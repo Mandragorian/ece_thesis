@@ -1,0 +1,38 @@
+\chapter{Introduction}
+
+\label{chapter:introduction}
+
+\newcommand{\dhname}{Diffie--Hellman}
+\newcommand{\tdhname}{Triple Diffie--Hellman}
+
+
+%--------------------------------------------
+
+\section{Summary}
+
+Not much time have passed since Edward Snowden revealed the plans that a certain intelligence agency has for the internet.
+While the world has always suspected that the various 3 letter agencies had the capability of controlling the network at a large scale, everybody was shocked with the confirmation of those suspicions.
+
+This means that in a world where the need for easy instant communication must overcome the threat of constant surveillance, end-to-end encryption has become a necessity.
+Thankfully this problem is solved in the case of a two party setting, where only 2 participants are exchanging messages, as a number of applications like OTR in pidgin and adium, Signal app for mobiles etc. provide end-to-end encryption in a user friendly manner.
+However, multi-party chat rooms are also very prominent in everyday communications and here things are somewhat trickier.
+On one hand, security in multi-party chat rooms is still an open problem theoretically.
+On the other, the existing implementations are either heavily mobile-centric or they are not licensed under a free software license.
+Additionally they all implement the same protocol, called Signal.
+And while Signal is a powerful protocol which provides strong encryption, we believe that more solutions should be implemented and tested, since, as we said, secure multi-party chat rooms are still an open problem.
+
+In this thesis we take a different approach from the signal protocol.
+We base our work on the Multi-party Off-the-Record messaging protocol ( from now mpOTR ) paper by I. Goldberg et al. \cite{mpotr}.
+Our contribution is both theoretical and practical.
+From a theoretic perspective , the mpOTR paper was not complete, as, as we will see later, two major building blocks, a Deniable Signature Key Exchange (DSKE) and a Group Key Agreement, were treated as black boxes.
+From a practical perspective we implemented the protocol almost from nothing. We had to engineer our implementation in such a way that its security is easily reviewable, and, at the same time, facilitates the free software development model, where contributions in the source code are made from several independent authors.
+
+As a result of our work's duality we will take a look in our contributions from the point of view of a cryptographer and the point of view of a software engineer.
+
+\subsection{Cryptographer's PoV}
+
+In this section we will discuss very briefly the theoretical focal points of our work.
+
+As already stated the protocol proposed in \cite{mpotr} left out two major gaps.
+
+\subsection{Software Engineer's PoV}
