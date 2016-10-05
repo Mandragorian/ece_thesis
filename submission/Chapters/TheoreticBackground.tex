@@ -1,0 +1,141 @@
+\chapter{Theoretic Background}
+\label{chapters:TheoreticBackground}
+
+In this chapter we will present some basic theoretic background.
+All the concepts, cryptographic primitives, and ideas presented here are essential building blocks of the protocol proposed in this thesis.
+As a result before someone carries on forward in this document, she should first have a basic understanding of this chapter.
+
+\subsection{Key Exchange Protocols (KEP)}
+
+The goal of any key exchange protocol is to allow two users to agree on a secret value, known only to them, by exchanging some publicly known information.
+This might be counter intuitive at first but as we will see in the next section this goal can be achieved with a very simple construction.
+
+Basically a key exchange protocol is any mechanism that provides two functions.
+One of them returns a tuple containing some private and some public information.
+The public information returned by that function must be sent to the other so that he can calculate the secret value.
+The other accepts the public values of the other user and the private values of this user.
+It returns the secret value.
+
+\begin{figure}[H]
+  \begin{align*}
+    <priv, pub> &= genkey() \\
+    secret &= calculate\_secret(priv_i, pub_j)
+  \end{align*}
+  \caption[The interface of a Key Exchange Protocol]{The KEP interface. $pub_j$ is the public information of user $j$ and $priv_i$ the private information of user $i$.}
+\end{figure}
+
+\subsection{\dhname key exchange}
+
+The \dhname key exchange is, as the name suggests, a key exchange protocol.
+It plays a major role in our proposed protocol, since it is a building block of many of its components.
+In this section we will examine how this KEP is constructed, and what public values must be exchanged.
+
+First, we remind to the readers the operation of multiplication modulo a number, $\oplus$.
+We want to multiply two numbers $a$ and $b$ modulo a number $n$, called "the modulo".
+This means that we first multiply the two numbers as usual.
+Then we calculate the remainder of the result when it is divided by the modulo.
+This remainder is the result of the multiplication of those two numbers $a$, $b$ modulo $n$.
+This means that if:
+
+\[
+  ab = np + r
+\]
+
+Then:
+
+\[
+  a \oplus b  = r
+\]
+.
+
+In this section we will also symbolize:
+
+\[
+  a^x \equiv a \oplus \dots \oplus a = a^x \mod p
+\]
+
+These are all the maths needed to understand how the \dhname key exchange works.
+To understand why it is also secure is a whole different matter and we will not cover it in this publication.
+
+The \dhname construction supposes that the two users already agree on two values $g$ and $p$ which are publicly known.
+The number $p$ must be prime and is called "the modulo" of the protocol.
+The number $g$ is called the "generator" and has the property that for every number $k \in [1 \dots p-1]$ there exists a number $l$ in the same range such that $g^l = k$.
+
+The private information for a user is any random integer $x$ such that $ 1 < x < p$.
+The public information is $g^x \mod p$ (any exponentiation from now on will be modulo $p$).
+
+The calculation of the shared secret is trivial.
+A user $i$, with private information $x$, and public $g^x$, receives the public information $g^y$ of another user $j$.
+He then calculates the value $s = (g^y)^x$ which is the shared secret.
+Now note that with $i$'s public information, $j$ can also calculate the same value $s = (g^x)^y$.
+The calculated value is the same for the two users since:
+
+\[
+  (g^y)^x = (g^x)^y = g^{xy}
+\]
+
+In algorithm \ref{algo:dh_genkey} we see the $genkey$ function, and in algorithm \ref{algo:dh_calculate_secret} the $calculate\_secret$ function.
+
+From now on, the public and private information of a user will be called public and private keys accordingly.
+
+\begin{algorithm}[h]
+  \KwResult{The private and public information needed by the protocol}
+  \Begin{
+    x := $random_in_range(1,p-1)$
+
+    p := $g^x$
+
+    \Return{$<x, p>$}
+  }
+  \caption{The $genkey$ function}
+  \label{algo:dh_genkey}
+\end{algorithm}
+
+\begin{algorithm}[h]
+  \KwIn{$g^y$: the public value of the other user, $x$: the secret value of the user calling the function}
+  \KwResult{The shared secret, which is known only to the two users}
+  \Begin{
+    \Return{$(g^y)^x$}
+  }
+  \caption{The $genkey$ function}
+  \label{algo:dh_calculate_secret}
+\end{algorithm}
+
+\section{Man-in-the-Middle attacks}
+
+\dhname is a great protocol for calculating shared secrets it has a grave disadvantage.
+Consider the following scenario, where Eve, an evil attacker can control the network so that she can read, drop, and inject packets:
+
+User $i$ wants to privately communicate with user $j$.
+She generates a private key $x$ and sends the public key $g^x$ to $j$.
+
+Eve interjects and copies and then drops the packet containing $i$'s public key.
+She generates a private key $x\prime$ and the public counterpart $g^{x\prime}$.
+She performs a \dhname exchange with $i$'s key and calculates $s_1 = g^{xx\prime}$, since she knows $x\prime$.
+She then sends her public key to user $j$.
+
+$j$ believes that the public key he just received belongs to $i$.
+He generates his private key $y$, and sends the public key $g^y$ to $i$.
+He also calculates $s_2 = g^{yx\prime}$ what he thinks is a shared secret known only to him and $i$.
+
+Eve interjects again to copy and drop the just sent package from the network.
+She calculates $s_2 = g^{yx\prime}$, again she knows $x\prime$.
+Then she sends her public key $g^{x\prime}$ to $i$, posing as $j$.
+
+Now $i$ receives a public key which she thinks belongs to $j$.
+Like $j$ she calculates the shared secret $s_1 = g^{xx\prime}$ which she thinks is only known between her and $j$.
+
+The situation now is that $i$ and $j$ use two different secrets to communicate which are both known to Eve.
+Eve can decrypt any message sent by $i$, for example, since she knows $s_i$.
+She then can re-encrypt it using $s_2$ and relay it to $j$.
+
+Nor $i$ neither $j$ will be able to know that such tampering is taking place and will continue to communicate, thinking that everything is fine.
+
+The above scenario was described with the \dhname key exchange in mind.
+However any similar situation where a malicious attacker can get between two communicating partners who think they are talking directly to each other is known as a Man-in-the-Middle attack.
+
+\section{\tdhname key exchange}
+
+\tdhname is another key exchange protocol.
+It is an improvement of \dhname which introduces negligible overhead in the complexity of the protocol.
+With doubling length of the first message containing the public keys of a user, this protocol provides both authentication and deniability.
