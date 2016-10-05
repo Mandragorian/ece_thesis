@@ -5,7 +5,19 @@ In this chapter we will present some basic theoretic background.
 All the concepts, cryptographic primitives, and ideas presented here are essential building blocks of the protocol proposed in this thesis.
 As a result before someone carries on forward in this document, she should first have a basic understanding of this chapter.
 
-\subsection{Key Exchange Protocols (KEP)}
+\section{Symmetric Encryption}
+
+The idea of symmetric encryption is quite simple.
+We suppose that there exists an algorithm called $E$, which takes two inputs.
+One input is a secret, called the key, and the other is some data we would like to encrypt.
+
+Another algorithm called $D$ again takes two inputs and is the reverse of $E$.
+This means that if we call $D$ with inputs the output of $E$ under some key $k$, and $k$ itself, the output will be the plaintext data. This is show in the below equation:
+
+\[
+  m = D(k, E(k, m))
+\]
+
 
 The goal of any key exchange protocol is to allow two users to agree on a secret value, known only to them, by exchanging some publicly known information.
 This might be counter intuitive at first but as we will see in the next section this goal can be achieved with a very simple construction.
