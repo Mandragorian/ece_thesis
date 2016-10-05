@@ -18,6 +18,89 @@ This means that if we call $D$ with inputs the output of $E$ under some key $k$,
   m = D(k, E(k, m))
 \]
 
+\section{Block Ciphers}
+
+Block ciphers are a special case of symmetric encryption algorithms.
+What makes them special is that they operate on a constant length block of data, hence the name.
+While this constrain may appear very limiting, we will see that this is not the case.
+In fact block ciphers have dominated the field of symmetric encryption.
+
+The block cipher which is most commonly used is called AES, also known as Rijndael.
+Its block size is 128 bits and depending on the AES version it has a key size of either 128, 192, or 256.
+
+Exactly because AES is the most commonly used block cipher, it is also the most scrutinized and studied one.
+Thus the crypto community is quite confident that AES is a secure construction, fully capable to be used for encrypted communications.
+
+\section{Modes of Operation}
+
+As we already stated, block ciphers operate on fixed chunks of data.
+To overcome this limitation we need a mechanism so that we can break the plaintext in chunks of the cipher's block size, and then somehow apply the cipher in each chunk.
+There are many modes of operation out there, but we will only talk about two of them.
+
+One is called Electronic Code Book (ECB), and it is the naive solution that one can come up with when first tackling the problem at hand.
+Suppose that we have a message $M$ which is a multiple of the block size.
+We can then divide it into $n$ chunks $m_i$, each being one block in length:
+
+\[
+  M = m_1 || \dots || m_n
+\]
+
+Then we encrypt each block using the bloc cipher and the same key such that we get ciphertext $C$:
+
+\[
+  C = c_1 || \dots || c_n =  E(k,m_1) || \dots || E(k,m_n)
+\]
+
+It is easy to see that the decryption is trivial:
+
+\[
+  M = D(k, c_1) || \dots || D(k, c_n)
+\]
+
+However this has a crucial weakness.
+You can easily see that if two chunks are the same then the resulting ciphertext will also be the same.
+This might not seem important, but, believe us, it is detrimental to the mode's security.
+Don't believe us yet? Here is an example:
+
+\begin{figure}[h]
+  \begin{minipage}{0.49\textwidth}
+    \includegraphics[scale=0.8]{Figures/Tux.jpg}
+  \end{minipage}
+  \begin{minipage}{0.49\textwidth}
+    \includegraphics[scale=0.8]{Figures/Tux_ecb.jpg}
+  \end{minipage}
+  \caption[ECB in practice]{The image on the left is the plaintext. The image on the right is the plaintext encrypted with ECB mode. The plaintext image was created by Larry Ewing using GIMP.}
+\end{figure}
+
+The other is called Counter mode (CTR).
+In this mode the block cipher itself does not encrypt the plaintext.
+Instead it is used to produce a pseudo-random sequence of bits, in chunks equal to one block, which is then xor'ed with the plaintext.
+
+To produce the $i$-th chunk $s_i$, it "encrypts" the number $i$ with the provided key.
+As a result a bit stream is generated as shown below:
+
+\[
+  S = E(k, 1) || E(k, 2) || \dots || E(k, n)
+\]
+
+And the resulting ciphertext is:
+
+\[
+  C = m_1 \oplus s_1 || \dots || m_n \oplus s_n
+\]
+
+To decrypt, one can generate the same bit stream and xor it again with the ciphertext:
+
+\[
+  M = c_1 \oplus s_1 || \dots || c_n \oplus s_n
+\]
+
+Notice that this means that we use the encryption algorithm of the block cipher both for encryption and decryption.
+
+Counter mode is a secure mode of operation suitable for use in production.
+It also has a nice property called malleability, but more on that later.
+
+\section{Key Exchange Protocols (KEP)}
 
 The goal of any key exchange protocol is to allow two users to agree on a secret value, known only to them, by exchanging some publicly known information.
 This might be counter intuitive at first but as we will see in the next section this goal can be achieved with a very simple construction.
