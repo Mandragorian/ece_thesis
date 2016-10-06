@@ -4,24 +4,24 @@
 %--------------------------------------------
 
 \section{Summary}
-Our primary goal was to design and implement the protocol we specified as a production-grade software, aiming to meet the needs of a wide user base. Of course every user would expect such a software to offer privacy in communication between two parties too. That said, implementing mpOTR as part of the OTR library was a natural decision. Not only would this result in a complete IM privacy library, but it would, as well, affect an already existing wide user base.
+Our primary goal was to design and implement the protocol we specified as a production-grade software, aiming to meet the needs of a wide user base. Of course every user would expect of such a software to offer privacy in communication between two parties too. That said, implementing mpOTR as part of the OTR library was a natural decision. Not only would this result in a complete IM privacy library, but it would, as well, affect an already existing wide user base.
 
 There exist quite a few implementations of the OTR Library, but only two of them have been actually developed by the OTR Development Team. The first one is implemented in C, it's the very first implementation and the most actively developed having 4 major versions with latest release in March of 2016. The other one is implemented in Java, and has only one release in October of 2009. We chose to develop mpOTR as part of the C implementation of the OTR Library.
 
 \section{Designing the Integration}
-Integrating a new feature into an existing software is quite a challenge. Ideally, a good design would at least follow the same coding style, make best reuse of the existing code and follow the same design patters. However, after a carefull inspection of the OTR Library source code we realized that following this approach was unfeasible.
+Integrating a new feature into an existing software is quite a challenge. Ideally, a good design would at least follow the same coding style, make the best possible reuse of the existing code and follow the same design patters. However, after a carefull inspection of the OTR Library source code we realized that following this approach was unfeasible.
 
 First of all, the coding style in OTR Librady source code is inconsistent. Different characters have been used for indentation, there is no standard error handling style, etc. Reusing parts of the existing code was not an option most of the time due to extensive coupling between the various modules. Finally, no specific design patterns had been used in the existing code.
 
-Our approach was the following. First, we used the coding style used more frequently in the existing code. The code reuse was limitted to the Diffie-Hellman implementation that was the only reusable module of the existing code. As for the design patterns, we decided to use them based on theory.
+Our approach was rather different. First, we used the coding style used more frequently in the existing code. The code reuse was limitted to the Diffie-Hellman implementation that was the only reusable module of the existing code. As for the design patterns, we decided to use them based on theory.
 
 
 \section{Design Challenges in C}
-A great deal of the callenges a software engineer is going to face when designing a software to be developed in C origins in the lack of literature regarding the Design Patterns. Most of the relative literature, such as the commonly referenced \cite{gofdesignpatterns}, describe the actual implementation of the patterns in the context of an object oriented design.
+A great deal of the callenges a software engineer is going to face when designing a software to be developed in C origins in the lack of literature regarding the Design Patterns. Most of the relative literature, such as the commonly referenced \cite{gofdesignpatterns}, describe the actual implementations of the patterns in the context of an object oriented design.
 
-Given that C is not object oriented, a developer should be innovative when implementing commonly used design patterns. Fortunately, C is a powerfull language offering the mechanisms to implement almost any design pattern. This power mainly comes from two features, the ability to specify incomplete types in order to achieve abstraction in the sense of information hiding, and the use of \textit{void*} in order to achieve generality as interface and inheritence would do in object oriented context. The latter must be carefully used, since it includes type-safety risks.
+Given that C is not object oriented language, a developer should be innovative when implementing commonly used design patterns. Fortunately, C is a powerfull language offering the mechanisms to implement almost any design pattern. This power mainly comes from two features, the ability to specify incomplete types in order to achieve abstraction in the sense of information hiding, and the use of \textit{void*} in order to achieve generality as interface and inheritence would do in an object oriented context. The latter must be used carefully, since it could raise the risks regarding type-safety.
 
-The most complete reference of design patterns in C can be found in \cite{patternsinc}. Although it only covers a small number of patterns, it gives the reader a clear approach of designing patterns when object-oriented techniques are not natively supported by the language. We also used \cite{patternsinc} as a reference for various patterns we implemented.
+The most complete reference of design patterns in C can be found in \cite{patternsinc}. Although it only covers a small number of patterns, it equips the reader with a clear approach of designing patterns when object-oriented techniques are not natively supported by the language. We also used \cite{patternsinc} as a reference for various patterns we implemented.
 
 \section{Patterns}
 
