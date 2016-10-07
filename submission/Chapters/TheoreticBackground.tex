@@ -276,3 +276,17 @@ This is true because to calculate the shared secret, either $x$ or $y$ are neede
 It is authenticated since to calculate the above secret one needs to know either $X$ or $Y$.
 
 It is deniable since the only values exchanged during the protocol are public keys.
+
+\subsection{The catch}
+
+
+There is a catch however. Suppose Eve would like to be able to read \emph{some} message that Alice has authored and sent to Bob.
+What she can do is create an "ephemeral" key $e$.
+She then starts a conversation with Alice, posing as Bob.
+Alice might respond, create the shared secret and start communicating.
+Eve does NOT know the shared secret, so she cant read any messages or prove anything, but she might be able to calculate it in the future.
+
+If Eve at some point forces Bob to hand over his long term secrets then she can recreate the shared secret.
+She can thus read the first message that Alice has tried to sent to "Bob" using the shared secret calculate with the phony ephemeral.
+This is possible since she now knows $Y$ (bob's longterm secret) and she also knows $e$.
+This breaks the forward secrecy of the protocol.
