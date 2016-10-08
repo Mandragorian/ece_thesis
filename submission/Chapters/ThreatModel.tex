@@ -1,0 +1,65 @@
+\chapter{Threat Model}
+\label{chapters:ThreatModel}
+
+\newcommand{\secadv}{$\mathcal{O}$}
+\newcommand{\privadv}{$\mathcal{M}$}
+
+In \cite{mpotr} a threat model was specified. First, three adversaries are introduced.
+
+\section{The Adversaries}
+
+\subsection{Security adversary $\mathcal{O}$}
+This adversary's goal is to read the messages of the chatroom.
+Let $T_c^{\hat{X}}$ be the transcript of chatroom $c$ owned by participant $\hat{X}$.
+Then, $\mathcal{O}$ is successful, if he can read any message from transcript $T_c^{\hat{A}}$, where $\hat{A}$ is an honest participant, without receiving it from transcript $T_c^{\hat{X}}$ for any participant $\hat{X}$ where $\hat{X} \ne \hat{A}$.
+While $\mathcal{O}$ can, both passively and actively, control the network, decrypt messages sent in other chatrooms and even participate in other sessions, he has limited access on the room he wants to attack.
+Not only can he not participate in the session under attack, but he also cannot ask for any secret shared between the participants of the specific room.
+He has the ability to inject messages of his liking in the chatroom by asking an, otherwise honest, user.
+In essence $\mathcal{O}$ is a somewhat formal definition of the notion of IND-CPA attacks in the multiparty setting.
+
+\subsection{Privacy adversary $\mathcal{M}$}
+
+The privacy adversary aims to break the deniability of the protocol.
+He is successful if he can prove to a judge $\mathcal{J}$ that a user $\hat{A}$ participated in, read messages from or authored messages in chatroom $c$.
+
+His restrictions are very few.
+He can collaborate with $\mathcal{J}$ before the creation of $c$, participate fully in $c$ and even force $\hat{A}$ to reveal his long term secrets in front of the judge.
+
+\subsection{Consensus adversary $\mathcal{T}$}
+
+\subsubsection{Definition of Consensus}
+
+For two participants $\hat{A}$ and $\hat{B}$, consensus is reached on $T_{C_1}^{\hat{A}}$ when $\hat{A}$ believes $\hat{B}$ claims to have a transcript $T_{C_2}^{\hat{B}}$ such that:
+
+\vbox{%
+\begin{itemize}
+  \label{consensus_def}
+  \item $C_1$ has the same set of participants as $C_2$;
+  \item $C_1$ and $C_2$ are the same chat room instance;
+  \item $T_{C_2}^{\hat{B}}$ has the same collection of messages as $T_{C_1}^{\hat{A}}$;
+  \item $T_{C_2}^{\hat{B}}$ and $T_{C_1}^{\hat{A}}$  agree an each message's origin.
+\end{itemize}
+}
+
+Notice that the above definition is not symmetric.
+This means that $\hat{A}$ can reach consensus with $\hat{B}$ without necessarily $\hat{B}$ reaching consensus with $\hat{A}$.
+
+The interpretation of the term "collection of messages" is intentionally left unclear.
+This way, each application can handle the ordering of the messages in different ways.
+
+\subsubsection{$\mathcal{T}$'s goal}
+
+$\mathcal{T}$ is successful when he is able to force an honest user $\hat{A}$ to believe that consensus is reached with another honest user $\hat{B}$ when at least one condition from \ref{consensus_def} does not hold.
+Notice that only $\hat{A}$ and $\hat{B}$ must be honest.
+$\mathcal{T}$ can otherwise control other users as he sees fit.
+
+\section{The Goals of the Protocol}
+
+The protocol must provide some defence mechanisms against all of the above.
+
+The security adversary \secadv can in no way be successful.
+The protocol must ensure that no one outside a chat room can read messages authored for it.
+This would be a catastrophic failure.
+
+To defend against the privacy adversary \privadv is also crucial.
+One might think, that since an attacker can not read messages, it wont make much difference if they are not deniable.
