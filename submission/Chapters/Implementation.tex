@@ -8,6 +8,7 @@ Our primary goal was to design and implement the protocol we specified as a prod
 
 There exist quite a few implementations of the OTR Library, but only two of them have been actually developed by the OTR Development Team. The first one is implemented in C, it's the very first implementation and the most actively developed having 4 major versions with latest release in March of 2016. The other one is implemented in Java, and has only one release in October of 2009. We chose to develop mpOTR as part of the C implementation of the OTR Library.
 
+
 \section{Designing the Integration}
 Integrating a new feature into an existing software is quite a challenge. Ideally, a good design would at least follow the same coding style, make the best possible reuse of the existing code and follow the same design patters. However, after a carefull inspection of the OTR Library source code we realized that following this approach was unfeasible.
 
@@ -23,6 +24,7 @@ Given that C is not object oriented language, a developer should be innovative w
 
 The most complete reference of design patterns in C can be found in \cite{patternsinc}. Although it only covers a small number of patterns, it equips the reader with a clear approach of designing patterns when object-oriented techniques are not natively supported by the language. We also used \cite{patternsinc} as a reference for various patterns we implemented.
 
+
 \section{Design Patterns}
 In this section we describe the Design Patterns we utilized in our implementation.
 
@@ -32,11 +34,11 @@ First-Class ADT is a pattern that decouples interface from implementation, thus 
 ADT stands for Abstract Data Type and it is basically a set of values and operations on these values. The ADT is considered first-class if we can have many, unique instances of it.
 \end{quote}
 
-Our implementation of First-Class ADTs is based on the paradigm found in \cite{patternsinc}
+Our implementation of First-Class ADTs is based on the paradigm found in \cite{patternsinc}.
 
 The header file of each First-Class ADT contains the declaration of a pointer to an incomplete type and the declaration of all functions that the interface constists of. The source file of each First-Class ADT contains the definition of the incomplete type, as a structure and the definition of each interface function.
 
-Instances of the declared pointer will serve as a handle for the clients. This mechanism enforces the clients to use the provided interface functions rather than directly accessing the fields of the structure.
+Instances of the declared pointer serve as a handle for the clients. This mechanism enforces the clients to use the provided interface functions rather than directly accessing the fields of the structure.
 
 We implemented most of the infrastructure modules as First-Class ADTs, namely \textit{ChatParticipant}, \textit{ChatContext}, \textit{ChatEvent}, \textit{ChatParticipant} and other.
 
@@ -44,6 +46,41 @@ We implemented most of the infrastructure modules as First-Class ADTs, namely \t
 
 \subsection{Iterator}
 
-\section{Idioms}
+
+\section{Idiomatic Expressions}
+Idiomatic expressions, also reffered to as idioms, are low-level patterns that depend upon the implementation technology. Usually idioms are only applicable in a specific language.
+
+\subsection{Constants to the left}
+The C language allows assignments inside conditional statement. This can be convenient in various cases, but can also lead to serious bugs when a programmer accidentaly uses the assignment symbol instead of the comparison symbol, as in the following example:
+\begin{lstlisting}[language=C]
+if(x = 0) {
+    /* This will never be true */
+}
+\end{lstlisting}
+
+By keeping constants to the left in comparisons the compiler will catch an erroneous assignment. So, a correct conditional statement using the idiom looks like:
+\begin{lstlisting}[language=C]
+if(0 == x) {
+    /* Control will get here if x is zero */
+}
+\end{lstlisting}
+
+
+\subsection{Sizeof to variables}
+When using functions for dynamic memory allocation in the C language the client has to provide the required size information. Many programmers use to dynamically allocate memory as in the following example:
+\begin{lstlisting}[language=C]
+OneType* var = malloc(sizeof(OneType));
+\end{lstlisting}
+
+Code like this contains a subtle form of dependency, that is the size given as an argument of malloc must match the size of the left sife of the assignment. A change in the variable type requires a change in two places. A failure to update both places would leave the code with undefined behaviour.
+
+By applying \textit{sizeof} to variables the dependency is removed and the change is limited to one place. When the idiom is applied the code will look like this:
+\begin{lstlisting}[language=C]
+OneType* var = malloc(sizeof *var);
+\end{lstlisting}
 
 \section{Naming Conventions}
+
+\section{API}
+
+\section{Overall Design}
