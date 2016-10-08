@@ -23,19 +23,22 @@ Given that C is not object oriented language, a developer should be innovative w
 
 The most complete reference of design patterns in C can be found in \cite{patternsinc}. Although it only covers a small number of patterns, it equips the reader with a clear approach of designing patterns when object-oriented techniques are not natively supported by the language. We also used \cite{patternsinc} as a reference for various patterns we implemented.
 
-\section{Patterns}
+\section{Design Patterns}
+In this section we describe the Design Patterns we utilized in our implementation.
 
 \subsection{First-Class ADT}
-First-Class ADT is a pattern that decoucples interface from implementation, thus improving encaplulation and providing loose dependencies. We get a definition from \cite{patternsinc}:
+First-Class ADT is a pattern that decouples interface from implementation, thus improving encaplulation and providing loose dependencies. We get a definition from \cite{patternsinc}:
 \begin{quote}
 ADT stands for Abstract Data Type and it is basically a set of values and operations on these values. The ADT is considered first-class if we can have many, unique instances of it.
 \end{quote}
 
-We implemented most of the infrastructure modules based on the First-Class ADT pattern, following the implementation paradigm found in \cite{patternsinc}.
+Our implementation of First-Class ADTs is based on the paradigm found in \cite{patternsinc}
 
 The header file of each First-Class ADT contains the declaration of a pointer to an incomplete type and the declaration of all functions that the interface constists of. The source file of each First-Class ADT contains the definition of the incomplete type, as a structure and the definition of each interface function.
 
 Instances of the declared pointer will serve as a handle for the clients. This mechanism enforces the clients to use the provided interface functions rather than directly accessing the fields of the structure.
+
+We implemented most of the infrastructure modules as First-Class ADTs, namely \te ChatParticipant
 
 \subsection{Observer}
 
