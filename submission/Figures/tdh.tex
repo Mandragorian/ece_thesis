@@ -1,0 +1,21 @@
+\begin{tikzpicture}
+
+  \def \dist {5cm}
+  \def \longrad {1cm}
+  \def \ephemrad {0.8cm}
+  \def \sqrttwo {1.4142}
+
+  \node[draw, circle, minimum size=\longrad] at (0,\dist) {$X$};
+  \node[draw, circle, minimum size=\ephemrad] at (0,0) {$x$};
+  \node[draw, circle, minimum size=\longrad] at (\dist,\dist) {$Y$};
+  \node[draw, circle, minimum size=\ephemrad] at (\dist,0) {$y$};
+
+  \draw[<->, >=latex] ({0 + (\sqrttwo * \longrad / 4)} ,{\dist  - (\sqrttwo * \longrad / 4)})
+  -- ({\dist - (\sqrttwo * \ephemrad /4)},{0 + (\sqrttwo * \ephemrad / 4)});
+
+  \draw[<->, >=latex] ({\dist - (\sqrttwo * \longrad / 4)} ,{\dist  - (\sqrttwo * \longrad / 4)})
+  -- ({0 + (\sqrttwo * \ephemrad /4)},{0 + (\sqrttwo * \ephemrad / 4)});
+
+  \draw[<->, >=latex] ({0 + \ephemrad/2}, 0) -- ({\dist - \ephemrad/2}, 0);
+
+\end{tikzpicture}
