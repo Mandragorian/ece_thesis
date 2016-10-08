@@ -285,7 +285,6 @@ It is deniable since the only values exchanged during the protocol are public ke
 
 \subsection{The catch}
 
-
 There is a catch however. Suppose Eve would like to be able to read \emph{some} message that Alice has authored and sent to Bob.
 What she can do is create an "ephemeral" key $e$.
 She then starts a conversation with Alice, posing as Bob.
@@ -296,3 +295,12 @@ If Eve at some point forces Bob to hand over his long term secrets then she can 
 She can thus read the first message that Alice has tried to sent to "Bob" using the shared secret calculate with the phony ephemeral.
 This is possible since she now knows $Y$ (bob's longterm secret) and she also knows $e$.
 This breaks the forward secrecy of the protocol.
+
+This can be easily solved if both Alice and Bob first make sure that they have both arrived at the same shared secret.
+
+Suppose that Alice has calculated the shared secret $s$. She uses that secret to send an encrypted and authenticated message to Bob.
+That message contains data known to everybody, the word "confirmation" for example.
+She won't send any further messages unless she receives the same confirmation message from Bob.
+
+On receiving the confirmation message Bob can be sure that Alice has calculated the shared secret.
+He then sends a confirmation message himself, so that Alice too can be sure that Bob has calculated the shared secret.
