@@ -100,6 +100,43 @@ Notice that this means that we use the encryption algorithm of the block cipher 
 Counter mode is a secure mode of operation suitable for use in production.
 It also has a nice property called malleability, but more on that later.
 
+
+\section{Message Integrity}
+
+We now know how to keep a message secret.
+Another major cryptographic problem is that of message authentication.
+How can we be sure that a message we are reading came from who we think it did?
+
+But why is this even necessary?
+Since only the sender and the receiver have the secret key, only they should be able to construct valid ciphertexts.
+
+Well, in general this is not correct.
+Let's consider again the case of a block cipher used in CTR mode.
+Remember that in this mode the block cipher is not directly used for encryption.
+Instead it is used to generated a pseudorandom sequence of bits.
+This sequence is then xor'ed to the plaintext and the result is the ciphertext.
+
+Now let's see what will happen if a bit of the ciphertext is flipped, and we try to decrypt it.
+Suppose $m_i$ and $c_i$ is the $i$-th bit of the plaintext and ciphertext respectively. $s_i$ is the $i$-th bit of the pseudorandom sequence produced during the CTR mode encryption process.
+The follow relation holds:
+
+\[
+  m_i = c_i \oplus s_i
+\]
+
+Flipping a bit means taking its complement.
+This means that the new plaintext bit $M_i$ will be:
+
+\[
+  M_i = c_i\prime \oplus s_i = (c_i \oplus s_i)\prime
+\]
+
+This means that an attacker could actually produce valid ciphertexts for plaintexts of his choosing by tampering with already sent messages!
+This property is called malleability.
+
+There are many more ways that an attacker could tamper with sent messages besides utilising the malleability properties of an encryption scheme.
+This means that we need ways to authenticate our messages before we sent them.
+
 \section{Key Exchange Protocols (KEP)}
 
 The goal of any key exchange protocol is to allow two users to agree on a secret value, known only to them, by exchanging some publicly known information.
