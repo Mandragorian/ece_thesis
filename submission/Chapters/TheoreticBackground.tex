@@ -419,3 +419,38 @@ She won't send any further messages unless she receives the same confirmation me
 
 On receiving the confirmation message Bob can be sure that Alice has calculated the shared secret.
 He then sends a confirmation message himself, so that Alice too can be sure that Bob has calculated the shared secret.
+
+\section{Message Ordering}
+
+One difficulty that multi-party chat protocols need to overcome is that of message ordering.
+This is confusing at first.
+Why would the ordering of the messages be so important?
+If a conversation is reordered it shouldn't make any sense.
+
+Unfortunately this is not the case.
+To illustrate why message order is important we will examine the so called "ice cream attack".
+
+Suppose that Alice, Bob, and Mallory are chatting in one chat room.
+Mallory wants to make Alice believe that Bob is a dangerous criminal.
+We assume that she has significant control over the network and can delay packages.
+To achieve her gaol she does the following:
+
+She sends the message "Who wants some ice cream?" in the chat room.
+But she delays the package going to Alice, so that Alice does not receive it yet.
+Bob will obviously reply that he wants ice cream.
+Let's suppose he sends the message "I do".
+Again Mallory will put the package on hold before she delivers it to Alice.
+And finally she transmits the message "Who wants to do something illegal?", which she allows to be delivered to both Alice and Bob.
+She then allows Bob's message, saying "I do", to go through to Alice.
+After that she also allows her original message, saying "Who wants some ice cream?" to also go to Alice.
+
+Now, what did Alice actually see?
+First, she saw that Mallory asked who wanted to do something illegal.
+And then she saw Bob saying that he does!
+In her eyes, bob is willing to do engage in illegal activities.
+Maybe she shouldn't hang out with him any more.
+
+And that exactly is the "ice cream attack".
+Can multi-party chat protocols defend against such vulnerabilities?
+The problem at hand is generally still open and goes beyond the scope of this publication.
+However at section \ref{chapters:FutureWork} we shall briefly examine a proposed solution which is compatible to our protocol.
