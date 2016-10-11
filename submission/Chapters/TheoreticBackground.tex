@@ -104,7 +104,7 @@ It also has a nice property called malleability, but more on that later.
 \section{Message Integrity}
 
 We now know how to keep a message secret.
-Another major cryptographic problem is that of message authentication.
+Another major cryptographic problem is that of message integrity.
 How can we be sure that a message we are reading came from who we think it did?
 
 But why is this even necessary?
@@ -136,6 +136,58 @@ This property is called malleability.
 
 There are many more ways that an attacker could tamper with sent messages besides utilising the malleability properties of an encryption scheme.
 This means that we need ways to authenticate our messages before we sent them.
+
+\section{Message Authentication}
+
+For the purpose of message authentication there are two main categories of solutions.
+The first category uses a shared secret to create some sort of electronic signature for some data that we want to authenticate.
+This type of signature is called a Message Authentication Code.
+
+The second category uses a pair of keys, the private key, known only to the person signing the data, and the public key, known to everybody.
+The public key is used to verify the signature.
+
+\subsection{Message Authentication Codes (MAC)}
+
+This case has many similarities with symmetric encryption.
+Again we assume that there is a secret value, called the key, known only to the two parties communicating.
+We also assume that an algorithm called $MAC$ exists which produces the signature, called the tag or mac.
+
+This algorithm takes two inputs, the secret key $k$ and the message\footnote{This message can be plaintext or already encrypted} $m$ itself.
+The algorithm works in a way such that the produced tag $t$ can only be calculated if you know $k$.
+
+\[
+  t = MAC(k, m)
+\]
+
+When the sending party wants to transmit a message, she calculates the tag and appends it to the message so that she sends $m||t$.
+The receiving can recalculate the tag on his own.
+He then checks if the appended tag is the same with the tag that he calculated.
+If the two tags are the same then he accepts the message, otherwise he rejects it as it is probably tampered with.
+
+\subsection{Public key signatures}
+
+In this case we have two distinct algorithms.
+On is called $Sign$ and is used to produce the signatures.
+The other is called $Verify$ and is used to verify data.
+
+The sender generates a tag $t$ using the $Sign$ algorithm:
+
+\[
+  t = Sign(priv, m)
+\]
+
+where $priv$ is the private key.
+He then appends the tag to the message as in the MAC case and transmits $m||t$.
+
+The receiving party then uses the $Verify$ algorithm.
+This algorithm accepts as inputs the message $m$, the tag $t$, and the public key $pub$.
+Its result is boolean, responding "YES" if the message is verified and "NO" if it is not:
+
+\[
+  result = Verify(m,t,pub)
+\]
+
+if $result$ is "YES" then she accepts the message. Otherwise she rejects it.
 
 \section{Key Exchange Protocols (KEP)}
 
@@ -233,15 +285,15 @@ From now on, the public and private information of a user will be called public 
   \label{algo:dh_calculate_secret}
 \end{algorithm}
 
-\section{Man-in-the-Middle attacks}
+\section{Person-in-the-Middle attacks}
 
 \dhname is a great protocol for calculating shared secrets it has a grave disadvantage.
-Consider the following scenario, where Eve, an evil attacker can control the network so that she can read, drop, and inject packets:
+Consider the following scenario, where Mallory, an evil attacker can control the network so that she can read, drop, and inject packets:
 
 User $i$ wants to privately communicate with user $j$.
 She generates a private key $x$ and sends the public key $g^x$ to $j$.
 
-Eve interjects and copies and then drops the packet containing $i$'s public key.
+Mallory interjects and copies and then drops the packet containing $i$'s public key.
 She generates a private key $x\prime$ and the public counterpart $g^{x\prime}$.
 She performs a \dhname exchange with $i$'s key and calculates $s_1 = g^{xx\prime}$, since she knows $x\prime$.
 She then sends her public key to user $j$.
@@ -250,21 +302,26 @@ $j$ believes that the public key he just received belongs to $i$.
 He generates his private key $y$, and sends the public key $g^y$ to $i$.
 He also calculates $s_2 = g^{yx\prime}$ what he thinks is a shared secret known only to him and $i$.
 
-Eve interjects again to copy and drop the just sent package from the network.
+Mallory interjects again to copy and drop the just sent package from the network.
 She calculates $s_2 = g^{yx\prime}$, again she knows $x\prime$.
 Then she sends her public key $g^{x\prime}$ to $i$, posing as $j$.
 
 Now $i$ receives a public key which she thinks belongs to $j$.
 Like $j$ she calculates the shared secret $s_1 = g^{xx\prime}$ which she thinks is only known between her and $j$.
 
-The situation now is that $i$ and $j$ use two different secrets to communicate which are both known to Eve.
-Eve can decrypt any message sent by $i$, for example, since she knows $s_i$.
+\begin{figure}[h]
+\includegraphics[scale=0.4]{Figures/Person_in_the_middle_attack.jpg}
+\caption[A Person-in-the-Middle attack]{This figure demonstrates the situation just after Mallory has performed her Person-in-the-Middle attack.}
+\end{figure}
+
+The situation now is that $i$ and $j$ use two different secrets to communicate which are both known to Mallory.
+Mallory can decrypt any message sent by $i$, for example, since she knows $s_i$.
 She then can re-encrypt it using $s_2$ and relay it to $j$.
 
 Nor $i$ neither $j$ will be able to know that such tampering is taking place and will continue to communicate, thinking that everything is fine.
 
 The above scenario was described with the \dhname key exchange in mind.
-However any similar situation where a malicious attacker can get between two communicating partners who think they are talking directly to each other is known as a Man-in-the-Middle attack.
+However any similar situation where a malicious attacker can get between two communicating partners who think they are talking directly to each other is known as a Person-in-the-Middle attack.
 
 \section{\tdhname key exchange}
 \begin{figure}[h]
@@ -281,7 +338,7 @@ With doubling length of the first message containing the public keys of a user, 
 \subsection{An Overview}
 
 In this key exchange each user has a \dhname longterm keypair.
-This should be authenticated to other users to exclude a man in the middle attack, like any other public key scheme.
+This should be authenticated to other users to exclude a person in the middle attack, like any other public key scheme.
 
 When Alice wants to communicate with Bob, she generates an ephemeral \dhname key.
 Suppose $X$ is her longterm private key and $x$ is her ephemeral private key.

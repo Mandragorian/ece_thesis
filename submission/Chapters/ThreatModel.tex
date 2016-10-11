@@ -66,9 +66,9 @@ To defend against the privacy adversary \privadv is also crucial.
 One might think, that since an attacker can not read messages, it wont make much difference if they are not deniable.
 However there are many situations that even evidence that you talked to someone can be incriminating.
 
-If a Ed wanted to reveal to a journalist some evidence about the wrongdoings of a state organization and did that in a non deniable manner then he is busted.
+If, for example, Ed wanted to reveal to a journalist some evidence about the wrongdoings of a state organization and did that in a non deniable manner then he is busted.
 The correlation between him contacting the journalist and the subsequent release of the information he revealed would mark him as a whistle blower.
 
 Lastly, the consensus adversary \conadv is not strictly cryptographic but is of no less importance.
 If an attacker could manipulate the transcripts of two different users, but then convince them that they have received the same messages he could have quite some power over them.
-Every multi-party chatting protocol must ensure
+Every multi-party chatting protocol must ensure that all participants view the same messages\footnote{The order of the message is also very important but this is an open problem and, while various solutions have been proposed, it is not addressed by this work}.
