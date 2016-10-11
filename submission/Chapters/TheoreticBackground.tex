@@ -309,6 +309,11 @@ Then she sends her public key $g^{x\prime}$ to $i$, posing as $j$.
 Now $i$ receives a public key which she thinks belongs to $j$.
 Like $j$ she calculates the shared secret $s_1 = g^{xx\prime}$ which she thinks is only known between her and $j$.
 
+\begin{figure}[h]
+\includegraphics[scale=0.4]{Figures/Person_in_the_middle_attack.jpg}
+\caption[A Person-in-the-Middle attack]{This figure demonstrates the situation just after Mallory has performed her Person-in-the-Middle attack.}
+\end{figure}
+
 The situation now is that $i$ and $j$ use two different secrets to communicate which are both known to Mallory.
 Mallory can decrypt any message sent by $i$, for example, since she knows $s_i$.
 She then can re-encrypt it using $s_2$ and relay it to $j$.
