@@ -288,12 +288,12 @@ From now on, the public and private information of a user will be called public 
 \section{Man-in-the-Middle attacks}
 
 \dhname is a great protocol for calculating shared secrets it has a grave disadvantage.
-Consider the following scenario, where Eve, an evil attacker can control the network so that she can read, drop, and inject packets:
+Consider the following scenario, where Mallory, an evil attacker can control the network so that she can read, drop, and inject packets:
 
 User $i$ wants to privately communicate with user $j$.
 She generates a private key $x$ and sends the public key $g^x$ to $j$.
 
-Eve interjects and copies and then drops the packet containing $i$'s public key.
+Mallory interjects and copies and then drops the packet containing $i$'s public key.
 She generates a private key $x\prime$ and the public counterpart $g^{x\prime}$.
 She performs a \dhname exchange with $i$'s key and calculates $s_1 = g^{xx\prime}$, since she knows $x\prime$.
 She then sends her public key to user $j$.
@@ -302,15 +302,15 @@ $j$ believes that the public key he just received belongs to $i$.
 He generates his private key $y$, and sends the public key $g^y$ to $i$.
 He also calculates $s_2 = g^{yx\prime}$ what he thinks is a shared secret known only to him and $i$.
 
-Eve interjects again to copy and drop the just sent package from the network.
+Mallory interjects again to copy and drop the just sent package from the network.
 She calculates $s_2 = g^{yx\prime}$, again she knows $x\prime$.
 Then she sends her public key $g^{x\prime}$ to $i$, posing as $j$.
 
 Now $i$ receives a public key which she thinks belongs to $j$.
 Like $j$ she calculates the shared secret $s_1 = g^{xx\prime}$ which she thinks is only known between her and $j$.
 
-The situation now is that $i$ and $j$ use two different secrets to communicate which are both known to Eve.
-Eve can decrypt any message sent by $i$, for example, since she knows $s_i$.
+The situation now is that $i$ and $j$ use two different secrets to communicate which are both known to Mallory.
+Mallory can decrypt any message sent by $i$, for example, since she knows $s_i$.
 She then can re-encrypt it using $s_2$ and relay it to $j$.
 
 Nor $i$ neither $j$ will be able to know that such tampering is taking place and will continue to communicate, thinking that everything is fine.
