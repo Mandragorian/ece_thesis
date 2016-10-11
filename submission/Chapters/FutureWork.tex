@@ -1,0 +1,13 @@
+\chapter{Future Work}
+\label{chapters:FutureWork}
+
+\section{Message Ordering with OldBlue Protocol}
+First let's see what we can and cannot do:
+A multi-party chat room is a distributed environment.
+This means that there is no central "authority" which can decide if a message came before another.
+
+Also, since we are in a zero trust setting we cannot utilise any values over which the participants have full control, their local clocks for example.
+
+The only information for which we must trust the other participants is what messages they have seen.
+We have no other option on this one as we cannot know if an attacker has actually stopped messages from getting to them or if they are dishonest and lie to us.
+
