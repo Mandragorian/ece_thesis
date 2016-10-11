@@ -577,8 +577,25 @@ If such a fingerprint is found and it is verified, then the user is verified for
 If the found fingerprint is not verified then the participant is not verified.
 If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list.
 
-\section{Message Structure}
-The general mpOTR message structure is the following: \\
+\section{Details of mpOTR Messages}
+All mpOTR messages start with the string "?OTR:" followed by the base64 encoded message and then a "." denoting the end of the message.
+
+\subsection{Data Types}
+This is how several data types are encoded:
+\begin{description}[align=left]
+\item [Shorts:] 2 byte unsigned value, big-endian
+\item [Integers:] 4 byte unsigned balue, big-endian
+\item [Multi Precision Integers:] 4 byte unsigned len, big-endian \\
+len byte unsigned value, big-endian
+\item [Lists:] 4 byte unsigned len, big-endian \\
+len list elements
+\item[Hashes:] 32 or 64 bytes of data
+\item[CTR-mode counter value:] 8 bytes data
+\end{description}
+
+
+\subsection{Message Structure}
+The general structure of mpOTR messages is the following: \\
 
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
@@ -597,7 +614,7 @@ The general mpOTR message structure is the following: \\
 
 Offer Messages contain no Session ID in the header, since Session ID has not been established yet Offer and DAKE and Shutdown KeyRelease Messages contain no Signature.
 
-\subsection{Offer Message Payload}
+\subsubsection{Offer Message Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
 \bitbox{4}{Position} & \bitbox[lrt]{4}{} \\
@@ -606,7 +623,7 @@ Offer Messages contain no Session ID in the header, since Session ID has not bee
 \bitbox[lrb]{4}{}
 \end{bytefield}
 
-\subsection{DAKE Handshake Message Payload}
+\subsubsection{DAKE Handshake Message Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
 \bitbox{4}{Ephemeral Key Length} & \bitbox[tlr]{4}{} \\
@@ -617,7 +634,7 @@ Offer Messages contain no Session ID in the header, since Session ID has not bee
 \wordbox[blr]{1}{$\cdots$}
 \end{bytefield}
 
-\subsection{DAKE Confirm Message Payload}
+\subsubsection{DAKE Confirm Message Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
 \bitbox{4}{Recipient} & \bitbox[tlr]{4}{} \\
@@ -626,7 +643,7 @@ Offer Messages contain no Session ID in the header, since Session ID has not bee
 \bitbox[lrb]{4}{}
 \end{bytefield}
 
-\subsection{DAKE Key Message Payload}
+\subsubsection{DAKE Key Message Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
 \bitbox{4}{Recipient} & \bitbox[tlr]{4}{} \\
@@ -635,7 +652,7 @@ Offer Messages contain no Session ID in the header, since Session ID has not bee
 \bitbox[lrb]{4}{} & \bitbox{4}{Key}
 \end{bytefield}
 
-\subsection{GKA Upflow Message Payload}
+\subsubsection{GKA Upflow Message Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
 \bitbox{4}{Recipient} & \bitbox{4}{Key List Length} \\
@@ -648,7 +665,7 @@ Offer Messages contain no Session ID in the header, since Session ID has not bee
 \wordbox[blr]{3}{$\cdots$} 
 \end{bytefield}
 
-\subsection{GKA Downflow Message Payload}
+\subsubsection{GKA Downflow Message Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
 \bitbox{4}{Key List Length} & \bitbox{4}{1st Key Length} \\
@@ -660,14 +677,14 @@ Offer Messages contain no Session ID in the header, since Session ID has not bee
 \wordbox[blr]{3}{$\cdots$}
 \end{bytefield}
 
-\subsection{Attest Message Payload}
+\subsubsection{Attest Message Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
 \wordbox{2}{Session ID (64 Bytes)} \\
 \wordbox{2}{Association Table Hash (64 Bytes)} 
 \end{bytefield}
 
-\subsection{Data Message Payload}
+\subsubsection{Data Message Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
 \wordbox{1}{CTR} \\
@@ -676,7 +693,7 @@ Offer Messages contain no Session ID in the header, since Session ID has not bee
 \wordbox[blr]{1}{$\cdots$} \\
 \end{bytefield}
 
-\subsection{Shutdown KeyRelease Payload}
+\subsubsection{Shutdown KeyRelease Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
 \bitbox{4}{Key Length} & \bitbox[tlr]{4}{} \\
