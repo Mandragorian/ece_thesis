@@ -55,6 +55,22 @@ headsepline, % Uncomment to get a line under the header
 \usepackage{listings}
 \usepackage{bytefield}
 \usepackage{enumitem}
+\usepackage[keys]{cryptocode}
+
+
+%Define the myinput macro for algorithm2e
+\newlength\mylen
+\newcommand\KwExtraIn[1]{%
+        \settowidth\mylen{\KwIn{}}%
+        \setlength\hangindent{\mylen}%
+        \hspace*{\mylen}#1\\}
+
+\newcommand\NextYear{%
+  \advance\year by 1 \the\year\advance\year by -1}
+\newcommand\PrevYear{%
+  \advance\year by -1 \the\year\advance\year by 1}
+
+
 %----------------------------------------------------------------------------------------
 %	MARGIN SETTINGS
 %----------------------------------------------------------------------------------------
