@@ -4,13 +4,15 @@
 %--------------------------------------------
 
 \section{Setup}
+The setup procedure consists of several subprotocols. They are responsible for setting up all the needed parameters for the private communication to take place.
+
 \subsection{Offer}
-\label{Offer}
-During the first phase of the setup procedure, which we call "Offer", the participants calculate a unique session id called $sid_i$. This is a value that will be used to distinguish the current session between other sessions created by the same set of participants. \\
+\label{subsections:offer}
+During the first phase of the setup procedure, which we call "Offer", the participants calculate a unique Session ID, called $sid_i$. This is a value that will be used to distinguish the current session between other sessions created by the same set of participants.
 
-Each participant $\hat{X}$ chooses a random 256-bit value $x_{\hat{X}}$, which is his contribution to the $sid_i$. We define $sid_i$ as the SHA-512 hash of the serialized ordered list that contains every participant's contribution. \\
+Each participant $\hat{X}$ chooses a random 256-bit value $x_{\hat{X}}$, which is his contribution to the $sid_i$. We define $sid_i$ as the SHA-512 hash of the serialized ordered list that contains every participant's contribution.
 
-Each offer message contains the sender's contribution along with his position in the participants list. \\
+Each offer message contains the sender's contribution along with his position in the participants list.
 
 The participant who wants to initiate the mpOTR protocol, broadcasts an offer message. Once a participant receives an offer message:
 
@@ -24,8 +26,8 @@ The participant who wants to initiate the mpOTR protocol, broadcasts an offer me
 	\item[]He checks if he has received every participant's contribution. If so, he calculates the $sid_i$ and proceeds to the next setup phase.
 \end{itemize}
 
-Notice that these messages are not authenticated and hence the session id must
-be verified \emph{after} the participants have exchanged signing keys.
+Notice that offer messages are not authenticated and hence $sid_i$ must
+be verified \emph{after} the participants have exchanged signing keys, as described in \ref{subsections:attest}.
 
 
 \subsection{Deniable Signature Key Exchange (DSKE)}
@@ -34,7 +36,7 @@ In \cite{mpotr} a construction for a DSKE is proposed. Given a deniable
 Authenticated Key Exchange\\ (denAKE), two participants of the chat can
 generate a deniable and authenticated shared secret. With that secret
 they can exchange their ephemeral signing public key in an encrypted and
-authenticated fashion, using symmetric algorithms.\\
+authenticated fashion, using symmetric algorithms.
 
 This is done for every pair of participants. After that, they will all have
 created an association table, which associates each participant with their
@@ -42,7 +44,7 @@ signing key. Afterwards, the participants must make sure that they all have
 constructed the same association table. This is done by each participant
 transmitting the hash of the association table (which is sorted in
 lexicographical order according to each participant's username). The hash
-is signed by the ephemeral signing key. \\
+is signed by the ephemeral signing key.
 
 Each participant must verify the signatures in each hash received and also
 make sure that each hash is the same with the one he has calculated. If everything
@@ -357,8 +359,9 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
     \caption{This diagram demonstrates the downflow of the intermediate keys}
   \end{minipage}
 \end{figure}
-\subsection{Attest}
 
+\subsection{Attest}
+\label{subsections:attest}
 During this phase the participants must verify that they agree on the $sid_i$,
 and the association table as we mentioned in \ref{Offer} and \ref{DSKE}.
 This is needed for two reasons. First because the session id is required before a signing key association table is constructed, and therefore the messages exchanged for the session id calculation can not be signed.
