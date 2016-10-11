@@ -285,7 +285,7 @@ From now on, the public and private information of a user will be called public 
   \label{algo:dh_calculate_secret}
 \end{algorithm}
 
-\section{Man-in-the-Middle attacks}
+\section{Person-in-the-Middle attacks}
 
 \dhname is a great protocol for calculating shared secrets it has a grave disadvantage.
 Consider the following scenario, where Mallory, an evil attacker can control the network so that she can read, drop, and inject packets:
@@ -316,7 +316,7 @@ She then can re-encrypt it using $s_2$ and relay it to $j$.
 Nor $i$ neither $j$ will be able to know that such tampering is taking place and will continue to communicate, thinking that everything is fine.
 
 The above scenario was described with the \dhname key exchange in mind.
-However any similar situation where a malicious attacker can get between two communicating partners who think they are talking directly to each other is known as a Man-in-the-Middle attack.
+However any similar situation where a malicious attacker can get between two communicating partners who think they are talking directly to each other is known as a Person-in-the-Middle attack.
 
 \section{\tdhname key exchange}
 \begin{figure}[h]
@@ -333,7 +333,7 @@ With doubling length of the first message containing the public keys of a user, 
 \subsection{An Overview}
 
 In this key exchange each user has a \dhname longterm keypair.
-This should be authenticated to other users to exclude a man in the middle attack, like any other public key scheme.
+This should be authenticated to other users to exclude a person in the middle attack, like any other public key scheme.
 
 When Alice wants to communicate with Bob, she generates an ephemeral \dhname key.
 Suppose $X$ is her longterm private key and $x$ is her ephemeral private key.
