@@ -1,0 +1,111 @@
+\chapter{The Protocol}
+\label{chapters:protocol}
+
+%--------------------------------------------
+
+\section{Message Structure}
+The general mpOTR message structure is the following: \\
+
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\begin{rightwordgroup}{Header}
+\bitbox{2}{PV} & \bitbox{2}{MT} & \bitbox{4}{Instance Tag} \\
+\wordbox{4}{Session ID (64 Bytes)}
+\end{rightwordgroup} \\
+\wordbox{4}{Payload} \\
+\wordbox{2}{Signature}
+\end{bytefield} \\
+
+\begin{description}[align=left]
+\item [PV] Protocol Version
+\item [MT] Message Type
+\end{description}
+
+Offer Messages contain no Session ID in the header, since Session ID has not been established yet Offer and DAKE and Shutdown KeyRelease Messages contain no Signature.
+
+\subsection{Offer Message Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\bitbox{4}{Position} & \bitbox[lrt]{4}{} \\
+\wordbox[lr]{1}{Session ID Contribution} \\
+\bitbox[l]{4}{} & \bitbox[rb]{4}{} \\
+\bitbox[lrb]{4}{}
+\end{bytefield}
+
+\subsection{DAKE Handshake Message Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\bitbox{4}{Ephemeral Key Length} & \bitbox[tlr]{4}{} \\
+\wordbox[lr]{1}{Ephemeral Key} \\
+\wordbox[blr]{1}{$\cdots$} \\
+\bitbox{4}{Longterm Key Length} & \bitbox[tlr]{4}{} \\
+\wordbox[lr]{1}{Longterm Key} \\
+\wordbox[blr]{1}{$\cdots$}
+\end{bytefield}
+
+\subsection{DAKE Confirm Message Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\bitbox{4}{Recipient} & \bitbox[tlr]{4}{} \\
+\wordbox[lr]{1}{Triple Diffie-Hellman MAC} \\
+\bitbox[l]{4}{} & \bitbox[rb]{4}{} \\
+\bitbox[lrb]{4}{}
+\end{bytefield}
+
+\subsection{DAKE Key Message Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\bitbox{4}{Recipient} & \bitbox[tlr]{4}{} \\
+\wordbox[lr]{1}{Triple Diffie-Hellman MAC} \\
+\bitbox[l]{4}{} & \bitbox[rb]{4}{} \\
+\bitbox[lrb]{4}{} & \bitbox{4}{Key}
+\end{bytefield}
+
+\subsection{GKA Upflow Message Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\bitbox{4}{Recipient} & \bitbox{4}{Key List Length} \\
+\bitbox{4}{1st Key Length} & \bitbox[tlr]{4}{} \\
+\wordbox[lr]{1}{1st Key} \\
+\wordbox[blr]{1}{$\cdots$} \\
+\bitbox{4}{2nd Key Length} & \bitbox[tlr]{4}{} \\
+\wordbox[lr]{1}{2nd Key} \\
+\wordbox[blr]{1}{$\cdots$} \\
+\wordbox[blr]{3}{$\cdots$} 
+\end{bytefield}
+
+\subsection{GKA Downflow Message Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\bitbox{4}{Key List Length} & \bitbox{4}{1st Key Length} \\
+\wordbox[lr]{1}{1st Key} \\
+\wordbox[lr]{1}{$\cdots$} \\
+\bitbox{4}{2nd Key Length} & \bitbox[tlr]{4}{} \\
+\wordbox[lr]{1}{2nd Key} \\
+\wordbox[blr]{1}{$\cdots$} \\
+\wordbox[blr]{3}{$\cdots$}
+\end{bytefield}
+
+\subsection{Attest Message Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\wordbox{2}{Session ID (64 Bytes)} \\
+\wordbox{2}{Association Table Hash (64 Bytes)} 
+\end{bytefield}
+
+\subsection{Data Message Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\wordbox{1}{CTR} \\
+\bitbox{4}{Ciphertext Length} & \bitbox[tlr]{4}{} \\
+\wordbox[lr]{1}{Ciphertext} \\
+\wordbox[blr]{1}{$\cdots$} \\
+\end{bytefield}
+
+\subsection{Shutdown KeyRelease Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\bitbox{4}{Key Length} & \bitbox[tlr]{4}{} \\
+\wordbox[lr]{1}{Key} \\
+\wordbox[blr]{1}{$\cdots$} \\
+\end{bytefield}
