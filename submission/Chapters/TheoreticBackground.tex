@@ -137,6 +137,27 @@ This property is called malleability.
 There are many more ways that an attacker could tamper with sent messages besides utilising the malleability properties of an encryption scheme.
 This means that we need ways to authenticate our messages before we sent them.
 
+\section{Hash Functions}
+
+Before we tackle that problem we will have a look at hash functions.
+These hash functions are algorithms that accept as input some data of arbitrary length and output some value of fixed length.
+
+If this value is computed in such a way that the hash function $H$ satisfies the following properties (as stated in \cite{appliedcrypto}), then we call the function a \emph{cryptographic} hash function.
+
+\begin{itemize}
+  \item Pre-image resistance\\[0.2cm]
+    For essentially any output value $h$ of the hash function $H$ it is computationally infeasible to find any input $x$ such that $H(x) = h$.
+
+  \item Second pre-image resistance\\[0.2cm]
+    For a given input $x$ it is computationally infeasible to find a second input $x\prime$ such that $x \ne x\prime$ and $H(x) = H(x\prime)$$x \ne x\prime$ and $H(x) = H(x\prime)$.
+
+  \item Collision resistance\\[0.2cm]
+    It is computationally infeasibly to find any pair of inputs $x$ and $x\prime$ such that $H(x) = H(x\prime)$\footnote{This and the previous property might seem the same, but notice that in the Second pre-image property $x$ is fixed, while in the collision resistance property it is not}.
+\end{itemize}
+
+Notice that collision resistance implies second pre-image resistance.
+Likewise second pre-image resistance implies pre-image resistance.
+
 \section{Message Authentication}
 
 For the purpose of message authentication there are two main categories of solutions.
