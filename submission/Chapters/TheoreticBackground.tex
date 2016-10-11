@@ -137,6 +137,58 @@ This property is called malleability.
 There are many more ways that an attacker could tamper with sent messages besides utilising the malleability properties of an encryption scheme.
 This means that we need ways to authenticate our messages before we sent them.
 
+\section{Message Authentication}
+
+For the purpose of message authentication there are two main categories of solutions.
+The first category uses a shared secret to create some sort of electronic signature for some data that we want to authenticate.
+This type of signature is called a Message Authentication Code.
+
+The second category uses a pair of keys, the private key, known only to the person signing the data, and the public key, known to everybody.
+The public key is used to verify the signature.
+
+\subsection{Message Authentication Codes (MAC)}
+
+This case has many similarities with symmetric encryption.
+Again we assume that there is a secret value, called the key, known only to the two parties communicating.
+We also assume that an algorithm called $MAC$ exists which produces the signature, called the tag or mac.
+
+This algorithm takes two inputs, the secret key $k$ and the message\footnote{This message can be plaintext or already encrypted} $m$ itself.
+The algorithm works in a way such that the produced tag $t$ can only be calculated if you know $k$.
+
+\[
+  t = MAC(k, m)
+\]
+
+When the sending party wants to transmit a message, she calculates the tag and appends it to the message so that she sends $m||t$.
+The receiving can recalculate the tag on his own.
+He then checks if the appended tag is the same with the tag that he calculated.
+If the two tags are the same then he accepts the message, otherwise he rejects it as it is probably tampered with.
+
+\subsection{Public key signatures}
+
+In this case we have two distinct algorithms.
+On is called $Sign$ and is used to produce the signatures.
+The other is called $Verify$ and is used to verify data.
+
+The sender generates a tag $t$ using the $Sign$ algorithm:
+
+\[
+  t = Sign(priv, m)
+\]
+
+where $priv$ is the private key.
+He then appends the tag to the message as in the MAC case and transmits $m||t$.
+
+The receiving party then uses the $Verify$ algorithm.
+This algorithm accepts as inputs the message $m$, the tag $t$, and the public key $pub$.
+Its result is boolean, responding "YES" if the message is verified and "NO" if it is not:
+
+\[
+  result = Verify(m,t,pub)
+\]
+
+if $result$ is "YES" then she accepts the message. Otherwise she rejects it.
+
 \section{Key Exchange Protocols (KEP)}
 
 The goal of any key exchange protocol is to allow two users to agree on a secret value, known only to them, by exchanging some publicly known information.
