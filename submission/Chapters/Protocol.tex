@@ -3,6 +3,69 @@
 
 %--------------------------------------------
 
+\section{Overview}
+\begin{algorithm}[H]
+  \KwIn{$\mathcal{P}$ : participants list}
+  \KwResult{Executes a run of the mpOTR protocol}
+  \Begin{
+
+    $sid$ := Offer($\mathcal{P}$)
+    
+    $\mathcal{S}$ := DSKE($sid$, $\mathcal{P}$)
+    
+    $\mathcal{K}$ := GKA($sid$, $\mathcal{S}$, $\mathcal{P}$)
+    
+    $\mathcal{A}$ := Attest($sid$, $\mathcal{S}$, $\mathcal{P}$)
+    
+    \If{$\mathcal{A}$ $\neq$ "OK"}{
+      \Return{"Error"}
+    }
+
+    $\mathcal{T}$ := Communication($sid$, $\mathcal{K}$, $\mathcal{S}$, $\mathcal{P}$)
+  
+    $c$ := Shutdown($sid$, $\mathcal{T}$, $\mathcal{S}$, $\mathcal{P}$)
+    
+    \If{$c$ = "consensus"}{
+      \Return{"OK"}
+    }
+    \Else{
+      \Return{"Error"}
+    }
+  }
+  \caption{The mpOTR protocol}
+  \label{algorithms:mpotr_algo}
+\end{algorithm}
+
+In \ref{algorithms:mpotr_algo} we illustrate an overview of the protocol behaviour. The whole protocol has been divided into sequential phases, which we call sub-protocols. The first four of them (Offer, DSKE GKA and Attest) are responsible for setting up all the needed parameters, for the private communication to take place. The Communication sub-protocol is the one that governs the actual private group conversation. Finally, the Shutdown sub-protocol is responsible for every action that needs to be done before ending each private session. We briefly describe the function of each sub-protocol below.
+
+During the Offer sub-protocol, the participants create a Session ID, $sid$. This is a unique (with high probability) number identifying the session. The Offer sub-protocol is described in more detail in \ref{subsections:offer}. 
+
+During the DSKE sub-protocol, each participant creates an association table $\mathcal{S}$ which maps each participant to the signing key he is going to use for this session. Each participant generates an ephemeral signing key, that she will be using in order to sign her messages during this session. This way she ensures her messages are authenticated. Then, every participant exchanges their ephemeral signing keys with every other participant, using a Deniable Authenticated Key Exchange (DAKE) algorithm. When all exchanges have taken place, every participant has created $\mathcal{S}$. The ephemeral signing keys to be used in this session are deniable. The DSKE sub-protocol and the DAKE are described in more detail in \ref{subsections:DSKE}.
+
+During the GKA sub-protocol, the participants generate a shared key $\mathcal{K}$ that will be used to derive encryption keys. The derived keys, in turn, will be used to encrypt the messages during this session. The GKA sub-protocol is described in more detail in \ref{subsections:gka}
+
+During the Attest sub-protocol, the participants authenticate $sid$ and ensure that they agree on $\mathcal{S}$. The Attest sub-protocol is described in more detail in \ref{subsections:attest}. 
+
+During the Communication sub-protocol, the actual private conversation takes place. The users use $\mathcal{K}$, ephemeral signing keys, and $\mathcal{S}$, in order to encrypt and authenticate their messages. When this phase is finished, a transcript of the chat room $\mathcal{T}$ is returned, which contains all the messages of the chatroom, by participant. The Communication sub-protocol is described in more detail in \ref{subsections:communication}. 
+
+During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is consistent, and reveal their ephemeral signing keys. If the transcript is indeed consistent we say that consensus has been reached. The revelation of the ephemeral signing keys adds to the deniability property of the protocol, in the same manner the key revelation in OTR protocol does. However, it’s an optional feature, since the signing keys are deniable in the first place. The Shutdown sub-protocol is described in more detail in \ref{subsections:shutdown}. 
+
+\subsection{Implementation Notice}
+The reader should note that while in \cite{mpotr} a chatroom message consistency
+check is specified, it is not yet implemented in our protocol. This is done on
+purpose since we are still examining the possible optimization in the proposed
+method, which is discussed later in this document.
+
+It must also be made clear that at the moment the protocol does not protect
+from message reordering, both from an insider or an outsider to the group.
+
+Thus our protocol is at the time vulnerable both to message reordering and replay
+attacks. It is also possible for a participant to send different messages to
+different participants.
+
+When the shutdown phase is fully implemented the only possible attack would be
+to change the order that the messages appear in.
+
 \section{Setup}
 The setup procedure consists of several subprotocols that are responsible for setting up all the needed parameters for the private communication to take place.
 
@@ -31,7 +94,7 @@ be verified \emph{after} the participants have exchanged signing keys, as descri
 
 
 \subsection{Deniable Signature Key Exchange (DSKE)}
-\label{DSKE}
+\label{subsections:DSKE}
 In \cite{mpotr} a construction for a DSKE is proposed. Given a deniable Authenticated Key Exchange (denAKE), two participants of the chat can generate a deniable and authenticated shared secret. With that secret they can exchange their ephemeral signing public key in an encrypted and authenticated fashion, using symmetric algorithms.
 
 This is done for every pair of participants. After that, they will all have created an association table, which associates each participant with their signing key. Afterwards, the participants must make sure that they all have constructed the same association table. This is done by each participant
@@ -176,6 +239,7 @@ can be used as a denAKE.
 
 \clearpage
 \subsection{GKA}
+\label{subsections:gka}
 
 During this phase the participants derive a shared secret key $g_k$ to be used
 as a symmetric encryption key.
@@ -361,6 +425,7 @@ To authenticate the message, the sender uses the ephemeral signing key he has no
 Provided that SHA-512 is a cryptographic hash function an attacker cannot find two signing keys association tables with the same hash. This means that he is not able to make two participants believe that they have arrived at the same table when they have not. Also by signing the message with the specific Session ID, a user implicitly verifies that he is using that particular id for this session.
 
 \section{Communication}
+\label{subsections:Communication}
 During the communication phase, the participants can exchange authenticated and encrypted messages using the association table derived from DSKE and the symmetric encryption key $g_k$ derived from GKA.
 
 \subsection{Origin Authentication}
@@ -416,6 +481,7 @@ When user $A$ sends a message he adds that message to the transcript correspondi
 When he receives a message from user $B$ then he adds that message to the transcript corresponding to user $B$.
 
 \section{Shutdown}
+\label{subsections:Shutdown}
 During this phase, the participants end the current session and publish their
 ephemeral signing keys, to permit modifying the chat transcript. This adds to
 the protocol's deniability property. (Notice though, that the protocol is
@@ -445,53 +511,6 @@ As a result when a participant receives an "End Message" from all other particip
 Now anyone who intercepts the released key can forge chat-room messages.
 However all the participants will no longer accept messages signed with the released secret key, and thus it cannot be used to impersonate its previous owner.
 
-\section{Putting it all together}
-Using the subprotocols described above we have this protocol:
-
-\begin{algorithm}[H]
-  \KwIn{$\mathcal{P}$ : participants list}
-	\KwResult{Executes a run of the mpOTR protocol}
-	\Begin{
-
-  $sid$ := Offer($\mathcal{P}$)
-
-  $\mathcal{S}$ := DSKE($sid$, $\mathcal{P}$)
-
-  $\mathcal{K}$ := GKA($sid$, $\mathcal{S}$, $\mathcal{P}$)
-
-  $\mathcal{T}$ := Communication($sid$, $\mathcal{K}$, $\mathcal{S}$, $\mathcal{P}$)
-
-  $c$ := Shutdown($sid$, $\mathcal{T}$, $\mathcal{S}$, $\mathcal{P}$)
-
-  \If{$c$ = "consensus"}{
-    \Return{"OK"}
-  }
-  \Else{
-    \Return{"Error"}
-  }
-
-	}
-	\caption{The mpOTR protocol}
-	\label{mpotr_algo}
-\end{algorithm}
-
-Where $sid$ is the session id, $\mathcal{S}$ is the signing keys association table, $\mathcal{K}$ is the group shared secret, $\mathcal{T}$ is the transcript of the chatroom and finally $c$ s a boolean value which states if consensus has been reached with all participants.
-
-\subsection{Implementation Notice}
-The reader should note that while in \cite{mpotr} a chatroom message consistency
-check is specified, it is not yet implemented in our protocol. This is done on
-purpose since we are still examining the possible optimization in the proposed
-method, which is discussed later in this document.
-
-It must also be made clear that at the moment the protocol does not protect
-from message reordering, both from an insider or an outsider to the group.
-
-Thus our protocol is at the time vulnerable both to message reordering and replay
-attacks. It is also possible for a participant to send different messages to
-different participants.
-
-When the shutdown phase is fully implemented the only possible attack would be
-to change the order that the messages appear in.
 
 \section{Message consistency in constant space}
 In \cite{mpotr} a straightforward approach is followed. In order to check if
