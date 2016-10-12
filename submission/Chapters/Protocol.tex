@@ -4,7 +4,7 @@
 %--------------------------------------------
 
 \section{Setup}
-The setup procedure consists of several subprotocols. They are responsible for setting up all the needed parameters for the private communication to take place.
+The setup procedure consists of several subprotocols that are responsible for setting up all the needed parameters for the private communication to take place.
 
 \subsection{Offer}
 \label{subsections:offer}
@@ -32,23 +32,12 @@ be verified \emph{after} the participants have exchanged signing keys, as descri
 
 \subsection{Deniable Signature Key Exchange (DSKE)}
 \label{DSKE}
-In \cite{mpotr} a construction for a DSKE is proposed. Given a deniable
-Authenticated Key Exchange\\ (denAKE), two participants of the chat can
-generate a deniable and authenticated shared secret. With that secret
-they can exchange their ephemeral signing public key in an encrypted and
-authenticated fashion, using symmetric algorithms.
+In \cite{mpotr} a construction for a DSKE is proposed. Given a deniable Authenticated Key Exchange (denAKE), two participants of the chat can generate a deniable and authenticated shared secret. With that secret they can exchange their ephemeral signing public key in an encrypted and authenticated fashion, using symmetric algorithms.
 
-This is done for every pair of participants. After that, they will all have
-created an association table, which associates each participant with their
-signing key. Afterwards, the participants must make sure that they all have
-constructed the same association table. This is done by each participant
-transmitting the hash of the association table (which is sorted in
-lexicographical order according to each participant's username). The hash
-is signed by the ephemeral signing key.
+This is done for every pair of participants. After that, they will all have created an association table, which associates each participant with their signing key. Afterwards, the participants must make sure that they all have constructed the same association table. This is done by each participant
+transmitting the hash of the association table (which is sorted in lexicographical order according to each participant's username). The hash is signed by the ephemeral signing key.
 
-Each participant must verify the signatures in each hash received and also
-make sure that each hash is the same with the one he has calculated. If everything
-checks out, then he is assured that the association table is the same.
+Each participant must verify the signatures in each hash received and also make sure that each hash is the same with the one he has calculated. If everything checks out, then he is assured that the association table is the same.
 
 \subsubsection{denAKE}
 
@@ -363,44 +352,26 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 \subsection{Attest}
 \label{subsections:attest}
 During this phase the participants must verify that they agree on the $sid_i$,
-and the association table as we mentioned in \ref{Offer} and \ref{DSKE}.
-This is needed for two reasons. First because the session id is required before a signing key association table is constructed, and therefore the messages exchanged for the session id calculation can not be signed.
-Second because the participants need to verify that they all have the same view of the association table.\\
+and the association table as we mentioned in \ref{subsections:offer} and \ref{DSKE}.
+This is needed for two reasons. First because $sid_i$ is required before a signing key association table is constructed, and therefore the messages exchanged for the $sid_i$ calculation can not be signed. Second because the participants need to verify that they all have the same view of the association table.
 
 Each participant calculates the SHA-512 hash of the serialized association table and broadcasts an encrypted and authenticated message that contains both the $sid$ and the calculated hash.
-To authenticate the message, the sender uses the ephemeral signing key he has now exchanged with the other participants.
-When each participant has received the attest messages from every other participant he must check two things.
-He must verify that the hashes of the serialized association table he has received from the other participants are the same with the hash he computed himself.
-He also must check that all participants have sent their messages using the same session id.\\
+To authenticate the message, the sender uses the ephemeral signing key he has now exchanged with the other participants. When each participant has received the attest messages from every other participant she must check two things. She must verify that the hashes of the serialized association table she has received from the other participants are the same with the hash she computed herself. She also must check that all participants have sent their messages using the same Session ID.
 
-Provided that SHA-512 is a cryptographic hash function an attacker cannot find two signing keys association tables with the same hash.
-This means that he is not able to make two participants believe that they have arrived at the same table when they have not.
-Also by signing the message with the specific session id, a user implicitly verifies that he is using that particular id for this session.
+Provided that SHA-512 is a cryptographic hash function an attacker cannot find two signing keys association tables with the same hash. This means that he is not able to make two participants believe that they have arrived at the same table when they have not. Also by signing the message with the specific Session ID, a user implicitly verifies that he is using that particular id for this session.
 
 \section{Communication}
-
-During the communication phase, the participants can exchange authenticated
-and encrypted messages using the association table derived from DSKE and the
-symmetric encryption key $g_k$ derived from GKA.
+During the communication phase, the participants can exchange authenticated and encrypted messages using the association table derived from DSKE and the symmetric encryption key $g_k$ derived from GKA.
 
 \subsection{Origin Authentication}
-
-For origin Authentication we will use public key encryption methods. This is
-done because use of symmetric algorithms would require a participant who
-wishes to send a message to mac the message $n-1$ times, where $n$ is the
-number of the participants.
+For origin Authentication we will use public key encryption methods. This is done because use of symmetric algorithms would require a participant who wishes to send a message to mac the message $n-1$ times, where $n$ is the number of the participants.
 
 \subsubsection{Algorithm}
+While describing the DSKE we mentioned that an ephemeral signing key is transmitted by each participant to every other, to be used for message origin verification.
 
-While describing the DSKE we mentioned that an ephemeral signing key is transmitted
-by each participant to every other, to be used for message origin verification.
-
-For this purpose we make use of the EdDSA algorithm. This algorithm was selected
-for its fast key generation, since a new keypair must be generated in each protocol
-run, and its relatively small signature size.
+For this purpose we make use of the EdDSA algorithm. This algorithm was selected for its fast key generation, since a new keypair must be generated in each protocol run, and its relatively small signature size.
 
 \subsubsection{Signing} \label{signing}
-
 The signature generation is the last step taken before sending a message. This
 way we can sign all the properties of the message to be sent, like the $sid$ or the
 recipient (if any). We also avoid any manifestations of the Cryptographic Doom
@@ -412,7 +383,6 @@ Symmetrically the signature verification is the first thing that happens before
 any other operation is performed on the received message (cryptographic or not).
 
 \subsection{Encryption}
-
 For encryption a shared secret key is used by all the members. This is not a
 problem since the origin authentication is provided by the signatures, and
 we obviously don't mind any chat member to read a message or we wouldn't
@@ -435,7 +405,6 @@ Provided that $H$ is a cryptographic hash function, an adversary cannot recover
 the value $K$ used for encryption as long as he doesn't know the master key.
 
 \subsection{Transcript}
-
 In order to execute the shutdown protocol we need to store the transcript of the chatroom.
 In reality a seperate transcript is held for the messages from each participant.
 The shutdown protocol will then combine all the different transcripts to determine if consensus has been reached.
@@ -447,7 +416,6 @@ When user $A$ sends a message he adds that message to the transcript correspondi
 When he receives a message from user $B$ then he adds that message to the transcript corresponding to user $B$.
 
 \section{Shutdown}
-
 During this phase, the participants end the current session and publish their
 ephemeral signing keys, to permit modifying the chat transcript. This adds to
 the protocol's deniability property. (Notice though, that the protocol is
@@ -510,7 +478,6 @@ Using the subprotocols described above we have this protocol:
 Where $sid$ is the session id, $\mathcal{S}$ is the signing keys association table, $\mathcal{K}$ is the group shared secret, $\mathcal{T}$ is the transcript of the chatroom and finally $c$ s a boolean value which states if consensus has been reached with all participants.
 
 \subsection{Implementation Notice}
-
 The reader should note that while in \cite{mpotr} a chatroom message consistency
 check is specified, it is not yet implemented in our protocol. This is done on
 purpose since we are still examining the possible optimization in the proposed
@@ -527,7 +494,6 @@ When the shutdown phase is fully implemented the only possible attack would be
 to change the order that the messages appear in.
 
 \section{Message consistency in constant space}
-
 In \cite{mpotr} a straightforward approach is followed. In order to check if
 each participant has received the same set of messages all the messages from
 each user must be stored, and during the shutdown phase be lexicographically
@@ -548,8 +514,7 @@ the shutdown phase. We only need to store the value of the accumulator which,
 of course, is constant.
 
 \section{Participants ordering}
-
-In many cases, the protocol demands some ordering of the participants. For example, in the Offer step of the Setup phase, the sid contributions should be concatenated in some order before hashing them. Same stands for the public signing keys in the association table, during the Attest step. So we define an ordering rule for the participants, that is used whenever an ordering of elements corresponding to participants is needed. \\
+In many cases, the protocol demands some ordering of the participants. For example, in the Offer step of the Setup phase, the sid contributions should be concatenated in some order before hashing them. Same stands for the public signing keys in the association table, during the Attest step. So we define an ordering rule for the participants, that is used whenever an ordering of elements corresponding to participants is needed.
 
 Given that the application provides the mpOTR protocol with a unique name describing each participant, we make the convention that every ordering of the participants list is made lexicographically based on that unique name. We also define the position of the participant, as his position in this order, starting counting from zero (0).
 
