@@ -1,6 +1,15 @@
 \chapter{Future Work}
 \label{chapters:FutureWork}
 
+\section{Message Fragmentation}
+Some networks may have a message length limitation that is too small to contain an mpOTR message. To solve this problem, OTR has utilized a fragmentation mechanism since version 2.
+
+The OTR fragmentation mechanism is intuitive. On the sender's side, messages are splitted into a sufficient number of pieces N, so that every fragment does not exceed the specified length limit. Each fragment contains a sequence number k, the value of N and the actual piece. The number k indicates the position of the piece in the whole message, starting from 1 and ending to N. On the recipient's side, the fragments are accumulated so that after receiving the piece with its sequence number k equal to N the whole message can be reconstructed.
+
+This fragmentation mechanism works properly as long as the fragments are delivered in-order. In case of out-of-order delivery the algorithm implements a fragment forgetting strategy that finally rejects the message. A more severe problem arises when fragments from different messages are delivered intermixed. Since each fragment contains no information identifying the message it belongs to, the only distinctive information is the number N. In case N contained in a newly received fragment is different than the one contained in the so far accumulated fragments, the so far accumulated fragments are forgotten. But what happens if fragments from different messages splitted into the same number of pieces N are delivered in an intermixed order? Hopefully, the sequence numbers k won't form a valid sequence. In the extreme scenario the latter happens a non-valid message will be reconstructed.
+
+The problems described above are actually unlikely to happen in a two-party communication context. But such a mechanism in a multi-party context would be a bad choice. Even if fragments are accumulated separately for each sender, there is a sporting chance that fragments from different messages sent during the setup procedure will be delivered intermixed. Rejecting such a message would require a restart of the whole setup procedure, and that could possibly occur indefinitely.
+
 \section{Message Ordering with OldBlue Protocol}
 First let's see what we can and cannot do:
 A multi-party chat room is a distributed environment.
