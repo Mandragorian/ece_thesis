@@ -99,3 +99,21 @@ If the parents are delivered then the message itself is inserted in the delivere
 After that happens the protocol iterates over the undelivered set and checks if any message is now deliverable (meaning that all of its parents are now in the delivered set).
 If it is then, the message is added in the delivered set and displayed to the user.
 After that it iterates again over the undelivered set and repeats until there are no deliverable messages.
+
+\section{Group Encryption Key Ratcheting}
+
+Plain OTR has a property called \emph{future secrecy}.
+This means that if for some reason the shared secret is compromised, only a few messages in the chat will be revealed to the attacker.
+In fact if both of the two participants send a messages after the compromise, then a new key will be generated and the old compromised secret will be useless.
+
+This does not happen in our protocol.
+After the GKA is finished the shared secret remains the same until the shutdown phase.
+
+A similar result can be achieved if we run various GKAs one after the other in the background.
+We could attach the required upflow and downflow messages in chat messages sent by users during the communications protocol.
+If a particular user is away or doesn't participate actively in the chat by authoring messages an chat message can be sent, using a timer interrupt, which will contain the data required for the GKA to continue.
+This way the group secret could be ratcheted.
+
+A side-effect of this approach is that the ratcheting of the key will work as a central "clock" of the chatroom.
+Messages sent before the change of the secret will no longer be readable by the participants.
+This way an attacker would not be able to reorder messages encrypted using two different secrets.
