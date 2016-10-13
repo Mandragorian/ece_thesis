@@ -31,12 +31,89 @@ the shutdown phase. We only need to store the value of the accumulator which,
 of course, is constant.
 
 \section{Message Ordering with OldBlue Protocol}
-First let's see what we can and cannot do:
-A multi-party chat room is a distributed environment.
+
+In chapter \ref{chapters:TheoreticBackground} we discussed the problem of message ordering.
+We also promised that we would investigate a possible solution to that problem.
+In particular we will talk about the OldBlue protocol.
+As we shall see this protocol guarantees that the received messages are causally ordered.
+
+\subsection{Why causal ordering}
+
+To understand why the causal ordering is the best we can get let's see what we can and cannot do:
+First note that a multi-party chat room is a distributed environment.
 This means that there is no central "authority" which can decide if a message came before another.
 
-Also, since we are in a zero trust setting we cannot utilise any values over which the participants have full control, their local clocks for example.
+Also, since we are in a zero trust setting we cannot utilise any values over which the participants have full control, like their local clocks for example.
 
 The only information for which we must trust the other participants is what messages they have seen.
 We have no other option on this one as we cannot know if an attacker has actually stopped messages from getting to them or if they are dishonest and lie to us.
 
+As a result the only information about the history of a received message that we can trust (\emph{must} trust actually) is this:
+We can only know what message a user admits she has seen, before authoring the received message.
+In other words the only thing we can know is which messages might have \emph{caused} the received message.
+
+\subsection{The parent graph}
+
+Using this information on the causal ordering of messages we can construct the parent graph.
+This graph will contain all the information about which messages came after some others.
+Now lets take a look on the structure of this graph.
+
+Firs of all it is directed.
+It retains information on which messages came after other messages.
+Since this property is not symmetric our parent graph has directions on its edges.
+
+It is also obvious that this graph is acyclic.
+No cycles can exist in this graph since a message cannot possibly cause any of its ancestors.
+In other words the edges will always point from the beginning of the conversation towards its end.
+
+In an ideal world, this graph would be a line.
+Every user would see  all the previous messages before sending a message, and no two messages would be sent simultaneously.
+However this is not the case generally.
+Two users may have seen the same set of parent messages and choose to send a message at the same time.
+As a result the parent graph will fork, as the same message now has two children.
+
+\subsection{Distributed Parent Graph}
+
+As we said a multi-party chatroom is a distributed environment.
+This means that each participant stores and builds a local copy of the parent graph.
+To do that each participant attach to each message he sends some information of his local copy so that other participants can find out where they should place his message.
+
+The naive solution would be to include the whole current parent graph in his message but that is obviously infeasible.
+Instead much less information is needed.
+The actual information that he must send is all the messages in his graph that do not have any children.
+This is called the "front" of the graph.
+
+This information is transmitted by appending a list of the hashes of all the "front" messages, to the message to be sent.
+
+\subsection{Dangling messages}
+
+If no re-ordering of the messages occurs then everything works fine.
+How do we handle reordered messages however?
+
+The protocol handles two sets of messages.
+One is called the delivered set, the other is called undelivered.
+When a message is received we check if all of its parents are in the delivered set.
+If not then the message is added in the undelivered set and waits there.
+
+If the parents are delivered then the message itself is inserted in the delivered  set and displayed to the user.
+After that happens the protocol iterates over the undelivered set and checks if any message is now deliverable (meaning that all of its parents are now in the delivered set).
+If it is then, the message is added in the delivered set and displayed to the user.
+After that it iterates again over the undelivered set and repeats until there are no deliverable messages.
+
+\section{Group Encryption Key Ratcheting}
+
+Plain OTR has a property called \emph{future secrecy}.
+This means that if for some reason the shared secret is compromised, only a few messages in the chat will be revealed to the attacker.
+In fact if both of the two participants send a messages after the compromise, then a new key will be generated and the old compromised secret will be useless.
+
+This does not happen in our protocol.
+After the GKA is finished the shared secret remains the same until the shutdown phase.
+
+A similar result can be achieved if we run various GKAs one after the other in the background.
+We could attach the required upflow and downflow messages in chat messages sent by users during the communications protocol.
+If a particular user is away or doesn't participate actively in the chat by authoring messages an chat message can be sent, using a timer interrupt, which will contain the data required for the GKA to continue.
+This way the group secret could be ratcheted.
+
+A side-effect of this approach is that the ratcheting of the key will work as a central "clock" of the chatroom.
+Messages sent before the change of the secret will no longer be readable by the participants.
+This way an attacker would not be able to reorder messages encrypted using two different secrets.
