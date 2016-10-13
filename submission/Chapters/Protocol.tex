@@ -405,7 +405,7 @@ Provided that SHA-512 is a cryptographic hash function an attacker cannot find t
 \label{subsections:communication}
 Using the Communication sub-protocol, the participants can exchange authenticated and encrypted messages using the association table $\mathcal{S}$ derived from DSKE and the shared key $\mathcal{K}$ derived from GKA.
 
-\subsubsection{Origin Authentication}
+\subsubsection{Origin authentication}
 For origin Authentication we use public key encryption methods. This is done because use of symmetric algorithms would require a participant who wishes to send a message to mac the message $n-1$ times, where $n$ is the number of the participants.
 
 \paragraph{Algorithm}
@@ -413,7 +413,8 @@ While describing the DSKE we mentioned that an ephemeral signing key is transmit
 
 For this purpose we make use of the EdDSA algorithm. This algorithm was selected for its fast key generation, since a new keypair must be generated in each protocol run, and its relatively small signature size.
 
-\paragraph{Signing} \label{signing}
+\paragraph{Signing}
+\label{signing}
 The signature generation is the last step taken before sending a message. This
 way we can sign all the properties of the message to be sent, like the $sid$ or the
 recipient (if any). We also avoid any manifestations of the Cryptographic Doom
@@ -425,76 +426,51 @@ Symmetrically the signature verification is the first thing that happens before
 any other operation is performed on the received message (cryptographic or not).
 
 \subsubsection{Encryption}
-For encryption a shared secret key is used by all the members. This is not a
-problem since the origin authentication is provided by the signatures, and
-we obviously don't mind any chat member to read a message or we wouldn't
-participate in the chat in the first place. For the actual encryption we
-use AES-128 in CTR mode.
+For encryption a shared secret key $\mathcal{K}$ is used by all the members. This is not a problem since the origin authentication is provided by the signatures, and we obviously don't mind any chat member to read a message or we wouldn't participate in the chat in the first place. For the actual encryption we use AES-128 in CTR mode.
 
-The use of the CTR mode however has a small pitfall. We must not let the same
-nonce be used twice. This is very difficult to achieve in a distributed setting
-like a multi-party chat protocol. Despite this we can solve the problem quite
-easily. We maintain our original idea of a shared master key, but we don't use
-it directly for encryption. Each participant uses the master key and his id in
-the chatroom, in order to compute his "personal" encryption key. This encryption
-key for participant $p$ is derived as follows:
+The use of the CTR mode however has a small pitfall. We must not let the same nonce be used twice. This is very difficult to achieve in a distributed setting like a multi-party chat protocol. Despite this we can solve the problem quite easily.
+
+We maintain our original idea of a shared secret key, which we call master key, but we don't use it directly for encryption. Each participant uses the master key $\mathcal{K}$ and his id in the chatroom $ID_p$, in order to compute his "personal" encryption key $\mathcal{K}_e$. We define $ID_p$ as an unsigned integer indicating the position of $p$ in the ordered participants list. This encryption key for participant $p$ is derived as follows:
 
 \[
     K_e = H(ID_p || Key_m)
 \]
 
-Provided that $H$ is a cryptographic hash function, an adversary cannot recover
-the value $K$ used for encryption as long as he doesn't know the master key.
+Provided that $H$ is a cryptographic hash function, an adversary cannot recover the value $\mathcal{K}_e$ used for encryption as long as he doesn't know the master key $\mathcal{K}$.
 
 \subsubsection{Transcript}
-In order to execute the shutdown protocol we need to store the transcript of the chatroom.
-In reality a seperate transcript is held for the messages from each participant.
+In order for the shutdown sub-protocol to be executed we need to store the transcript of the chatroom. In reality a seperate transcript is held for the messages from each participant.
 The shutdown protocol will then combine all the different transcripts to determine if consensus has been reached.
 
-The transcript is implemented as a linked list. The list is kept sorted in lexicographic order.
-When a message is to be added in a transcript list, the list is searched linearly to find the position the new message should be placed.
+The transcripts are implemented as linked lists. Each list is kept sorted in lexicographic order.
+When a message is to be added in a transcript list, the list is searched linearly to find the position the new message should be placed at.
 
-When user $A$ sends a message he adds that message to the transcript corresponding to himself.
-When he receives a message from user $B$ then he adds that message to the transcript corresponding to user $B$.
+When user $A$ sends a message, he adds that message to the transcript corresponding to himself.
+When he receives a message from user $B$, he adds that message to the transcript corresponding to user $B$.
 
 \subsection{Shutdown}
 \label{subsections:shutdown}
-During this phase, the participants end the current session and publish their
-ephemeral signing keys, to permit modifying the chat transcript. This adds to
-the protocol's deniability property. (Notice though, that the protocol is
-deniable without publishing the ephemeral signing keys.)
+During this sub-protocol, the participants end the current session. Chat room transcript consistency is checked and the ephemeral signing keys are published, in order to permit a posteriori modifications of the chat transcript. The revelation of the ephemeral signing keys adds to the protocol's deniability property. However, the protocol is deniable even without publishing the ephemeral signing keys, since the signing keys are deniable in the first place.
 
-For a session to be terminated, a "Shutdown Message" is sent.
-This message signals to other participants that the shutdown phase should be initiated.
-It contains the  hash of all the messages sent by the user sending the "Shutdown Message".
-When a user receives a "Shutdown Message", he also sends a "Shutdown Message" containing his own messages hash.
-If he has already sent his "Shutdown Message" then he does nothing new.
+For a session to be terminated, a "Shutdown Message" is sent. This message signals to other participants that the shutdown phase should be initiated. It contains the  hash of all the messages sent by the user sending the "Shutdown Message". When a user receives a "Shutdown Message", he also responds with a "Shutdown Message" containing his own messages hash, if he hasn't already sent one.
 
-When one participant has received a "Shutdown Message" from all other participants he can send a "Digest Message".
-This message contains a digest of all the messages in the chat-room and is calculated as follows:
+When one participant has received a "Shutdown Message" from all other participants he can send a "Digest Message". This message contains a digest of all the messages in the chat room and is calculated as follows:
 \begin{itemize}
   \item[] Sort the participants using their usernames in lexicographic order.
-  \item[] For each participant $i$ (in that order) calculate the hash $h_i = H(S_i)$, where $S_i$ is set of all the messages sent by this user (sorted in lexicographic order).
+  \item[] For each participant $i$ (in that order) calculate the hash $h_i = H(S_i)$, where $S_i$ is set of all the messages sent by this user, sorted in lexicographic order too.
   \item[] Calculate the digest $h = H(h_1 || h_2 \dots || h_N)$, where N is the number of participants.
 \end{itemize}
 
-When one participant receives a "Digest Message" from some other participant he checks whether the two of them agree on the chat-room transcript.
-He simply compares the digest he computed locally to the one sent by the other participant.
-He deduces that consensus is reached only if the two digests are the same.
+When one participant receives a "Digest Message" from some other participant, he checks whether the two of them agree on the chat room transcript. He simply compares the digest he computed locally to the one sent by the other participant. He deduces that consensus is reached only if the two digests are the same.
 
-When one participant has received a "Digest Message" from every other participant he broadcasts an "End Message".
-This message signifies that the sender will not user the channel to send any messages anymore.
-As a result when a participant receives an "End Message" from all other participants, he is certain that he can release his signing secret key.
-Now anyone who intercepts the released key can forge chat-room messages.
-However all the participants will no longer accept messages signed with the released secret key, and thus it cannot be used to impersonate its previous owner.
-
+When one participant has received a "Digest Message" from every other participant, he broadcasts an "End Message". This message signifies that the sender will not use the channel to send any messages anymore. As a result when a participant receives an "End Message" from all other participants, he is certain that he can release his signing secret key. Now anyone who intercepts the released key can forge chat room messages. However all the participants will no longer accept messages signed with the released secret key, and thus it cannot be used to impersonate its previous owner.
 
 \section{Participants ordering}
 In many cases, the protocol demands some ordering of the participants. For example, in the Offer step of the Setup phase, the sid contributions should be concatenated in some order before hashing them. Same stands for the public signing keys in the association table, during the Attest step. So we define an ordering rule for the participants, that is used whenever an ordering of elements corresponding to participants is needed.
 
 Given that the application provides the mpOTR protocol with a unique name describing each participant, we make the convention that every ordering of the participants list is made lexicographically based on that unique name. We also define the position of the participant, as his position in this order, starting counting from zero (0).
 
-\section{Identity Verification}
+\section{Identity verification}
 The identity of a participant is verified during the DSKE phase.
 In order for a participant to be verified the fingerprint of his longterm key must be stored in the known fingerprints file, and be explicitly marked as verified.
 In our implementation this file is comma separated and is of the form:
@@ -521,42 +497,53 @@ If such a fingerprint is found and it is verified, then the user is verified for
 If the found fingerprint is not verified then the participant is not verified.
 If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list.
 
-\section{Details of mpOTR Messages}
+\section{Instance tags}
+
+\section{Data Types}
+We present a list of several data types used in mpOTR messages along with their encoding:
+\begin{description}[align=left]
+\item [SHORT] Short integers. 2 byte unsigned value, big-endian.
+\item [INT] Integers. 4 byte unsigned value, big-endian.
+\item [MPI] Multi Precision Integers. 4 byte unsigned len, big-endian. len byte unsigned value, big-endian.
+\item [LIST] Lists of any other type. 4 byte unsigned len, big-endian. len list elements.
+\item[HASH] Hashes. 32 or 64 bytes of data.
+\item[CTR] AES CTR-mode counter value. 8 bytes data.
+\end{description}
+
+\section{Message Structure}
 All mpOTR messages start with the string "?OTR:" followed by the base64 encoded message and then a "." denoting the end of the message.
 
-\subsection{Data Types}
-This is how several data types are encoded:
-\begin{description}[align=left]
-\item [Shorts:] 2 byte unsigned value, big-endian
-\item [Integers:] 4 byte unsigned balue, big-endian
-\item [Multi Precision Integers:] 4 byte unsigned len, big-endian \\
-len byte unsigned value, big-endian
-\item [Lists:] 4 byte unsigned len, big-endian \\
-len list elements
-\item[Hashes:] 32 or 64 bytes of data
-\item[CTR-mode counter value:] 8 bytes data
-\end{description}
+\subsection{General message structure}
+In figure \ref{figures:general_message_structure} the general structure of mpOTR messages is shown.
 
-
-\subsection{Message Structure}
-The general structure of mpOTR messages is the following: \\
-
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\begin{rightwordgroup}{Header}
-\bitbox{2}{PV} & \bitbox{2}{MT} & \bitbox{4}{Instance Tag} \\
-\wordbox{4}{Session ID (64 Bytes)}
-\end{rightwordgroup} \\
-\wordbox{4}{Payload} \\
-\wordbox{2}{Signature}
-\end{bytefield} \\
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \begin{rightwordgroup}{Header}
+      \bitbox{2}{PV} & \bitbox{2}{MT} & \bitbox{4}{Instance Tag} \\
+      \wordbox{4}{Session ID (64 Bytes)}
+    \end{rightwordgroup} \\
+    \wordbox{4}{Payload} \\
+    \wordbox{2}{Signature}
+  \end{bytefield}  
+  
+  \caption{General message structure}
+  \label{figures:general_message_structure}
+\end{figure}
 
 \begin{description}[align=left]
-\item [PV] Protocol Version
-\item [MT] Message Type
+  \item[PV] Protocol Version. A SHORT indicating the Protocol Version the message is intended for.
+  \item[MT] Message Type. A SHORT indicating the type of the message. See \ref{REFERENCE_NEDDED} for more details.
+  \item [Instance Tag] An INT indicating the instance tag. See \ref{REFERENCE_NEEDED} for more details.
+  \item[Session ID] A 64-Bytes HASH containing the value of $sid_i$. Not existent in Offer Messages.
+  \item[Payload] Data contained in each type of message. See \ref{REFERENCE_NEEDED} for more details.
+  \item[Signature] The signature covering all data above, used to authenticate the message. Not existent in all message types.
 \end{description}
 
-Offer Messages contain no Session ID in the header, since Session ID has not been established yet Offer and DAKE and Shutdown KeyRelease Messages contain no Signature.
+Offer Messages contain no Session ID in the header, since $sid_i$ has not been established yet. Offerand DAKE Messages contain no Signature since the association table $\mathcal{S}$ has not been constructed yet. Shutdown KeyRelease Messages contain no Signature since authentication is not required.
+
+
+\subsection{Message Payloads}
 
 \subsubsection{Offer Message Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
@@ -637,7 +624,19 @@ Offer Messages contain no Session ID in the header, since Session ID has not bee
 \wordbox[blr]{1}{$\cdots$} \\
 \end{bytefield}
 
-\subsubsection{Shutdown KeyRelease Payload}
+\subsubsection{Shutdown Message Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\wordbox{2}{Shutdown Hash (64 Bytes)} \\
+\end{bytefield}
+
+\subsubsection{Shutdown Digest Message Payload}
+\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+\bitheader{0-7} \\
+\wordbox{2}{Digest (64 Bytes)} \\
+\end{bytefield}
+
+\subsubsection{Shutdown KeyRelease Message Payload}
 \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
 \bitheader{0-7} \\
 \bitbox{4}{Key Length} & \bitbox[tlr]{4}{} \\
