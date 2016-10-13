@@ -10,6 +10,26 @@ This fragmentation mechanism works properly as long as the fragments are deliver
 
 The problems described above are actually unlikely to happen in a two-party communication context. But such a mechanism in a multi-party context would be a bad choice. Even if fragments are accumulated separately for each sender, there is a sporting chance that fragments from different messages sent during the setup procedure will be delivered intermixed. Rejecting such a message would require a restart of the whole setup procedure, and that could possibly occur indefinitely.
 
+\section{Message consistency in constant space}
+In \cite{mpotr} a straightforward approach is followed. In order to check if
+each participant has received the same set of messages all the messages from
+each user must be stored, and during the shutdown phase be lexicographically
+ordered and hashed. While this achieves our purpose it requires $O(M)$ space
+where $M$ is the number of messages.
+
+We believe that the same effect can be achieved in constant space by using
+cryptographic accumulators. One can find more about this primitive in \cite{accum_def}.
+
+Since such accumulators are collision free but at the same time quasi-commutative,
+they are ideal for our purposes. We can feed the accumulator with the incoming
+messages in whichever order they arrive at each participant. The quasi-commutative
+property guarantees that if two participants have received the same set of messages
+then their accumulators will arrive at the same value in the end.
+
+Thus, we have removed the need to store the messages in order to sort them during
+the shutdown phase. We only need to store the value of the accumulator which,
+of course, is constant.
+
 \section{Message Ordering with OldBlue Protocol}
 First let's see what we can and cannot do:
 A multi-party chat room is a distributed environment.
