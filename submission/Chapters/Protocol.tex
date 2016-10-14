@@ -463,7 +463,9 @@ When one participant has received a "Shutdown Message" from all other participan
 
 When one participant receives a "Digest Message" from some other participant, he checks whether the two of them agree on the chat room transcript. He simply compares the digest he computed locally to the one sent by the other participant. He deduces that consensus is reached only if the two digests are the same.
 
-When one participant has received a "Digest Message" from every other participant, he broadcasts an "End Message". This message signifies that the sender will not use the channel to send any messages anymore. As a result when a participant receives an "End Message" from all other participants, he is certain that he can release his signing secret key. Now anyone who intercepts the released key can forge chat room messages. However all the participants will no longer accept messages signed with the released secret key, and thus it cannot be used to impersonate its previous owner.
+When one participant has received a "Digest Message" from every other participant, he broadcasts an "End Message". This message signifies that the sender will not use the channel to send any messages anymore.
+
+When a participant receives an "End Message" from all other participants, he is certain that he can release his signing secret key. This is done by broadcasting a message which we shall call "Key Release Message". Now anyone who intercepts the released key can forge chat room messages. However all the participants will no longer accept messages signed with the released secret key, and thus it cannot be used to impersonate its previous owner.
 
 \section{Participants ordering}
 In many cases, the protocol demands some ordering of the participants. For example, in the Offer step of the Setup phase, the sid contributions should be concatenated in some order before hashing them. Same stands for the public signing keys in the association table, during the Attest step. So we define an ordering rule for the participants, that is used whenever an ordering of elements corresponding to participants is needed.
@@ -498,16 +500,42 @@ If the found fingerprint is not verified then the participant is not verified.
 If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list.
 
 \section{Instance tags}
+\label{subsections:instance_tags}
+Many IM Protocols allow for a client to be logged into the same account from multiple locations and the server may relay messages to all of them. So, a distinguishing mechanism is required. We follow the same approach used in the version 3 of OTR, called instance tags.
+
+Instance tags are 32-bit values that are intended to be persistent. If the same client is logged into the same account from multiple locations, the intention is that the client will have different instance tags at each location. All mpOTR messages include the sender's instance tag. 
 
 \section{Data Types}
 We present a list of several data types used in mpOTR messages along with their encoding:
 \begin{description}[align=left]
 \item [SHORT] Short integers. 2 byte unsigned value, big-endian.
 \item [INT] Integers. 4 byte unsigned value, big-endian.
-\item [MPI] Multi Precision Integers. 4 byte unsigned len, big-endian. len byte unsigned value, big-endian.
-\item [LIST] Lists of any other type. 4 byte unsigned len, big-endian. len list elements.
-\item[HASH] Hashes. 32 or 64 bytes of data.
+\item [MPI] Multi Precision Integers. 4 byte unsigned len, big-endian. len byte string with each byte of the MPI encoded as 2 hex digits. Negative numbers are prefix with a minus sign and in addition the high bit is always zero to make clear that an explicit sign ist used.
+\item [LIST] Lists of any other type. 4 byte unsigned len, big-endian. len encoded list elements.
+\item[HASH32] Hashes. 32 bytes of data.
+\item[HASH64] Hashes. 64 bytes of data.
 \item[CTR] AES CTR-mode counter value. 8 bytes data.
+\item[DATA] Opaque variable-length data. 4 byte unsigned len, big-endian. len byte data.
+\end{description}
+
+\section{Message types}
+\label{subsections:message_types}
+There are 12 different types of mpOTR messages. Each message is indicated by a positive integer. We have reserved the zero value to indicate non-OTR messages. The list of these types along with the corresponding integer value is shown below:
+
+\begin{description}[align=left]
+  \item[0] Non-OTR Message
+  \item[1] Offer Message
+  \item[2] Handshake Message
+  \item[3] Confirm Message
+  \item[4] Key Message
+  \item[5] Upflow Message
+  \item[6] Downflow Message
+  \item[7] Attest Message
+  \item[8] Data Message
+  \item[9] Shutdown Message
+  \item[10] Digest Message
+  \item[11] End Message
+  \item[12] Key Release Message
 \end{description}
 
 \section{Message Structure}
@@ -521,7 +549,7 @@ In figure \ref{figures:general_message_structure} the general structure of mpOTR
     \bitheader{0-7} \\
     \begin{rightwordgroup}{Header}
       \bitbox{2}{PV} & \bitbox{2}{MT} & \bitbox{4}{Instance Tag} \\
-      \wordbox{4}{Session ID (64 Bytes)}
+      \wordbox{4}{Session ID}
     \end{rightwordgroup} \\
     \wordbox{4}{Payload} \\
     \wordbox{2}{Signature}
@@ -533,113 +561,206 @@ In figure \ref{figures:general_message_structure} the general structure of mpOTR
 
 \begin{description}[align=left]
   \item[PV] Protocol Version. A SHORT indicating the Protocol Version the message is intended for.
-  \item[MT] Message Type. A SHORT indicating the type of the message. See \ref{REFERENCE_NEDDED} for more details.
-  \item [Instance Tag] An INT indicating the instance tag. See \ref{REFERENCE_NEEDED} for more details.
-  \item[Session ID] A 64-Bytes HASH containing the value of $sid_i$. Not existent in Offer Messages.
-  \item[Payload] Data contained in each type of message. See \ref{REFERENCE_NEEDED} for more details.
+  \item[MT] Message Type. A SHORT indicating the type of the message. See \ref{subsections:message_types} for more details.
+  \item [Instance Tag] An INT indicating the instance tag. See \ref{subsections:instance_tags} for more details.
+  \item[Session ID] A HASH64 containing the value of $sid_i$. Not existent in Offer Messages.
+  \item[Payload] Specific data dependent for each type of message. See \ref{subsections:payload_structures} for more details.
   \item[Signature] The signature covering all data above, used to authenticate the message. Not existent in all message types.
 \end{description}
 
 Offer Messages contain no Session ID in the header, since $sid_i$ has not been established yet. Offerand DAKE Messages contain no Signature since the association table $\mathcal{S}$ has not been constructed yet. Shutdown KeyRelease Messages contain no Signature since authentication is not required.
 
+\subsection{Payload structures}
+\label{subsections:payload_structures}
 
-\subsection{Message Payloads}
+\subsubsection{Offer message payload}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \bitbox{4}{Position} & \bitbox[lrt]{4}{} \\
+    \wordbox[lr]{1}{SID Contribution} \\
+    \bitbox[l]{4}{} & \bitbox[rb]{4}{} \\
+    \bitbox[lrb]{4}{}
+  \end{bytefield}
+  \caption{The structure of Offer Message payload}
+\end{figure}
 
-\subsubsection{Offer Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\bitbox{4}{Position} & \bitbox[lrt]{4}{} \\
-\wordbox[lr]{1}{Session ID Contribution} \\
-\bitbox[l]{4}{} & \bitbox[rb]{4}{} \\
-\bitbox[lrb]{4}{}
-\end{bytefield}
+\begin{description}[align=left]
+  \item[Position] An INT indicating the sender's position in the ordered list of the participants.
+  \item[SID Contribution] A HASH32 containing the sender's contribution for the construction of the $sid_i$.
+\end{description}
 
-\subsubsection{DAKE Handshake Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\bitbox{4}{Ephemeral Key Length} & \bitbox[tlr]{4}{} \\
-\wordbox[lr]{1}{Ephemeral Key} \\
-\wordbox[blr]{1}{$\cdots$} \\
-\bitbox{4}{Longterm Key Length} & \bitbox[tlr]{4}{} \\
-\wordbox[lr]{1}{Longterm Key} \\
-\wordbox[blr]{1}{$\cdots$}
-\end{bytefield}
+\subsubsection{Handshake Message Payload}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \wordbox[lrt]{1}{Ephemeral PubKey} \\
+    \wordbox[blr]{1}{$\cdots$} \\
+    \wordbox[lrt]{1}{Longterm PubKey} \\
+    \wordbox[blr]{1}{$\cdots$}
+  \end{bytefield}
+  \caption{The structure of Handshake Message payload}
+\end{figure}
 
-\subsubsection{DAKE Confirm Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\bitbox{4}{Recipient} & \bitbox[tlr]{4}{} \\
-\wordbox[lr]{1}{Triple Diffie-Hellman MAC} \\
-\bitbox[l]{4}{} & \bitbox[rb]{4}{} \\
-\bitbox[lrb]{4}{}
-\end{bytefield}
+\begin{description}[align=left]
+  \item[Ephemeral PubKey] A MPI containing the public part of the ephemeral key.
+  \item[Longterm PubKey] A MPI containing the public part of the longterm key.
+\end{description}
 
-\subsubsection{DAKE Key Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\bitbox{4}{Recipient} & \bitbox[tlr]{4}{} \\
-\wordbox[lr]{1}{Triple Diffie-Hellman MAC} \\
-\bitbox[l]{4}{} & \bitbox[rb]{4}{} \\
-\bitbox[lrb]{4}{} & \bitbox{4}{Key}
-\end{bytefield}
+\subsubsection{Confirm Message Payload}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \bitbox{4}{Recipient} & \bitbox[tlr]{4}{} \\
+    \wordbox[lr]{1}{TDH MAC} \\
+    \bitbox[l]{4}{} & \bitbox[rb]{4}{} \\
+    \bitbox[lrb]{4}{}
+  \end{bytefield}
+  \caption{The structure of Confirm Message payload}
+\end{figure}
 
-\subsubsection{GKA Upflow Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\bitbox{4}{Recipient} & \bitbox{4}{Key List Length} \\
-\bitbox{4}{1st Key Length} & \bitbox[tlr]{4}{} \\
-\wordbox[lr]{1}{1st Key} \\
-\wordbox[blr]{1}{$\cdots$} \\
-\bitbox{4}{2nd Key Length} & \bitbox[tlr]{4}{} \\
-\wordbox[lr]{1}{2nd Key} \\
-\wordbox[blr]{1}{$\cdots$} \\
-\wordbox[blr]{3}{$\cdots$} 
-\end{bytefield}
+\begin{description}[align=left]
+  \item[Recipient] An INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
+  \item[TDH MAC] Triple Diffie-Hellman MAC. A HASH32 containing the MAC value for a magic number.
+\end{description}
 
-\subsubsection{GKA Downflow Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\bitbox{4}{Key List Length} & \bitbox{4}{1st Key Length} \\
-\wordbox[lr]{1}{1st Key} \\
-\wordbox[lr]{1}{$\cdots$} \\
-\bitbox{4}{2nd Key Length} & \bitbox[tlr]{4}{} \\
-\wordbox[lr]{1}{2nd Key} \\
-\wordbox[blr]{1}{$\cdots$} \\
-\wordbox[blr]{3}{$\cdots$}
-\end{bytefield}
+\subsubsection{Key Message Payload}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \bitbox{4}{Recipient} & \bitbox[tlr]{4}{} \\
+    \wordbox[lr]{1}{TDH MAC} \\
+    \bitbox[l]{4}{} & \bitbox[rb]{4}{} \\
+    \bitbox[lrb]{4}{} & \bitbox[tlr]{4}{} \\
+    \wordbox[lr]{1}{Key} \\
+    \wordbox[blr]{1}{$\cdots$} \\
+  \end{bytefield}
+  \caption{The structure of Key Message payload}
+\end{figure}
+
+\begin{description}[align=left]
+  \item[Recipient] An INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
+  \item[TDH MAC] Triple Diffie-Hellman MAC. A HASH32 containing the MAC value for the following key.
+  \item[Key] The encrypted public part of the ephemeral signing key.
+\end{description}
+
+\subsubsection{Upflow Message Payload}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \bitbox{4}{Recipient} & \bitbox{4}{ListLen} \\
+    \begin{rightwordgroup}{\parbox{4em}{\raggedright ListLen number of list elements}}
+      \wordbox[lrt]{1}{1st Key} \\
+      \wordbox[blr]{1}{$\cdots$} \\
+      \wordbox[lrt]{1}{2nd Key} \\
+      \wordbox[blr]{1}{$\cdots$} \\
+      \wordbox[blr]{2}{$\cdots$} \\
+      \wordbox[lrt]{1}{n-th Key} \\
+      \wordbox[blr]{1}{$\cdots$}
+    \end{rightwordgroup}
+  \end{bytefield}
+  \caption{The structure of Upflow Message payload}
+\end{figure}
+
+\begin{description}[align=left]
+  \item[Recipient] An INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
+  \item[ListLen] An INT containing the length of the following key list.
+  \item[i-th Key] An MPI containing the i-th key of the intermediate key list.
+\end{description}
+
+\subsubsection{Downflow Message Payload}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \begin{rightwordgroup}{\parbox{4em}{\raggedright ListLen number of list elements}}
+      \bitbox{4}{ListLen} & \bitbox[tlr]{4}{} \\
+      \wordbox[lr]{1}{1st Key} \\
+      \wordbox[blr]{1}{$\cdots$} \\
+      \wordbox[lrt]{1}{2nd Key} \\
+      \wordbox[blr]{1}{$\cdots$} \\
+      \wordbox[blr]{2}{$\cdots$} \\
+      \wordbox[lrt]{1}{n-th Key} \\
+      \wordbox[blr]{1}{$\cdots$}
+    \end{rightwordgroup}
+  \end{bytefield}
+  \caption{The structure of Downflow Message payload}
+\end{figure}
+
+\begin{description}[align=left]
+  \item[ListLen] An INT containing the length of the following key list.
+  \item[i-th Key] An MPI containing the i-th key of the intermediate key list.
+\end{description}
 
 \subsubsection{Attest Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\wordbox{2}{Session ID (64 Bytes)} \\
-\wordbox{2}{Association Table Hash (64 Bytes)} 
-\end{bytefield}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \wordbox{2}{Session ID} \\
+    \wordbox{2}{Association Table Hash} 
+  \end{bytefield}
+  \caption{The structure of Attest Message payload}
+\end{figure}
+
+\begin{description}[align=left]
+  \item[Session ID] An HASH64 containing the value of $sid_i$.
+  \item[Association Table Hash] An HASH64 containing the hash of the association table $\mathcal{S}$.
+\end{description}
 
 \subsubsection{Data Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\wordbox{1}{CTR} \\
-\bitbox{4}{Ciphertext Length} & \bitbox[tlr]{4}{} \\
-\wordbox[lr]{1}{Ciphertext} \\
-\wordbox[blr]{1}{$\cdots$} \\
-\end{bytefield}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \wordbox{1}{CTR} \\
+    \wordbox[tlr]{1}{Ciphertext} \\
+    \wordbox[blr]{1}{$\cdots$} \\
+  \end{bytefield}
+  \caption{The structure of Data Message payload}
+\end{figure}
+
+\begin{description}[align=left]
+  \item[CTR] A CTR. The top half of the counter for AES CTR-mode.
+  \item[Ciphertext] DATA. The encrypted message.
+\end{description}
 
 \subsubsection{Shutdown Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\wordbox{2}{Shutdown Hash (64 Bytes)} \\
-\end{bytefield}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \wordbox{2}{Shutdown Hash} \\
+  \end{bytefield}
+  \caption{The structure of Shutdown Message payload}
+\end{figure}
 
-\subsubsection{Shutdown Digest Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\wordbox{2}{Digest (64 Bytes)} \\
-\end{bytefield}
+\begin{description}[align=left]
+  \item[Shutdown Hash] A HASH64 containing the hash of the sender's transcript.
+\end{description}
 
-\subsubsection{Shutdown KeyRelease Message Payload}
-\begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-\bitheader{0-7} \\
-\bitbox{4}{Key Length} & \bitbox[tlr]{4}{} \\
-\wordbox[lr]{1}{Key} \\
-\wordbox[blr]{1}{$\cdots$} \\
-\end{bytefield}
+\subsubsection{Digest Message Payload}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \wordbox{2}{Digest} \\
+  \end{bytefield}
+  \caption{The structure of Digest Message payload}
+\end{figure}
+
+\begin{description}[align=left]
+  \item[Digest] A HASH64 containing the hash of all transcripts.
+\end{description}
+
+\subsubsection{End Message Payload}
+An End Message contains no payload.
+
+\subsubsection{Key Release Message Payload}
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \wordbox[tlr]{1}{Key} \\
+    \wordbox[blr]{1}{$\cdots$} \\
+  \end{bytefield}
+  \caption{The structure of Key Release Message payload}
+\end{figure}
+
+\begin{description}[align=left]
+  \item[Key] DATA. The value of the key to be revealed.
+\end{description}
