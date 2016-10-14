@@ -8,31 +8,21 @@
 
 %--------------------------------------------
 
-\section{Summary}
+\section{Motivation}
+Not much time has passed since Edward Snowden revealed the plans that a certain intelligence agency has for the internet. While the world had always been suspecting that the various 3-letter agencies had the capability of controlling the network at a large scale, everybody was shocked with the confirmation of those suspicions.
 
-Not much time have passed since Edward Snowden revealed the plans that a certain intelligence agency has for the internet.
-While the world has always suspected that the various 3 letter agencies had the capability of controlling the network at a large scale, everybody was shocked with the confirmation of those suspicions.
+In a world where the need for easy instant communication must overcome the threat of constant surveillance, end-to-end encryption has become a necessity. It's not a coincidence that digital privacy has come into focus during the last years. One after another companies advertise the utilization of encryption in their products. Apparently, Instant Messaging is the most favorable means of communication when it comes to end-to-end encryption.
 
-This means that in a world where the need for easy instant communication must overcome the threat of constant surveillance, end-to-end encryption has become a necessity.
-Thankfully this problem is solved in the case of a two party setting, where only 2 participants are exchanging messages, as a number of applications like OTR in pidgin and adium, Signal app for mobiles etc. provide end-to-end encryption in a user friendly manner.
-However, multi-party chat rooms are also very prominent in everyday communications and here things are somewhat trickier.
-On one hand, security in multi-party chat rooms is still an open problem theoretically.
-On the other, the existing implementations are either heavily mobile-centric or they are not licensed under a free software license.
-Additionally they all implement the same protocol, called Signal.
-And while Signal is a powerful protocol which provides strong encryption, we believe that more solutions should be implemented and tested, since, as we said, secure multi-party chat rooms are still an open problem.
+One of the oldest and commonly used protocols that provides privacy in Instant Messaging is the Off-The-Record (OTR). OTR was initially introduced in a paper named "Off-the-Record Communication, or, Why Not To Use PGP" in 2004 \cite{otr}. It was named after the homonymous method of journal sourcing. The primary motivation behind OTR was to provide deniable authentication for the conversation participants while keeping conversations confidential, as in real-life private conversations.
 
-In this thesis we take a different approach from the signal protocol.
-We base our work on the Multi-party Off-the-Record messaging protocol ( from now mpOTR ) paper by I. Goldberg et al. \cite{mpotr}.
-Our contribution is both theoretical and practical.
-From a theoretic perspective, the mpOTR paper was not complete, as, as we will see later, two major building blocks, a Deniable Signature Key Exchange (DSKE) and a Group Key Agreement, were treated as black boxes.
-From a practical perspective we implemented the protocol almost from nothing. We had to engineer our implementation in such a way that its security is easily reviewable, and, at the same time, facilitates the free software development model, where contributions in the source code are made from several independent authors.
+Unfortunately, OTR does only apply in a two-party setting, where only two participants are exchanging messages. However, multi-party chat rooms are also very prominent in everyday communications. A protocol providing the same privacy properties as OTR in a multi-party setting was theoritically described in the "Multi-party Off-the-Record Messaging" paper by I. Goldberg et al. in 2009 \cite{mpotr}. This protocol is called multi-party OTR (mpOTR). Although it's been around since 2009, no actual implementation of mpOTR existed until now.
 
-As a result of our work's duality we will take a look in our contributions from the point of view of a cryptographer and the point of view of a software engineer.
+\section{Our Contributions}
+The existing theoretical introduction of mpOTR protocol in \cite{mpotr} treats the underlying subrotocols as black boxes and does not describe them in detail. More specifically, two underlying subprotocols are left unspecified, namely the deniable Authenticated Key Exchange (denAKE) and the Group Key Agreement (GKA). These sub-protocols play a key role in setting up the parameters needed for authentication and encryption.
 
-\subsection{Cryptographer's PoV}
+We propose a full construction for the mpOTR Protocol. We specify every underlying sub-protocol. We also specify all the primitive algorithms used for several cryptographic functions, such as hashing, signing and encrypting. Finally, we propose a detailed low-level description of the protocol, including message structures, encoding, etc.
 
-In this section we will discuss very briefly the theoretical focal points of our work.
+In addition, we provide the first implementation of mpOTR. Our implementation is a production-grade extension of the existing OTR library accompanied by a pidgin plugin, all writen in C. Both are open source projects, available in github. We engineered our implementation in such a way that its security is easily reviewable, and, at the same time, facilitates the free software development model, where contributions in the source code are made from several independent authors.
 
-As already stated the protocol proposed in \cite{mpotr} left out two major gaps.
-
-\subsection{Software Engineer's PoV}
+\section{Organization of the thesis}
+PLACEHOLDER
