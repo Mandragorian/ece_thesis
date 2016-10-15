@@ -1,4 +1,6 @@
 *.bbl
+*.nav
+*.snm
 *.log
 *.aux
 *.pdf
