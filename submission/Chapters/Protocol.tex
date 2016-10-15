@@ -426,17 +426,40 @@ Symmetrically the signature verification is the first thing that happens before
 any other operation is performed on the received message (cryptographic or not).
 
 \subsubsection{Encryption}
-For encryption a shared secret key $\mathcal{K}$ is used by all the members. This is not a problem since the origin authentication is provided by the signatures, and we obviously don't mind any chat member to read a message or we wouldn't participate in the chat in the first place. For the actual encryption we use AES-128 in CTR mode.
 
-The use of the CTR mode however has a small pitfall. We must not let the same nonce be used twice. This is very difficult to achieve in a distributed setting like a multi-party chat protocol. Despite this we can solve the problem quite easily.
+For encryption a shared secret key $\mathcal{K}$ is used by all the members. This is not a problem since the origin authentication is provided by the signatures, and we obviously don't mind any chat member to read a message or we wouldn't participate in the chat in the first place.
 
-We maintain our original idea of a shared secret key, which we call master key, but we don't use it directly for encryption. Each participant uses the master key $\mathcal{K}$ and his id in the chatroom $ID_p$, in order to compute his "personal" encryption key $\mathcal{K}_e$. We define $ID_p$ as an unsigned integer indicating the position of $p$ in the ordered participants list. This encryption key for participant $p$ is derived as follows:
+To encrypt a message, a user concatenates the shared secret with his personal id and creates a personal key.
+This is the actual encryption key.
 
 \[
-    K_e = H(ID_p || Key_m)
+k_{enc} = H(id_{personal} || master\ key)
 \]
 
-Provided that $H$ is a cryptographic hash function, an adversary cannot recover the value $\mathcal{K}_e$ used for encryption as long as he doesn't know the master key $\mathcal{K}$.
+For the counter, each user stores locally his personal upper half (8 most significant bytes).
+The lower half (8 least significant bytes) are always set to zero.
+The top half of the counter is prepended in the sent message.
+The ciphertext is produced as follows (where $ctr$ is the top half of the locally stored counter):
+
+\[
+ciphertext = AES_{CTR}(k_{enc}, ctr||0, plaintext)
+\]
+
+To decrypt a message, a user concatenates the shared secret with the id of the message's sender.
+\[
+k_{dec} = H(id_{sender} || master\ key)
+\]
+
+He uses the prepended top half of the counter.
+
+\[
+plaintext = AES_{CTR}(k_{dec}, ctr||0, ciphertext)
+\]
+
+This encryption scheme is used, so that the possibility that a certain encryption key and counter pair is eliminated.
+If all the participants used the shared secret itself as an encryption key and two users sent a message at the same time, they would use the same counter.
+This would be a catastrophic failure.
+We discuss why we choose Counter mode in section \ref{setions:Protocol:primitives}
 
 \subsubsection{Transcript}
 In order for the shutdown sub-protocol to be executed we need to store the transcript of the chatroom. In reality a seperate transcript is held for the messages from each participant.
@@ -466,6 +489,31 @@ When one participant receives a "Digest Message" from some other participant, he
 When one participant has received a "Digest Message" from every other participant, he broadcasts an "End Message". This message signifies that the sender will not use the channel to send any messages anymore.
 
 When a participant receives an "End Message" from all other participants, he is certain that he can release his signing secret key. This is done by broadcasting a message which we shall call "Key Release Message". Now anyone who intercepts the released key can forge chat room messages. However all the participants will no longer accept messages signed with the released secret key, and thus it cannot be used to impersonate its previous owner.
+
+\section{The primitives}
+\label{setions:Protocol:primitives}
+In the protocol description we talked generally about \dhname Key exchanges, encryption ciphers and signatures.
+Here we shall present the specific algorithms and parameters we used in our implementation.
+
+\subsection{Diffie--Hellman Group}
+The already existing libotr implementation of the DH key exchange is used.
+As a result we use classic Diffie--Hellman , and specifically the group no. 5 \cite{website:dh-rfc} with a 1536 bit modulus.
+In the algorithms presented above, all exponentiations are performed in this group.
+
+\subsection{Encryption}
+
+For encryption we use AES-128 in CTR mode, the same cipher as the two-party OTR protocol.
+
+We chose 128-bit AES instead of the 256-bit one because our \dhname group does not provide 256 bit of entropy and evidence suggests that the 128-bit AES key schedule is preferred for security \cite{aes-key-recov} \cite{rijndael-improved-analysis}.
+
+We chose CTR mode because it is malleable.
+This increases the deniability properties of the protocol, as described in \cite{otr} and \cite{otr_improvedauth}.
+
+\subsection{Authentication}
+For signing we use the EdDSA algorithm over the Ed25519 curve.
+This signature scheme was chosen primarily because of its fast key generation.
+Each message is signed as a whole.
+This means that the signature covers the message and any metadata sent, like session id, counter value etc.
 
 \section{Participants ordering}
 In many cases, the protocol demands some ordering of the participants. For example, in the Offer step of the Setup phase, the sid contributions should be concatenated in some order before hashing them. Same stands for the public signing keys in the association table, during the Attest step. So we define an ordering rule for the participants, that is used whenever an ordering of elements corresponding to participants is needed.
