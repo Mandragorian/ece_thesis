@@ -237,7 +237,7 @@ It was introduce by Whitfield Diffie and Martin Hellman in \cite{dhpaper}.
 
 In this section we will examine how this KEP is constructed, and what public values must be exchanged.
 
-First, we remind to the readers the operation of multiplication modulo a number, $\oplus$.
+First, we remind to the readers the operation of multiplication modulo a number, $\odot$.
 We want to multiply two numbers $a$ and $b$ modulo a number $n$, called "the modulo".
 This means that we first multiply the two numbers as usual.
 Then we calculate the remainder of the result when it is divided by the modulo.
@@ -251,14 +251,14 @@ This means that if:
 Then:
 
 \[
-  a \oplus b  = r
+  a \odot b  = r
 \]
 .
 
 In this section we will also symbolize:
 
 \[
-  a^x \equiv a \oplus \dots \oplus a = a^x \mod p
+  a^x \equiv a \odot \dots \odot a = a^x \mod p
 \]
 
 These are all the maths needed to understand how the \dhname key exchange works.
