@@ -1,0 +1,32 @@
+\section{Offer}
+\begin{frame}
+\Huge{\centerline{Offer}}
+\end{frame}
+
+\begin{frame}
+  This subprotocol does two things simultaneously.
+  \vfill
+  First the initiator makes an offer to other participants to start a session.
+  \vfill
+  Secondly, it generates a unique session ID for this run of the protocol.
+\end{frame}
+
+\begin{frame}
+  The problem: Messages from one chatroom should not be valid in another chatroom.
+  \vfill
+  The solution: Create a (with high probability) unique session id. This way any signatures will not be valid in other chatrooms.
+
+\end{frame}
+
+\begin{frame}
+  To achieve that, each user $A$ generates a random number $c_A$, called the contribution.
+  \vfill
+  She then transmits her contribution to everyone else in the chatroom.
+  \vfill
+  She calculates the session id when she has received the contributions from all other users.
+  \[
+      sess_{id} = H(c_A || c_B || \dots || c_Z)
+  \]
+  \vfill
+  $sess_{id}$ is not authenticated, but we fix that later.
+\end{frame}
