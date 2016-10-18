@@ -5,13 +5,14 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Attest}
-  During Attest participants verify that they all agree on $sid_i$ and $\mathcal{S}$.\\[0.3cm]
+  \frametitle{Attest (1/2)}
   
-  Messages exchanged for the calculation of $sid_i$ were not signed, since $sid_i$ is required before $\mathcal{S}$ is constructed.\\[0.3cm]
-  
+  During Attest participants verify that they all agree on $sid_i$ and $\mathcal{S}$.
+  \vfill
+  Messages exchanged for the calculation of $sid_i$ were not signed, since $sid_i$ is required before $\mathcal{S}$ is constructed.
+  \vfill
   Participants must verify that they all have the same view of $\mathcal{S}$.\\[0.3cm]
-
+  \vfill
   Any information transmitted is signed using the association table $\mathcal{S}$, so it is:
   \begin{itemize}
     \item Authenticated
@@ -21,13 +22,14 @@
 \end{frame}
 
 \begin{frame}
-  Each participant calculates the SHA-512 hash of $\mathcal{S}$, sorted in lexicographical order according to each participant's username.\\[0.3cm]
-  
+ \frametitle{Attest (2/2)}
+ 
+  Each participant calculates the SHA-512 hash of $\mathcal{S}$, sorted in lexicographical order according to each participant's username.
+  \vfill
   Then, broadcasts a message containing this hash and the value of $sid_i$.
-  
-  The first participant sends a list containing the shared base and the shared base raised to his private exponent.\\[0.3cm]
-  
+  \vfill
   Provided that SHA-512 is a cryptographic hash function an attacker cannot find two signing keys association tables with the same hash.
+  \vfill
+  By signing the message containing the specific $sid_i$ , a user implicitly verifies that he is using that particular id for this session.
   
-  by signing the message containing the specific $sid_i$ , a user implicitly verifies that he is using that particular id for this session.
 \end{frame}
