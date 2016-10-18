@@ -1,0 +1,25 @@
+\section{Message Structure}
+
+\begin{frame}
+\Huge{\centerline{Message Structure}}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Message Structure}
+   
+\begin{figure}[H]
+  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+    \bitheader{0-7} \\
+    \begin{rightwordgroup}{Header}
+      \bitbox{2}{PV} & \bitbox{2}{MT} & \bitbox{4}{Instance Tag} \\
+      \wordbox{4}{Session ID}
+    \end{rightwordgroup} \\
+    \wordbox{4}{Payload} \\
+    \wordbox{2}{Signature} \\
+  \end{bytefield}
+
+  \caption{General message structure}
+  \label{figures:general_message_structure}
+\end{figure}
+
+\end{frame}
