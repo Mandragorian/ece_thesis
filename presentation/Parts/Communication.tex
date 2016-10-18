@@ -9,6 +9,8 @@
   This is how the actual communication between participants is perfmormed.\\[0.3cm]
 
   Participants exchange authenticated and encrypted messages using the association table $\mathcal{S}$ derived from DSKE and the shared key $\mathcal{K}$ derived from GKA.\\[0.3cm]
+  
+  A transcript of the chatroom is stored, that will be used later to check the chat room transcript consistency.
 
 \end{frame}
 
@@ -22,10 +24,33 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Communication - Encryption}
+  \frametitle{Communication - Encryption (1/2)}
+  $\mathcal{K}$ cannot be directly used as an encryption key. If two users sent a message at the same time, they would use the same counter. This would be a catastrophic failure.\\[0.3cm]
+  
+  Instead, $\mathcal{K}$ is used as a master key, from which personal encryption keys are derived.\\[0.3cm]
+  
 \end{frame}
 
+\begin{frame}
+  \frametitle{Communication - Encryption (2/2)}
+Personal encryption key is derived from $\mathcal{K}$ and the participant's id $id_{personal}$:
+\[ k_{enc} = H(id_{personal} || \mathcal{K}) \]\\[0.3cm]
+
+  Each participant stores locally his personal upper half (8 bytes) of the counter, $ctr$. The top half of the counter is prepended in the sent message. The ciphertext is produced as follows:
+\[ ciphertext = AES_{CTR}(k_{enc}, ctr||0, plaintext) \]\\[0.3cm] 
+  
+  To decrypt a message, a user first calculates the decryption key:
+  \[ k_{dec} = H(id_{sender} || \mathcal{K}) \]\\[0.3cm]
+
+  He uses $k_{dec}$ and the prepended top half of the counter ctr, to get the plaintext:
+  \[ plaintext = AES_{CTR}(k_{dec}, ctr||0, ciphertext) \]
+\end{frame}
 
 \begin{frame}
   \frametitle{Communication - Transcript}
+  A seperate transcript is held for the messages of each participant.\\[0.3cm]
+  
+  Each transcript is a link list, kept sorted in lexicographical order according to the message content.\\[0.3cm]
+  
+  Messages are inserted to the corresponding list, each time a participant receives or sends a message during Communication.
 \end{frame}
