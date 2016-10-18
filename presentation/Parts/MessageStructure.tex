@@ -5,21 +5,214 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Message Structure}
-   
-\begin{figure}[H]
-  \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
-    \bitheader{0-7} \\
-    \begin{rightwordgroup}{Header}
-      \bitbox{2}{PV} & \bitbox{2}{MT} & \bitbox{4}{Instance Tag} \\
-      \wordbox{4}{Session ID}
-    \end{rightwordgroup} \\
-    \wordbox{4}{Payload} \\
-    \wordbox{2}{Signature} \\
-  \end{bytefield}
+  \frametitle{Message structure - General structure}
 
-  \caption{General message structure}
-  \label{figures:general_message_structure}
+\begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \begin{rightwordgroup}{Header}
+        \bitbox{2}{PV} \bitbox{2}{MT} \bitbox{4}{Instance Tag} \\
+        \wordbox{4}{Session ID}
+      \end{rightwordgroup} \\
+      \wordbox{4}{Payload} \\
+      \wordbox{2}{Signature} \\
+    \end{bytefield}
+  }
 \end{figure}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Message structure - Payload structures (1/3)}
+
+\begin{minipage}{.47\textwidth}
+
+  \begin{itemize}
+  \item Offer Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \bitbox{4}{Position} \bitbox[lrt]{4}{} \\
+      \wordbox[lr]{1}{SID Contribution} \\
+      \bitbox[l]{4}{} \bitbox[rb]{4}{} \\
+      \bitbox[lrb]{4}{}
+    \end{bytefield}    
+  }
+  \end{figure}
+  
+  \item Handshake Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \wordbox[lrt]{1}{Ephemeral PubKey} \\
+      \wordbox[blr]{1}{$\cdots$} \\
+      \wordbox[lrt]{1}{Longterm PubKey} \\
+      \wordbox[blr]{1}{$\cdots$}
+    \end{bytefield}
+  }
+  \end{figure}    
+  \end{itemize}
+    
+\end{minipage}
+\begin{minipage}{.47\textwidth}
+
+  \begin{itemize}
+  \item Confirm Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+        \bitbox{4}{Recipient} \bitbox[tlr]{4}{} \\
+      \wordbox[lr]{1}{TDH MAC} \\
+      \bitbox[l]{4}{} \bitbox[rb]{4}{} \\
+      \bitbox[lrb]{4}{}
+    \end{bytefield} 
+  }
+  \end{figure}
+  
+  \item Key Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \bitbox{4}{Recipient} \bitbox[tlr]{4}{} \\
+      \wordbox[lr]{1}{TDH MAC} \\
+      \bitbox[l]{4}{} \bitbox[rb]{4}{} \\
+      \bitbox[lrb]{4}{} \bitbox[tlr]{4}{} \\
+      \wordbox[lr]{1}{Key} \\
+      \wordbox[blr]{1}{$\cdots$} \\
+    \end{bytefield}
+  }
+  \end{figure}
+  \end{itemize}   
+   
+\end{minipage}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Message structure - Payload structures (2/3)}
+
+\begin{minipage}{.47\textwidth}
+
+  \begin{itemize} 
+  \item Upflow Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \bitbox{4}{Recipient} \bitbox{4}{ListLen} \\
+      \begin{rightwordgroup}{\parbox{4em}{\raggedright ListLen number of list elements}}
+        \wordbox[lrt]{1}{1st Key} \\
+        \wordbox[blr]{1}{$\cdots$} \\
+        \wordbox[lrt]{1}{2nd Key} \\
+        \wordbox[blr]{1}{$\cdots$} \\
+        \wordbox[blr]{2}{$\cdots$} \\
+        \wordbox[lrt]{1}{n-th Key} \\
+        \wordbox[blr]{1}{$\cdots$}
+      \end{rightwordgroup}
+    \end{bytefield}
+  }
+  \end{figure}
+  \end{itemize}
+  
+\end{minipage}
+\begin{minipage}{.47\textwidth}
+
+  \begin{itemize} 
+  \item Downflow Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \begin{rightwordgroup}{\parbox{4em}{\raggedright ListLen number of list elements}}
+        \bitbox{4}{ListLen} \bitbox[tlr]{4}{} \\
+        \wordbox[lr]{1}{1st Key} \\
+        \wordbox[blr]{1}{$\cdots$} \\
+        \wordbox[lrt]{1}{2nd Key} \\
+        \wordbox[blr]{1}{$\cdots$} \\
+        \wordbox[blr]{2}{$\cdots$} \\
+        \wordbox[lrt]{1}{n-th Key} \\
+        \wordbox[blr]{1}{$\cdots$}
+      \end{rightwordgroup}
+    \end{bytefield}
+  }
+  \end{figure}  
+  \end{itemize}  
+  
+\end{minipage}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Message structure - Payload structures (3/3)}
+
+\begin{minipage}{.47\textwidth}
+
+  \begin{itemize}
+  \item Attest Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \wordbox{2}{Session ID} \\
+      \wordbox{2}{Association Table Hash} 
+    \end{bytefield}
+  }
+  \end{figure}
+  
+  \item Data Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \wordbox{1}{CTR} \\
+      \wordbox[tlr]{1}{Ciphertext} \\
+      \wordbox[blr]{1}{$\cdots$} \\
+    \end{bytefield}
+  }
+  \end{figure}
+  \end{itemize}
+  
+\end{minipage}
+\begin{minipage}{.47\textwidth}
+
+  \begin{itemize}
+  \item Shutdown Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \wordbox{2}{Shutdown Hash} \\
+    \end{bytefield}
+  }
+  \end{figure}
+
+  \item Digest Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \wordbox{2}{Digest} \\
+    \end{bytefield}
+  }
+  \end{figure}    
+  
+ \item  Key Release Message payload:
+  \begin{figure}[H]
+  \scalebox{0.7}{
+    \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
+      \bitheader{0-7} \\
+      \wordbox[tlr]{1}{Key} \\
+      \wordbox[blr]{1}{$\cdots$} \\
+    \end{bytefield}
+  }
+  \end{figure}   
+  \end{itemize}
+  
+\end{minipage}
 
 \end{frame}
