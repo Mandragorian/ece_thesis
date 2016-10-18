@@ -7,17 +7,17 @@
 \begin{frame}
   \frametitle{Communication}
   This is how the actual communication between participants is perfmormed.\\[0.3cm]
-  
-  Participants exchange authenticated and encrypted messages using the association table $\mathcal{S}$ derived from DSKE and the shared key $\amthcal{K}$ derived from GKA.\\[0.3cm]
-  
+
+  Participants exchange authenticated and encrypted messages using the association table $\mathcal{S}$ derived from DSKE and the shared key $\mathcal{K}$ derived from GKA.\\[0.3cm]
+
 \end{frame}
 
 \begin{frame}
   \frametitle{Communication - Origin authentication}
   We use public key encryption methods. Symmetric algorithms would require to mac the message n-1 times.\\[0.3cm]
-  
+
   Signature generation is the last step before sending a message. All metadata, like $sid_i$, are signed. See, Cryptographic Doom Principle.\\[0.3cm]
-  
+
   Symmetrically, signature verification is done before any other operation is performed on a received message.
 \end{frame}
 
