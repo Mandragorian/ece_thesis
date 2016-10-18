@@ -1,0 +1,30 @@
+\fbox{%
+  \pseudocode{%
+    \textbf{Alice} \< \< \textbf{Bob} \\[][\hline]
+    \text{ Choose a random number $x \in Z_p^*$ }\< \< \\
+    \< \sendmessageright*{Send \ \left(g^x,g^X\right)} \< \\
+    \< \< \text{ Choose a random number $y \in Z_p^*$ } \\
+    \< \< s = g^{xy} || g^{Xy} || g^{Yx} \\
+    \< \< k_1 = KDF_1(s) \\
+    \< \< k_2=KDF_2(s) \\
+    \< \sendmessageleft*{Send \ \left(g^y,g^Y\right)} \< \\
+    s = g^{xy} || g^{Xy} || g^{Yx} \< \< \\
+    k_1 = KDF_1(s) \< \< \\
+    k_2 = KDF_2(s) \< \< \\
+    \< \sendmessageright*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
+    \< \< \text{Verify mac} \\
+    \< \< m = AES^{-1}_{k_1}(c) \\
+    \< \< \text{Verify m = "confirm"} \\
+    \< \sendmessageleft*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
+    \text{Verify mac} \< \< \\
+    m = AES^{-1}_{k_1}(c) \< \< \\
+    \text{Verify m = "confirm"} \\
+    \< \sendmessageright*{Send \\ c = AES_{k_1}(\pk_a) \\ MAC_{k_2}(c) } \< \\
+    \< \< \text{Verify mac} \\
+    \< \< \text{Add $\pk_a$ to association table} \\
+    \< \sendmessageleft*{Send \\ c = AES_{k_1}(\pk_b) \\ MAC_{k_2}(c) } \< \\
+    \text{Verify mac} \< \<  \\
+    \text{Add $\pk_b$ to association table} \< \< \\
+  }
+}
+
