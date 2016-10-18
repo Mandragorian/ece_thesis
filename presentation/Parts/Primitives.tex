@@ -1,0 +1,21 @@
+\section{Primitives}
+
+\begin{frame}
+\Huge{\centerline{The primitives}}
+\end{frame}
+
+\begin{frame}
+  For encryption we used {\bf AES-128} in {\bf Counter} mode.
+  \vfill
+  For signatures we use the {\bf EdDSA} algorithm over {\bf courve 25519}
+  \vfill
+  For the DH key exchange we used the group no. {\bf 5} with a {\bf 1536 bit} modulus.
+\end{frame}
+
+\begin{frame}
+  Counter mode was selected for malleability
+  \vfill
+  EdDSA for fast key generation and small signatures
+  \vfill
+  The DH group is already used by libotr.
+\end{frame}
