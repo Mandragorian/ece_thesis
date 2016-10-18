@@ -1,0 +1,54 @@
+\section{High level protocol overview}
+\begin{frame}
+\Huge{\centerline{High level protocol overview}}
+\end{frame}
+
+\begin{frame}
+  \frametitle{High level protocol overview (1/2)}
+  mpOTR is divided into sequential phases, sub-protocols.\\[0.3cm]
+  
+  The first 4 sub-protocols are responsible for setting up the required parameters for the private communication to take place.\\[0.3cm]
+  
+  The Communication sub-protocol follows. It governs the actual private group conversation.\\[0.3cm]
+  
+  Finally, the Shutdown sub-protocol is responsible for actions needed to be done before ending each private session.\\[0.3cm]
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{High level protocol overview (2/2)}
+  \scalebox{0.7}{
+  \begin{algorithm}[H]
+    \label{algorithms:mpotr_algo}
+    \KwIn{$\mathcal{P}$ : participants list}
+    \KwResult{Executes a run of the mpOTR protocol}
+    \Begin{
+
+      $sid$ := Offer($\mathcal{P}$)
+
+      $\mathcal{S}$ := DSKE($sid$, $\mathcal{P}$)
+
+      $\mathcal{K}$ := GKA($sid$, $\mathcal{S}$, $\mathcal{P}$)
+
+      $\mathcal{A}$ := Attest($sid$, $\mathcal{S}$, $\mathcal{P}$)
+
+      \If{$\mathcal{A}$ $\neq$ "OK"}{
+        \Return{"Error"}
+      }
+
+      $\mathcal{T}$ := Communication($sid$, $\mathcal{K}$, $\mathcal{S}$, $\mathcal{P}$)
+
+      $c$ := Shutdown($sid$, $\mathcal{T}$, $\mathcal{S}$, $\mathcal{P}$)
+
+      \If{$c$ = "consensus"}{
+        \Return{"OK"}
+      }
+      \Else{
+        \Return{"Error"}
+      }
+    }
+  \caption{The mpOTR protocol}
+  \end{algorithm}
+  }
+
+\end{frame}
