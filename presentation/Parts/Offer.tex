@@ -14,7 +14,7 @@
 \begin{frame}
   The problem: Messages from one chatroom should not be valid in another chatroom.
   \vfill
-  The solution: Create a (with high probability) unique session id. This way any signatures will not be valid in other chatrooms.
+  The solution: Create a unique (with high probability) session ID. This way any signatures will not be valid in other chatrooms.
 
 \end{frame}
 
@@ -25,8 +25,8 @@
   \vfill
   She calculates the session id when she has received the contributions from all other users.
   \[
-      sess_{id} = H(c_A || c_B || \dots || c_Z)
+      sid_i = H(c_A || c_B || \dots || c_Z)
   \]
   \vfill
-  $sess_{id}$ is not authenticated, but we fix that later.
+  $sid_i$ is not authenticated, but we take care of that later.
 \end{frame}
