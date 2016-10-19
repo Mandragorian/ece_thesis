@@ -10,8 +10,8 @@
 
   Each participant generates a private exponent.  $\mathcal{K}$ will be the shared base raised to all exponents.\\[0.3cm]
 
-  For example, for 5 participants with private exponents a, b, c, d and e, and a shared base G:
-  \[ \mathcal{K} = G^{abcde} \]
+  For example, for 5 participants with private exponents a, b, c, d and e, and a shared base g:
+  \[ \mathcal{K} = g^{abcde} \]
 
   Any information transmitted is signed using the association table $\mathcal{S}$, so it is:
   \begin{itemize}
@@ -30,10 +30,10 @@
   Each next participant prepends a copy of the last element to the list, and raises every other element to his private exponent.\\[0.3cm]
 
   \begin{minipage}{.47\textwidth}
-    \[ 1 \rightarrow 2: G, G^a \]
-    \[ 2 \rightarrow 3: G^a, G^b, G^{ab} \]
-    \[ 3 \rightarrow 4: G^{ab}, G^{ac}, G^{bc}, G^{abc} \]
-    \[ 4 \rightarrow 5: G^{abc}, G^{abd}, G^{acd}, G^{bcd}, G^{abcd} \]
+    \[ 1 \rightarrow 2: g, g^a \]
+    \[ 2 \rightarrow 3: g^a, g^b, g^{ab} \]
+    \[ 3 \rightarrow 4: g^{ab}, g^{ac}, g^{bc}, g^{abc} \]
+    \[ 4 \rightarrow 5: g^{abc}, g^{abd}, g^{acd}, g^{bcd}, g^{abcd} \]
   \end{minipage}
   \begin{minipage}{.47\textwidth}
    \begin{figure}
@@ -62,14 +62,14 @@
   Once the last participant has received the upflow, he calculates the shared secret, and broadcasts a new list to all other participants.\\[0.3cm]
 
   He raises every element of the  received list to his private exponent:
-  \[ G^{abce}, G^{abde}, G^{acde}, G^{bcde}, G^{abcde} \]
+  \[ g^{abce}, g^{abde}, g^{acde}, g^{bcde}, g^{abcde} \]
 
   The last element is $\mathcal{K}$. He saves it and removes it from the list.\\[0.3cm]
 
   Other participants calculate $\mathcal{K}$ by raising the $(n-i)$th element of the list to their private exponent, where n is the length of the list and i their position in the participants order.
 
   \begin{minipage}{.47\textwidth}
-    \[ 5 \rightarrow all: G^{abce}, G^{abde}, G^{acde}, G^{bcde} \]
+    \[ 5 \rightarrow all: g^{abce}, g^{abde}, g^{acde}, g^{bcde} \]
 
   \end{minipage}
   \begin{minipage}{.47\textwidth}
