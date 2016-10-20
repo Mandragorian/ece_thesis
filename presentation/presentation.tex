@@ -44,6 +44,7 @@
 \usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
 \usepackage[keys]{cryptocode}
 \usepackage{xcolor}
+\usepackage{datetime}
 
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
@@ -63,7 +64,7 @@
   \textit{dim.kolotouros@gmail.com} % Your email address
 \medskip
 }
-\date{Febuary 22, 2016} % Date, can be changed to a custom date
+\date{{\ddmmyyyydate\today}} % Date, can be changed to a custom date
 
 
 \begin{document}
@@ -89,6 +90,7 @@
 \include{Parts/Attest}
 \include{Parts/Communication}
 \include{Parts/Shutdown}
-\include{Parts/MessageStructure}
 \include{Parts/Primitives}
+\include{Parts/MessageStructure}
+\include{Parts/Outro}
 \end{document}
