@@ -12,7 +12,7 @@ We suppose that there exists an algorithm called $E$, which takes two inputs.
 One input is a secret, called the key, and the other is some data we would like to encrypt.
 
 Another algorithm called $D$ again takes two inputs and is the reverse of $E$.
-This means that if we call $D$ with inputs the output of $E$ under some key $k$, and $k$ itself, the output will be the plaintext data. This is show in the below equation:
+This means that if we call $D$ with inputs the output of $E$ under some key $k$, and $k$ itself, the output will be the plaintext data. This is shown in the below equation:
 
 \[
   m = D(k, E(k, m))
@@ -113,7 +113,7 @@ Since only the sender and the receiver have the secret key, only they should be 
 Well, in general this is not correct.
 Let's consider again the case of a block cipher used in CTR mode.
 Remember that in this mode the block cipher is not directly used for encryption.
-Instead it is used to generated a pseudorandom sequence of bits.
+Instead it is used to generate a pseudorandom sequence of bits.
 This sequence is then xor'ed to the plaintext and the result is the ciphertext.
 
 Now let's see what will happen if a bit of the ciphertext is flipped, and we try to decrypt it.
@@ -310,7 +310,7 @@ From now on, the public and private information of a user will be called public 
 
 \section{Person-in-the-Middle attacks}
 
-\dhname is a great protocol for calculating shared secrets it has a grave disadvantage.
+Although \dhname is a great protocol for calculating shared secrets, it has a grave disadvantage.
 Consider the following scenario, where Mallory, an evil attacker can control the network so that she can read, drop, and inject packets:
 
 User $i$ wants to privately communicate with user $j$.
@@ -361,7 +361,7 @@ With doubling length of the first message containing the public keys of a user, 
 \subsection{An Overview}
 
 In this key exchange each user has a \dhname longterm keypair.
-This should be authenticated to other users to exclude a person in the middle attack, like any other public key scheme.
+This should be authenticated to other users to exclude a person-in-the-middle attack, like any other public key scheme.
 
 When Alice wants to communicate with Bob, she generates an ephemeral \dhname key.
 Suppose $X$ is her longterm private key and $x$ is her ephemeral private key.
@@ -406,10 +406,10 @@ There is a catch however. Suppose Eve would like to be able to read \emph{some} 
 What she can do is create an "ephemeral" key $e$.
 She then starts a conversation with Alice, posing as Bob.
 Alice might respond, create the shared secret and start communicating.
-Eve does NOT know the shared secret, so she cant read any messages or prove anything, but she might be able to calculate it in the future.
+Eve does NOT know the shared secret, so she can't read any messages or prove anything, but she might be able to calculate it in the future.
 
 If Eve at some point forces Bob to hand over his long term secrets then she can recreate the shared secret.
-She can thus read the first message that Alice has tried to sent to "Bob" using the shared secret calculate with the phony ephemeral.
+She can thus read the first message that Alice has tried to send to "Bob" using the shared secret calculate with the phony ephemeral.
 This is possible since she now knows $Y$ (bob's longterm secret) and she also knows $e$.
 This breaks the forward secrecy of the protocol.
 
@@ -435,7 +435,7 @@ To illustrate why message order is important we will examine the so called "ice 
 Suppose that Alice, Bob, and Mallory are chatting in one chat room.
 Mallory wants to make Alice believe that Bob is a dangerous criminal.
 We assume that she has significant control over the network and can delay packages.
-To achieve her gaol she does the following:
+To achieve her goal she does the following:
 
 She sends the message "Who wants some ice cream?" in the chat room.
 But she delays the package going to Alice, so that Alice does not receive it yet.
@@ -449,7 +449,7 @@ After that she also allows her original message, saying "Who wants some ice crea
 Now, what did Alice actually see?
 First, she saw that Mallory asked who wanted to do something illegal.
 And then she saw Bob saying that he does!
-In her eyes, bob is willing to do engage in illegal activities.
+In her eyes, Bob is willing to do engage in illegal activities.
 Maybe she shouldn't hang out with him any more.
 
 And that exactly is the "ice cream attack".
