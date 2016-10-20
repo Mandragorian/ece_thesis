@@ -57,30 +57,40 @@ It is easy to see that the decryption is trivial:
   M = D(k, c_1) || \dots || D(k, c_n)
 \]
 
-However this has a crucial weakness.
-You can easily see that if two chunks are the same then the resulting ciphertext will also be the same.
-This might not seem important, but, believe us, it is detrimental to the mode's security.
-Don't believe us yet? Here is an example:
+However, this has a crucial weakness. You can easily see that if two chunks are the same then the resulting ciphertext will also be the same. As a result data patterns in the plaintext may remain in the ciphertext as well. This might not seem important, but, believe us, it is detrimental to the mode's security. Don't believe us yet? A striking example is shown in figure \ref{figures:ecb_in_practice} where ECB mode is used to encrypt a bitmap image which uses large areas of uniform colour.
 
 \begin{figure}[h]
-  \begin{minipage}{0.49\textwidth}
-    \includegraphics[scale=0.8]{Figures/Tux.jpg}
-  \end{minipage}
-  \begin{minipage}{0.49\textwidth}
-    \includegraphics[scale=0.8]{Figures/Tux_ecb.jpg}
-  \end{minipage}
-  \caption[ECB in practice]{The image on the left is the plaintext. The image on the right is the plaintext encrypted with ECB mode. The plaintext image was created by Larry Ewing using GIMP.}
+  \centering
+  \hfill
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{Figures/Tux.jpg}
+    \caption{Original image}
+    \label{figures:tux}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{Figures/Tux_ecb.jpg}
+    \caption{Encrypted using ECB mode}
+    \label{figures:tux_ecb}
+  \end{subfigure}
+  \caption[ECB in practice]{ECB in practice. The original image was created by Larry Ewing using GIMP.}
+  \label{figures:ecb_in_practice}
+  \hfill
 \end{figure}
 
 The other is called Counter mode (CTR).
 In this mode the block cipher itself does not encrypt the plaintext.
 Instead it is used to produce a pseudo-random sequence of bits, in chunks equal to one block, which is then xor'ed with the plaintext.
 
-To produce the $i$-th chunk $s_i$, it "encrypts" the number $i$ with the provided key.
-As a result a bit stream is generated as shown below:
+To produce the $i$-th chunk $s_i$, it "encrypts" the number $i$ with the provided key:
+\[
+  s_i = E(k, i)
+\]
+
+As a result, a bit stream is generated as shown below:
 
 \[
-  S = E(k, 1) || E(k, 2) || \dots || E(k, n)
+  S = s_1 || s_2 || \dots || s_n
 \]
 
 And the resulting ciphertext is:
