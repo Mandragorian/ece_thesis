@@ -191,7 +191,7 @@ The algorithm works in a way such that the produced tag $t$ can only be calculat
 \]
 
 When the sending party wants to transmit a message, she calculates the tag and appends it to the message so that she sends $m||t$.
-The receiving can recalculate the tag on his own.
+The receiving party can recalculate the tag on his own.
 He then checks if the appended tag is the same with the tag that he calculated.
 If the two tags are the same then he accepts the message, otherwise he rejects it as it is probably tampered with.
 
@@ -222,14 +222,13 @@ if $result$ is "YES" then she accepts the message. Otherwise she rejects it.
 
 \section{Key Exchange Protocols (KEP)}
 
-The goal of any key exchange protocol is to allow two users to agree on a secret value, known only to them, by exchanging some publicly known information.
+The goal of any Key Exchange Protocol is to allow two users to agree on a secret value, known only to them, by exchanging some publicly known information.
 This might be counter intuitive at first but as we will see in the next section this goal can be achieved with a very simple construction.
 
-Basically a key exchange protocol is any mechanism that provides two functions.
+Basically a Key Exchange Protocol is any mechanism that provides two functions.
 One of them returns a tuple containing some private and some public information.
-The public information returned by that function must be sent to the other so that he can calculate the secret value.
-The other accepts the public values of the other user and the private values of this user.
-It returns the secret value.
+The public information returned by that function must be sent to the other user so that he can calculate the secret value.
+The other function accepts the public values of the other user and the private values of this user and returns the secret value.
 
 \begin{figure}[H]
   \begin{align*}
@@ -314,7 +313,7 @@ From now on, the public and private information of a user will be called public 
   \Begin{
     \Return{$(g^y)^x$}
   }
-  \caption{The $genkey$ function}
+  \caption{The $calculate\_secret$ function}
   \label{algo:dh_calculate_secret}
 \end{algorithm}
 
@@ -376,9 +375,7 @@ This should be authenticated to other users to exclude a person-in-the-middle at
 When Alice wants to communicate with Bob, she generates an ephemeral \dhname key.
 Suppose $X$ is her longterm private key and $x$ is her ephemeral private key.
 
-She then sends the tuple $(g^X, g^x)$ to Bob, who upon receiving it does exactly what Alice did.
-Supposing $Y$ is his longterm private key, he generates an ephemeral key $y$.
-He then calculates the shared secret $s$ as shown below:
+She then sends the tuple $(g^X, g^x)$ to Bob, who upon receiving it does exactly what Alice did. He generates an ephemeral key $y$. Supposing $Y$ is his longterm private key, he then calculates the shared secret $s$ as shown below:
 
 \[
   s = g^{Xy} || g^{xY} || g^{xy}
@@ -420,7 +417,7 @@ Eve does NOT know the shared secret, so she can't read any messages or prove any
 
 If Eve at some point forces Bob to hand over his long term secrets then she can recreate the shared secret.
 She can thus read the first message that Alice has tried to send to "Bob" using the shared secret calculate with the phony ephemeral.
-This is possible since she now knows $Y$ (bob's longterm secret) and she also knows $e$.
+This is possible since she now knows $Y$ (Bob's longterm secret) and she also knows $e$.
 This breaks the forward secrecy of the protocol.
 
 This can be easily solved if both Alice and Bob first make sure that they have both arrived at the same shared secret.
