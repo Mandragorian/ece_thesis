@@ -81,22 +81,22 @@ The contributions are sent with an "Offer Message". An "Offer Message" sent by $
 The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer Message". When other participants receive it, they also broadcast their own "Offer Message". They all store the received contributions as well as their own. Once all messages have been exchanged, all participants can calculate $sid$. Then, they initiate the next sub-protocol. A formal description of the Offer sub-protocol in the context of a participant $\hat{X}$ is shown in algorithm \ref{algo:offer}.
 
 \begin{algorithm}[H]
-  \KwIn{P : participants list}
-  \KwOut{sid: the session ID}
-  \KwResult{Session ID construction in the context of party $\hat{X}$}
-  \Begin{	
-	$c_{\hat{X}} \leftarrow random$
+  \KwIn{$\mathcal{P}$ : participants list}
+  \KwOut{$sid$: the session ID}
+  \Begin
+  {
+	$c_{\hat{X}} \leftarrow \{0,1\}^{256}$
 	
 	$Broadcast(c_{\hat{X}})$
 	
-	$Outstanding \leftarrow P \textbackslash \{\hat{X}\}$
+	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
 
-    \While{$Outstanding \neq \emptyset$}{
-    
+    \While{$Outstanding \neq \emptyset$}
+    {    
       $(\hat{Y}, c) := Receive()$
       
-      \If{$\hat{Y} \in Outstanding$}{
-      
+      \If{$\hat{Y} \in Outstanding$}
+      {      
         $c_{\hat{Y}} \leftarrow c$
       
         $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
@@ -108,7 +108,7 @@ The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer M
 	\Return{$sid$}
 
   }
-  \caption{Offer()}
+  \caption{Offer($\mathcal{P}$) --- session ID construction in the context of party $\hat{X}$.}
   \label{algo:offer}
 \end{algorithm}
 
@@ -320,100 +320,104 @@ Algorithm \ref{downflow_algo} presents an overview of how the final, downflow me
 In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo} and \ref{downflow_algo}) are used in order to execute a complete run of the GKA protocol.
 
 \begin{algorithm}[H]
-	\KwIn{P : participants list}
-	\KwExtraIn {InterKeys : previous intermediate key list}
-	\KwExtraIn {X : user's secret key}
-	\KwExtraIn {N : next participant}
-	\KwResult{Sends the new intermediate key list to the next participant}
-	\Begin{
-	inter\_key\_list := empty\_list
+  \KwIn{$\mathcal{P}$ : participants list}
+  \KwExtraIn {$InterKeys$ : previous intermediate key list}
+  \KwExtraIn {$x$ : user's secret key}
+  \KwExtraIn {$\hat{Y}$ : the next participant}
+  \KwResult{Sends the new intermediate key list to the next participant}
+  \Begin
+  {
+    $inter\_key\_list \leftarrow []$
 
-	inter\_key\_list.append( InterKeys.last\_elem() )
+    $inter\_key\_list.Append(InterKeys.Last() )$
 
-	\ForEach{k in InterKeys}
-	{
-		inter\_key\_list.append( $k^X$ )
-	}
+    \ForEach{$k$ in $InterKeys$}
+    {
+      $inter\_key\_list.Append(k^x)$
+    }
 
-	send( N , P || inter\_key\_list)
-	}
-	\caption{Upflow Message send algorithm}
-	\label{upflow_algo}
+    $AuthSend(\hat{Y}, inter\_key\_list)$
+  }
+  \caption{SendUpflow($\mathcal{P}$, $InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
+  \label{upflow_algo}
 \end{algorithm}
 
 \begin{algorithm}[H]
-	\KwIn{P : participants list}
-	\KwExtraIn {InterKeys : previous intermediate key list}
-	\KwExtraIn {X : user's secret key}
-	\KwExtraIn {N : next participant}
-	\KwResult{Sends the downflow intermediate key list to the other participants}
-	\Begin{
-	inter\_key\_list := empty\_list
+  \KwIn{$\mathcal{P}$ : participants list}
+  \KwExtraIn {$InterKeys$ : previous intermediate key list}
+  \KwExtraIn {$x$ : user's secret key}
+  \KwResult{Broadcasts the downflow intermediate key list to the other participants}
+  \Begin
+  {
+    $inter\_key\_list \leftarrow []$
 
-	\ForEach{k in InterKeys}
-	{
-		inter\_key\_list.append( $k^X$ )
+    \ForEach{$k$ in $InterKeys$}
+    {
+      $inter\_key\_list.Append(k^x)$
 	}
 
-	inter\_key\_list.reverse()
-
-	send( N , P || inter\_key\_list)
-	}
-	\caption{Downflow Message send algorithm}
-	\label{downflow_algo}
+    $AuthBroadcast(inter\_key\_list)$
+  }
+  \caption{SendDownflow($\mathcal{P}$, $InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
+  \label{downflow_algo}
 \end{algorithm}
 
 \vfill
 \begin{algorithm}[H]
-	\KwIn{P : participants list}
-	\KwOut{The shared secret}
-	\KwResult{Executes a GKA and produces the shared secret}
-	\Begin{
+  \KwIn{$\mathcal{P}$s : participants list}
+  \KwOut{$\mathcal{K}$: the shared secret}
+  \Begin
+  {
+    $x \leftarrow GenerateKey()$
 
-	prev := get\_previous\_participant()
+    $\hat{Y}_{prev} \leftarrow \hat{X}.Previous()$
 
-	next := get\_next\_participant()
+    $\hat{Y}_{next} \leftarrow \hat{X}.Next()$   
 
-	x := gka\_genkey()
+    \If{$\hat{Y}_{prev}$ = NULL}{
+      $SendUpflow(P, [G], x, \hat{Y}_{next})$
+    }
+    \Else
+    {
+      $(\hat{Y}, key\_list) \leftarrow AuthReceive()$
 
-	\If{prev == NULL}{
-		send\_upflow(P, [G], x, next)
-		}
-	\Else{
-			m = receive\_from(prev)
+      \If{$\hat{Y}$ $\neq$ $\hat{Y}_{prev}$ $\lor$ Validate($key\_list$) = false}
+      {
+        \Return{error}
+      }
+      \If{$\hat{Y}_{next}$ $\neq$ NULL}
+      {
+        $SendUpflow(P, key\_list, x, \hat{Y}_{next})$
+      }
+      \Else
+      {
+        $final\_key \leftarrow key\_list.Last()$
 
-			\If{ m not valid}{
-					return error
-			}
-			\If{ next != NULL}{
-				send\_upflow(P, m.key\_list, x, next)
-			}
-			\Else{
-				final\_key := m.key\_list.last\_elem()
+        $\mathcal{K} \leftarrow final\_key^x$
 
-				s := $final\_key^x$
+        $SendDownflow(P, key\_list, x)$
 
-				send\_downflow(P, m.key\_list, x)
+        \Return{$\mathcal{K}$}
+      }
+    }
 
-				return s
-			}
-	}
+    $(\hat{Y}, key\_list) \leftarrow AuthReceive()$
 
-	m = wait\_for\_downflow()
+    \If{$\hat{Y}$ $\neq$ $\mathcal{P}.Last()$ $\lor$ Validate($key\_list$) = false}
+    {
+      \Return{error}
+    }
+    
+    $pos \leftarrow \mathcal{P}.IndexOf(\hat{X})$
 
-	\If{m not valid}{
-		return error
-	}
+    $final\_key \leftarrow key\_list.Reverse().Get(pos)$
 
-	final\_key := m.key\_list[pos]
+    $\mathcal{K} \leftarrow final\_key^x$
 
-	s := $final\_key^x$
-
-	return s
-
-	}
-	\caption{The GKA protocol}
-	\label{gka_proto_algo}
+	\Return{$\mathcal{K}$}
+  }
+  \caption{GKA - executes a Group Key Agreement and produces the shared secret in the context of party $\hat{X}$.}
+  \label{gka_proto_algo}
 \end{algorithm}
 
 \subsection{Attest}
@@ -427,22 +431,24 @@ When a participant receives an "Attest Message", first she must verify the signa
 Provided that SHA-512 is a cryptographic hash function an attacker can't find two signing keys association tables with the same hash. This means that he is not able to make two participants believe that they have arrived at the same table when they have not. Also by signing the message containing the specific $sid$, a user implicitly verifies that he is using that particular $sid$ for this session.
 
 \begin{algorithm}[H]
-  \KwIn{$\mathcal{P}$ : participants list, $sid$: the session ID, $\mathcal{S}$: the association table}
+  \KwIn{$\mathcal{P}$ : participants list}
+  \KwExtraIn{$sid$: the session ID}
+  \KwExtraIn{$\mathcal{S}$: the association table}
   \KwOut{$\mathcal{A}$: "OK" if verification went good, "Error" if it went wrong}
-  \KwResult{authenticate previously unauthenticated protocol parameters for the current session in the context of party $\hat{X}$}
-  \Begin{	
+  \Begin
+  {	
 	$M \leftarrow sid \Vert SHA512(\mathcal{S})$
 	
 	$Broadcast(M)$
 	
 	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
 
-    \While{$Outstanding \neq \emptyset$}{
-    
+    \While{$Outstanding \neq \emptyset$}
+    {
       $(\hat{Y}, M_{\hat{Y}}) := Receive()$
       
-      \If{$M_{\hat{Y}}) \neq M$}{
-            
+      \If{$M_{\hat{Y}}) \neq M$}
+      {     
         \Return{"Error"}            
         
       }
@@ -454,9 +460,8 @@ Provided that SHA-512 is a cryptographic hash function an attacker can't find tw
     }
 
 	\Return{"OK"}
-
   }
-  \caption{Attest()}
+  \caption{Attest($\mathcal{P}$, $sid$, $\mathcal{S}$) --- authenticate previously unauthenticated protocol parameters for the current session in the context of party $\hat{X}$.}
   \label{algo:attest}
 \end{algorithm}
 
