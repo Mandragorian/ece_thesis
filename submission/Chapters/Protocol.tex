@@ -605,15 +605,24 @@ When a new chatroom is created, each participant is assigned a list with all kno
 When a "Handshake Message" is received the participants known fingerprints list is checked to find (if it exists) a fingerprint matching the currently used public key.
 If such a fingerprint is found and it is verified, then the user is verified for this session.
 If the found fingerprint is not verified then the participant is not verified.
-If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list.
+If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list. 
 
-\section{Instance tags}
+\section{Message Structure}
+
+\subsection{Top level encoding}
+We follow the OTR rules for the top level encoding of mpOTR messages. That is, all mpOTR messages start with the string "?OTR:" followed by the base64 encoded message and then a "." denoting the end of the message. For a mpOTR message M, we send:
+
+\[ 
+  "?OTR:" \Vert Base64(M) \Vert "."
+\]
+
+\subsection{Instance tags}
 \label{subsections:instance_tags}
-Many IM Protocols allow for a client to be logged into the same account from multiple locations and the server may relay messages to all of them. So, a distinguishing mechanism is required. We follow the same approach used in the version 3 of OTR, called instance tags.
+Many IM Protocols allow for a client to be logged into the same account from multiple locations and the server may relay messages to all of them. The version 3 of OTR utilizes a distinguishing mechanism, called instance tags.
 
-Instance tags are 32-bit values that are intended to be persistent. If the same client is logged into the same account from multiple locations, the intention is that the client will have different instance tags at each location. All mpOTR messages include the sender's instance tag. 
+Instance tags are 32-bit values that are intended to be persistent. If the same client is logged into the same account from multiple locations, the intention is that the client will have different instance tags at each location. All mpOTR messages include the sender's instance tag.
 
-\section{Data Types}
+\subsection{Data Types}
 We present a list of several data types used in mpOTR messages along with their encoding:
 \begin{description}[align=left]
 \item [SHORT] Short integers. 2 byte unsigned value, big-endian.
@@ -626,10 +635,12 @@ We present a list of several data types used in mpOTR messages along with their 
 \item[DATA] Opaque variable-length data. 4 byte unsigned len, big-endian. len byte data.
 \end{description}
 
-\section{Message types}
+\subsection{Message types}
 \label{subsections:message_types}
-There are 12 different types of mpOTR messages. Each message is indicated by a positive integer. We have reserved the zero value to indicate non-OTR messages. The list of these types along with the corresponding integer value is shown below:
+There are 12 different types of mpOTR messages. Each type is indicated by a positive integer. We have reserved the zero value to indicate non-OTR messages. The list of these types along with the corresponding integer value is shown below:
 
+\hfill
+\begin{minipage}{.40\textwidth}
 \begin{description}[align=left]
   \item[0] Non-OTR Message
   \item[1] Offer Message
@@ -638,6 +649,11 @@ There are 12 different types of mpOTR messages. Each message is indicated by a p
   \item[4] Key Message
   \item[5] Upflow Message
   \item[6] Downflow Message
+\end{description}
+\end{minipage}
+\hfill
+\begin{minipage}{.40\textwidth}
+\begin{description}[align=left]
   \item[7] Attest Message
   \item[8] Data Message
   \item[9] Shutdown Message
@@ -645,13 +661,11 @@ There are 12 different types of mpOTR messages. Each message is indicated by a p
   \item[11] End Message
   \item[12] Key Release Message
 \end{description}
+\end{minipage}
+\hfill
 
-\section{Message Structure}
-All mpOTR messages start with the string "?OTR:" followed by the base64 encoded message and then a "." denoting the end of the message.
 
 \subsection{General message structure}
-In figure \ref{figures:general_message_structure} the general structure of mpOTR messages is shown.
-
 \begin{figure}[H]
   \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
     \bitheader{0-7} \\
@@ -667,21 +681,23 @@ In figure \ref{figures:general_message_structure} the general structure of mpOTR
   \label{figures:general_message_structure}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[PV] Protocol Version. A SHORT indicating the Protocol Version the message is intended for.
-  \item[MT] Message Type. A SHORT indicating the type of the message. See \ref{subsections:message_types} for more details.
-  \item [Instance Tag] An INT indicating the instance tag. See \ref{subsections:instance_tags} for more details.
-  \item[Session ID] A HASH64 containing the value of $sid_i$. Not existent in Offer Messages.
-  \item[Payload] Specific data dependent for each type of message. See \ref{subsections:payload_structures} for more details.
-  \item[Signature] The signature covering all data above, used to authenticate the message. Not existent in all message types.
-\end{description}
+In figure \ref{figures:general_message_structure} the general structure of mpOTR messages is shown. Each message contains the following fields:
+\begin{itemize}
+  \item PV: the Protocol Version. A SHORT indicating the Protocol Version the message is intended for.
+  \item MT: the Message Type. A SHORT indicating the type of the message. See \ref{subsections:message_types} for more details.
+  \item Instance Tag: an INT indicating the instance tag. See \ref{subsections:instance_tags} for more details.
+  \item Session ID: a HASH64 containing the value of $sid$. Not existent in Offer Messages.
+  \item Payload: specific data dependent for each type of message. See \ref{subsections:payload_structures} for more details.
+  \item Signature: the signature covering all data above, used to authenticate the message. Not existent in all message types.
+\end{itemize}
 
-Offer Messages contain no Session ID in the header, since $sid_i$ has not been established yet. Offerand DAKE Messages contain no Signature since the association table $\mathcal{S}$ has not been constructed yet. Shutdown KeyRelease Messages contain no Signature since authentication is not required.
+There are only a few exceptions. Offer Messages contain no Session ID in the header, since $sid$ has not been established yet. Offer and DAKE Messages contain no Signature since the association table $\mathcal{S}$ has not been constructed yet. Shutdown KeyRelease Messages also contain no Signature since authentication is not required.
 
 \subsection{Payload structures}
 \label{subsections:payload_structures}
+In the following paragraphs we show the payload structure of each mpOTR message type. We also briefly describe each field.
 
-\subsubsection{Offer message payload}
+\subsubsection{Offer Message Payload}
 \begin{figure}[H]
   \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
     \bitheader{0-7} \\
@@ -693,10 +709,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Offer Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Position] An INT indicating the sender's position in the ordered list of the participants.
-  \item[SID Contribution] A HASH32 containing the sender's contribution for the construction of the $sid_i$.
-\end{description}
+\begin{itemize}
+  \item Position: an INT indicating the sender's position in the ordered list of the participants.
+  \item SID Contribution: a HASH32 containing the sender's contribution for the construction of the $sid$.
+\end{itemize}
 
 \subsubsection{Handshake Message Payload}
 \begin{figure}[H]
@@ -710,10 +726,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Handshake Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Ephemeral PubKey] A MPI containing the public part of the ephemeral key.
-  \item[Longterm PubKey] A MPI containing the public part of the longterm key.
-\end{description}
+\begin{itemize}
+  \item Ephemeral PubKey: a MPI containing the public part of the ephemeral key.
+  \item Longterm PubKey: a MPI containing the public part of the longterm key.
+\end{itemize}
 
 \subsubsection{Confirm Message Payload}
 \begin{figure}[H]
@@ -727,10 +743,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Confirm Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Recipient] An INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
-  \item[TDH MAC] Triple Diffie-Hellman MAC. A HASH32 containing the MAC value for a magic number.
-\end{description}
+\begin{itemize}
+  \item Recipient: an INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
+  \item TDH MAC: a Triple Diffie-Hellman MAC. A HASH32 containing the MAC value for a magic number.
+\end{itemize}
 
 \subsubsection{Key Message Payload}
 \begin{figure}[H]
@@ -746,11 +762,11 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Key Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Recipient] An INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
-  \item[TDH MAC] Triple Diffie-Hellman MAC. A HASH32 containing the MAC value for the following key.
-  \item[Key] The encrypted public part of the ephemeral signing key.
-\end{description}
+\begin{itemize}
+  \item Recipient: an INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
+  \item TDH MAC: a Triple Diffie-Hellman MAC. A HASH32 containing the MAC value for the following key.
+  \item Key: DATA containing the encrypted public part of the ephemeral signing key.
+\end{itemize}
 
 \subsubsection{Upflow Message Payload}
 \begin{figure}[H]
@@ -770,11 +786,11 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Upflow Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Recipient] An INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
-  \item[ListLen] An INT containing the length of the following key list.
-  \item[i-th Key] An MPI containing the i-th key of the intermediate key list.
-\end{description}
+\begin{itemize}
+  \item Recipient: an INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
+  \item ListLen: an INT containing the length of the following key list.
+  \item i-th Key: an MPI containing the i-th key of the intermediate key list.
+\end{itemize}
 
 \subsubsection{Downflow Message Payload}
 \begin{figure}[H]
@@ -794,10 +810,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Downflow Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[ListLen] An INT containing the length of the following key list.
-  \item[i-th Key] An MPI containing the i-th key of the intermediate key list.
-\end{description}
+\begin{itemize}
+  \item ListLen: an INT containing the length of the following key list.
+  \item i-th Key: an MPI containing the i-th key of the intermediate key list.
+\end{itemize}
 
 \subsubsection{Attest Message Payload}
 \begin{figure}[H]
@@ -809,10 +825,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Attest Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Session ID] An HASH64 containing the value of $sid_i$.
-  \item[Association Table Hash] An HASH64 containing the hash of the association table $\mathcal{S}$.
-\end{description}
+\begin{itemize}
+  \item Session ID: a HASH64 containing the value of $sid$.
+  \item Association Table Hash: a HASH64 containing the hash of the association table $\mathcal{S}$.
+\end{itemize}
 
 \subsubsection{Data Message Payload}
 \begin{figure}[H]
@@ -825,10 +841,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Data Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[CTR] A CTR. The top half of the counter for AES CTR-mode.
-  \item[Ciphertext] DATA. The encrypted message.
-\end{description}
+\begin{itemize}
+  \item CTR: a CTR containing the top half of the counter for AES CTR-mode.
+  \item Ciphertext: a DATA containing the encrypted message.
+\end{itemize}
 
 \subsubsection{Shutdown Message Payload}
 \begin{figure}[H]
@@ -839,9 +855,9 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Shutdown Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Shutdown Hash] A HASH64 containing the hash of the sender's transcript.
-\end{description}
+\begin{itemize}
+  \item Shutdown Hash: a HASH64 containing the hash of the sender's transcript.
+\end{itemize}
 
 \subsubsection{Digest Message Payload}
 \begin{figure}[H]
@@ -852,12 +868,12 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Digest Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Digest] A HASH64 containing the hash of all transcripts.
-\end{description}
+\begin{itemize}
+  \item Digest: a HASH64 containing the hash of all transcripts.
+\end{itemize}
 
 \subsubsection{End Message Payload}
-An End Message contains no payload.
+End Messages contain no payload.
 
 \subsubsection{Key Release Message Payload}
 \begin{figure}[H]
@@ -869,6 +885,6 @@ An End Message contains no payload.
   \caption{The structure of Key Release Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Key] DATA. The value of the key to be revealed.
-\end{description}
+\begin{itemize}
+  \item Key: a DATA containing the value of the key to be revealed.
+\end{itemize}
