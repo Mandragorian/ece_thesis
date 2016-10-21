@@ -261,13 +261,39 @@ can be used as a denAKE.
 
 During the GKA sub-protocol the participants construct a shared secret key $\mathcal{K}$. The latter will be used in order for symmetric encryption keys to be derived.
 
-The main idea is to compute a combined Diffie-Hellman-like key for all participants. To do this, each participant in the chatroom generates a private exponent. The shared base is then raised to this exponent. The key agreement begins by the initiating participant sending his public key to the next participant.
+The main idea is to compute a combined Diffie-Hellman-like key for all participants. To do this, each participant in the chatroom generates a private exponent $x_i$. Given that $g$ is the shared base and $n$ the number of participants, the shared secret $\mathcal{K}$ will be: 
+\[
+\mathcal{K} = g^{x_1 \cdot x_2 \cdots x_n}
+\]
 
-In each step that follows, the participant who just received a list of intermediate keys from the previous participant must calculate the next intermediate key list and forward it to the next participant. The forwarding procedure continues until the final participant has received an intermediate key list. During the $i$-th iteration, the corresponding participant receives keys from the $(i - 1)$th participant and then sends information to the $(i + 1)$th participant, as illustrated in figure \ref{figures:gka_upflow}. These messages shall be called "Upflow Messages".
+The key agreement is performed in $n$ steps. Given the ordering rule of participants described in \ref{sections:participants_ordering}, in each step a participant receives an intermediate key list from the previous participant, calculates a new intermediate key list based on the received one and sends the new list to the next participant.
 
-When the last participant has received the required information, he computes a)the shared secret and b) the final intermediate key list. Then he broadcasts the final intermediate key list back to all previous participants, as illustrated in figure \ref{figures:gka_downflow}. This message, containing the final intermediate key list shall be called "Downflow Message".
+In the first step, no previous list is received and the new list is created from scratch. In the last step, the new list is broadcasted to all other participants. We call each of the $n-1$ first steps "Upflow", and the last step "Downflow".
 
-The other participants now can also caclulate the shared secret using the final intermediate key list. Then, they can use it for encryption.
+\subsubsection{Upflows}
+The first participant sends a list containing $g$ and $g^{x_1}$ where $x_1$ is his private exponent. To construct the new key list, each next participant prepends a copy of the last element to the reveived list, and raises every other element to his private exponent. These messages shall be called "Upflow Messages" and the Upflow forwarding procedure is illustrated in figure \ref{figures:gka_upflow}
+ 
+\subsubsection{Downflow}
+Once the last participant has received the Upflow, he calculates $\mathcal{K}$ by raising the last element of the received list to his private exponent. Then, he constructs the final intermediate key list by removing that last element and raising all other elements of the received list to his private exponent. He finally sends the final key list back to all previous participants, as illustrated in figure \ref{figures:gka_downflow}. This message, containing the final intermediate key list shall be called "Downflow Message".
+
+All other participants now can also caclulate the shared secret $\mathcal{K}$. The $i-th$ participant calculates $\mathcal{K}$ by raising $i-th$, {\bf counting from the end}, element of the final intermediate key list to his private exponent. Then, they can use $\mathcal{K}$ for encryption.
+
+\subsubsection{Example}
+To illustrate the intermediate key list construction we give an example of a GKA between 5 participants with private exponents $a$, $b$, $c$, $d$ and $e$, so that:
+\[
+\mathcal{K} = g^{abcde}
+\]
+
+The messages exchanged contain the following intermediate key lists:
+
+\[ 1 \rightarrow 2: g, g^a \]
+\[ 2 \rightarrow 3: g^a, g^b, g^{ab} \]
+\[ 3 \rightarrow 4: g^{ab}, g^{ac}, g^{bc}, g^{abc} \]
+\[ 4 \rightarrow 5: g^{abc}, g^{abd}, g^{acd}, g^{bcd}, g^{abcd} \]
+\[ 5 \rightarrow all: g^{abce}, g^{abde}, g^{acde}, g^{bcde} \]
+
+It's obvious how participant 5 can calculate $\mathcal{K}$ using the last element of the list received, $g^{abcd}$, and his private exponent $e$. It's also obvious how each of the rest participants can calculate $\mathcal{K}$ using his own private exponent and the proper element of the final list.
+
 
 \begin{figure}[H]
   \begin{minipage}{0.49\textwidth}
@@ -318,7 +344,7 @@ Algorithm \ref{upflow_algo} presents an overview of how each upflow message is c
 Algorithm \ref{downflow_algo} presents an overview of how the final, downflow message is constructed using the data received from the last upflow message.
 
 In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo} and \ref{downflow_algo}) are used in order to execute a complete run of the GKA protocol.
-
+\vfill
 \begin{algorithm}[H]
   \KwIn{$\mathcal{P}$ : participants list}
   \KwExtraIn {$InterKeys$ : previous intermediate key list}
@@ -341,7 +367,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
   \caption{SendUpflow($\mathcal{P}$, $InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
   \label{upflow_algo}
 \end{algorithm}
-
+\vfill
 \begin{algorithm}[H]
   \KwIn{$\mathcal{P}$ : participants list}
   \KwExtraIn {$InterKeys$ : previous intermediate key list}
@@ -361,7 +387,6 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
   \caption{SendDownflow($\mathcal{P}$, $InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
   \label{downflow_algo}
 \end{algorithm}
-
 \vfill
 \begin{algorithm}[H]
   \KwIn{$\mathcal{P}$s : participants list}
