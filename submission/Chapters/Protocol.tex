@@ -68,26 +68,51 @@ During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is
 
 \subsection{Offer}
 \label{subsections:offer}
-During the first phase of the setup procedure, which we call "Offer", the participants calculate a unique Session ID, called $sid_i$. This is a value that will be used to distinguish the current session between other sessions created by the same set of participants.
+During the first phase of the setup procedure, which we call "Offer", the participants calculate a unique Session ID, called $sid$. This is a value that will be used to distinguish the current session between other sessions created by the same set of participants $P$.
 
-Each participant $\hat{X}$ chooses a random 256-bit value $x_{\hat{X}}$, which is his contribution to the $sid_i$. We define $sid_i$ as the SHA-512 hash of the serialized ordered list that contains every participant's contribution.
+Each participant $\hat{X}$ chooses a random 256-bit value $c_{\hat{X}}$, which is his contribution to the $sid$. Given an ordering rule described in \ref{sections:participants_ordering}, we define $sid$ as the SHA-512 hash of the serialized ordered list that contains every participant's contribution:
 
-Each offer message contains the sender's contribution along with his position in the participants list.
+\[
+  sid = SHA512(c_{\hat{Y}_1} \Vert c_{\hat{Y}_2} \Vert \cdots)
+\]
 
-The participant who wants to initiate the mpOTR protocol, broadcasts an offer message. Once a participant receives an offer message:
+The contributions are sent with an "Offer Message". An "Offer Message" sent by $\hat{X}$ contains $c_{\hat{X}}$ along with $\hat{X}$'s position in the ordered participants list according to his own perception. The position is sent for technical reasons, so that a disagreement on the participants list can be determined as early as possible.
 
-\begin{itemize}
-	\item[]He checks if the sender's position contained in the message matches his actual position, if not, he rejects the message.
+The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer Message". When other participants receive it, they also broadcast their own "Offer Message". They all store the received contributions as well as their own. Once all messages have been exchanged, all participants can calculate $sid$. Then, they initiate the next sub-protocol. A formal description of the Offer sub-protocol in the context of a participant $\hat{X}$ is shown in algorithm \ref{algo:offer}.
 
-	\item[]He checks if he has already received an offer message from the sender, if so, he rejects the message.
+\begin{algorithm}[H]
+  \KwIn{P : participants list}
+  \KwOut{sid: the session ID}
+  \KwResult{Session ID construction in the context of party $\hat{X}$}
+  \Begin{	
+	$c_{\hat{X}} \leftarrow random$
+	
+	$Broadcast(c_{\hat{X}})$
+	
+	$Outstanding \leftarrow P \textbackslash \{\hat{X}\}$
 
-	\item[]He checks if he has already broadcast his own offer message. If not, creates and broadcasts his own offer message.
+    \While{$Outstanding \neq \emptyset$}{
+    
+      $(\hat{Y}, c) := Receive()$
+      
+      \If{$\hat{Y} \in Outstanding$}{
+      
+        $c_{\hat{Y}} \leftarrow c$
+      
+        $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
+      }
+    }
+   
+    $sid \leftarrow SHA512(c_{\hat{Y}_1} \Vert c_{\hat{Y}_2} \Vert \cdots)$
 
-	\item[]He checks if he has received every participant's contribution. If so, he calculates the $sid_i$ and proceeds to the next setup phase.
-\end{itemize}
+	\Return{$sid$}
 
-Notice that offer messages are not authenticated and hence $sid_i$ must
-be verified \emph{after} the participants have exchanged signing keys, as described in section \ref{subsections:attest}.
+  }
+  \caption{Offer()}
+  \label{algo:offer}
+\end{algorithm}
+
+Notice that "Offer Messages" are not authenticated and hence $sid$ must be verified \emph{after} the participants have exchanged signing keys, as described in section \ref{subsections:attest}.
 
 
 \subsection{Deniable Signature Key Exchange (DSKE)}
@@ -393,13 +418,47 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
 \subsection{Attest}
 \label{subsections:attest}
-During this sub-protocol the participants must verify that they agree on the $sid_i$ and the association table $\mathcal{S}$. This is needed for two reasons. First, because $sid_i$ is required before $\mathcal{S}$ is constructed, and therefore the messages exchanged for the calculation of $sid_i$ can't be signed. Second, because the participants need to verify that they all have the same view of $\mathcal{S}$.
+During this sub-protocol the participants must verify that they agree on the $sid$ and the association table $\mathcal{S}$. This is needed for two reasons. First, because $sid$ is required before $\mathcal{S}$ is constructed, and therefore the messages exchanged for the calculation of $sid$ can't be signed. Second, because the participants need to verify that they all have the same view of $\mathcal{S}$.
 
-Each participant calculates the SHA-512 hash of $\mathcal{S}$, which is sorted in lexicographical order according to each participant's username. Then they broadcast an authenticated message that contains both the $sid_i$ and the calculated hash.
+Each participant calculates the SHA-512 hash of $\mathcal{S}$, which is sorted according to the rule described in \ref{sections:participants_ordering}. Then they broadcast an authenticated message, called "Attest Message", which contains both the $sid$ and the calculated hash. To authenticate the message, each sender signs it using the ephemeral signing key $e_{\hat{X}}$ that has now exchanged with the other participants.
 
-To authenticate the message, each sender uses the ephemeral signing key she has now exchanged with the other participants. When each participant has received the attest messages from every other participant, she must check two things. First, she must verify that the hashes of $\mathcal{S}$ received from the other participants match the one she computed herself. Second, she must check that all participants have sent their messages using the same $sid_i$.
+When a participant receives an "Attest Message", first she must verify the signature. Then she must check for two things. First, verify the received hash of $\mathcal{S}$ matches the one she computed herself. Second, check that the received message uses the expected $sid$. A formal description of the Attest sub-protocol in the context of a participant $\hat{X}$ is shown in algorithm \ref{algo:attest}.
 
-Provided that SHA-512 is a cryptographic hash function an attacker cannot find two signing keys association tables with the same hash. This means that he is not able to make two participants believe that they have arrived at the same table when they have not. Also by signing the message containing the specific $sid_i$, a user implicitly verifies that he is using that particular $sid_i$ for this session.
+Provided that SHA-512 is a cryptographic hash function an attacker can't find two signing keys association tables with the same hash. This means that he is not able to make two participants believe that they have arrived at the same table when they have not. Also by signing the message containing the specific $sid$, a user implicitly verifies that he is using that particular $sid$ for this session.
+
+\begin{algorithm}[H]
+  \KwIn{$\mathcal{P}$ : participants list, $sid$: the session ID, $\mathcal{S}$: the association table}
+  \KwOut{$\mathcal{A}$: "OK" if verification went good, "Error" if it went wrong}
+  \KwResult{authenticate previously unauthenticated protocol parameters for the current session in the context of party $\hat{X}$}
+  \Begin{	
+	$M \leftarrow sid \Vert SHA512(\mathcal{S})$
+	
+	$Broadcast(M)$
+	
+	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
+
+    \While{$Outstanding \neq \emptyset$}{
+    
+      $(\hat{Y}, M_{\hat{Y}}) := Receive()$
+      
+      \If{$M_{\hat{Y}}) \neq M$}{
+            
+        \Return{"Error"}            
+        
+      }
+      \Else{
+      
+        $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
+        
+      }
+    }
+
+	\Return{"OK"}
+
+  }
+  \caption{Attest()}
+  \label{algo:attest}
+\end{algorithm}
 
 \subsection{Communication}
 \label{subsections:communication}
@@ -516,6 +575,7 @@ Each message is signed as a whole.
 This means that the signature covers the message and any metadata sent, like session id, counter value etc.
 
 \section{Participants ordering}
+\label{sections:participants_ordering}
 In many cases, the protocol demands some ordering of the participants. For example, in the Offer step of the Setup phase, the sid contributions should be concatenated in some order before hashing them. Same stands for the public signing keys in the association table, during the Attest step. So we define an ordering rule for the participants, that is used whenever an ordering of elements corresponding to participants is needed.
 
 Given that the application provides the mpOTR protocol with a unique name describing each participant, we make the convention that every ordering of the participants list is made lexicographically based on that unique name. We also define the position of the participant, as his position in this order, starting counting from zero (0).
@@ -545,15 +605,24 @@ When a new chatroom is created, each participant is assigned a list with all kno
 When a "Handshake Message" is received the participants known fingerprints list is checked to find (if it exists) a fingerprint matching the currently used public key.
 If such a fingerprint is found and it is verified, then the user is verified for this session.
 If the found fingerprint is not verified then the participant is not verified.
-If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list.
+If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list. 
 
-\section{Instance tags}
+\section{Message Structure}
+
+\subsection{Top level encoding}
+We follow the OTR rules for the top level encoding of mpOTR messages. That is, all mpOTR messages start with the string "?OTR:" followed by the base64 encoded message and then a "." denoting the end of the message. For a mpOTR message M, we send:
+
+\[ 
+  "?OTR:" \Vert Base64(M) \Vert "."
+\]
+
+\subsection{Instance tags}
 \label{subsections:instance_tags}
-Many IM Protocols allow for a client to be logged into the same account from multiple locations and the server may relay messages to all of them. So, a distinguishing mechanism is required. We follow the same approach used in the version 3 of OTR, called instance tags.
+Many IM Protocols allow for a client to be logged into the same account from multiple locations and the server may relay messages to all of them. The version 3 of OTR utilizes a distinguishing mechanism, called instance tags.
 
-Instance tags are 32-bit values that are intended to be persistent. If the same client is logged into the same account from multiple locations, the intention is that the client will have different instance tags at each location. All mpOTR messages include the sender's instance tag. 
+Instance tags are 32-bit values that are intended to be persistent. If the same client is logged into the same account from multiple locations, the intention is that the client will have different instance tags at each location. All mpOTR messages include the sender's instance tag.
 
-\section{Data Types}
+\subsection{Data Types}
 We present a list of several data types used in mpOTR messages along with their encoding:
 \begin{description}[align=left]
 \item [SHORT] Short integers. 2 byte unsigned value, big-endian.
@@ -566,10 +635,12 @@ We present a list of several data types used in mpOTR messages along with their 
 \item[DATA] Opaque variable-length data. 4 byte unsigned len, big-endian. len byte data.
 \end{description}
 
-\section{Message types}
+\subsection{Message types}
 \label{subsections:message_types}
-There are 12 different types of mpOTR messages. Each message is indicated by a positive integer. We have reserved the zero value to indicate non-OTR messages. The list of these types along with the corresponding integer value is shown below:
+There are 12 different types of mpOTR messages. Each type is indicated by a positive integer. We have reserved the zero value to indicate non-OTR messages. The list of these types along with the corresponding integer value is shown below:
 
+\hfill
+\begin{minipage}{.40\textwidth}
 \begin{description}[align=left]
   \item[0] Non-OTR Message
   \item[1] Offer Message
@@ -578,6 +649,11 @@ There are 12 different types of mpOTR messages. Each message is indicated by a p
   \item[4] Key Message
   \item[5] Upflow Message
   \item[6] Downflow Message
+\end{description}
+\end{minipage}
+\hfill
+\begin{minipage}{.40\textwidth}
+\begin{description}[align=left]
   \item[7] Attest Message
   \item[8] Data Message
   \item[9] Shutdown Message
@@ -585,13 +661,11 @@ There are 12 different types of mpOTR messages. Each message is indicated by a p
   \item[11] End Message
   \item[12] Key Release Message
 \end{description}
+\end{minipage}
+\hfill
 
-\section{Message Structure}
-All mpOTR messages start with the string "?OTR:" followed by the base64 encoded message and then a "." denoting the end of the message.
 
 \subsection{General message structure}
-In figure \ref{figures:general_message_structure} the general structure of mpOTR messages is shown.
-
 \begin{figure}[H]
   \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
     \bitheader{0-7} \\
@@ -607,21 +681,23 @@ In figure \ref{figures:general_message_structure} the general structure of mpOTR
   \label{figures:general_message_structure}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[PV] Protocol Version. A SHORT indicating the Protocol Version the message is intended for.
-  \item[MT] Message Type. A SHORT indicating the type of the message. See \ref{subsections:message_types} for more details.
-  \item [Instance Tag] An INT indicating the instance tag. See \ref{subsections:instance_tags} for more details.
-  \item[Session ID] A HASH64 containing the value of $sid_i$. Not existent in Offer Messages.
-  \item[Payload] Specific data dependent for each type of message. See \ref{subsections:payload_structures} for more details.
-  \item[Signature] The signature covering all data above, used to authenticate the message. Not existent in all message types.
-\end{description}
+In figure \ref{figures:general_message_structure} the general structure of mpOTR messages is shown. Each message contains the following fields:
+\begin{itemize}
+  \item PV: the Protocol Version. A SHORT indicating the Protocol Version the message is intended for.
+  \item MT: the Message Type. A SHORT indicating the type of the message. See \ref{subsections:message_types} for more details.
+  \item Instance Tag: an INT indicating the instance tag. See \ref{subsections:instance_tags} for more details.
+  \item Session ID: a HASH64 containing the value of $sid$. Not existent in Offer Messages.
+  \item Payload: specific data dependent for each type of message. See \ref{subsections:payload_structures} for more details.
+  \item Signature: the signature covering all data above, used to authenticate the message. Not existent in all message types.
+\end{itemize}
 
-Offer Messages contain no Session ID in the header, since $sid_i$ has not been established yet. Offerand DAKE Messages contain no Signature since the association table $\mathcal{S}$ has not been constructed yet. Shutdown KeyRelease Messages contain no Signature since authentication is not required.
+There are only a few exceptions. Offer Messages contain no Session ID in the header, since $sid$ has not been established yet. Offer and DAKE Messages contain no Signature since the association table $\mathcal{S}$ has not been constructed yet. Shutdown KeyRelease Messages also contain no Signature since authentication is not required.
 
 \subsection{Payload structures}
 \label{subsections:payload_structures}
+In the following paragraphs we show the payload structure of each mpOTR message type. We also briefly describe each field.
 
-\subsubsection{Offer message payload}
+\subsubsection{Offer Message Payload}
 \begin{figure}[H]
   \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
     \bitheader{0-7} \\
@@ -633,10 +709,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Offer Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Position] An INT indicating the sender's position in the ordered list of the participants.
-  \item[SID Contribution] A HASH32 containing the sender's contribution for the construction of the $sid_i$.
-\end{description}
+\begin{itemize}
+  \item Position: an INT indicating the sender's position in the ordered list of the participants.
+  \item SID Contribution: a HASH32 containing the sender's contribution for the construction of the $sid$.
+\end{itemize}
 
 \subsubsection{Handshake Message Payload}
 \begin{figure}[H]
@@ -650,10 +726,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Handshake Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Ephemeral PubKey] A MPI containing the public part of the ephemeral key.
-  \item[Longterm PubKey] A MPI containing the public part of the longterm key.
-\end{description}
+\begin{itemize}
+  \item Ephemeral PubKey: a MPI containing the public part of the ephemeral key.
+  \item Longterm PubKey: a MPI containing the public part of the longterm key.
+\end{itemize}
 
 \subsubsection{Confirm Message Payload}
 \begin{figure}[H]
@@ -667,10 +743,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Confirm Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Recipient] An INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
-  \item[TDH MAC] Triple Diffie-Hellman MAC. A HASH32 containing the MAC value for a magic number.
-\end{description}
+\begin{itemize}
+  \item Recipient: an INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
+  \item TDH MAC: a Triple Diffie-Hellman MAC. A HASH32 containing the MAC value for a magic number.
+\end{itemize}
 
 \subsubsection{Key Message Payload}
 \begin{figure}[H]
@@ -686,11 +762,11 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Key Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Recipient] An INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
-  \item[TDH MAC] Triple Diffie-Hellman MAC. A HASH32 containing the MAC value for the following key.
-  \item[Key] The encrypted public part of the ephemeral signing key.
-\end{description}
+\begin{itemize}
+  \item Recipient: an INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
+  \item TDH MAC: a Triple Diffie-Hellman MAC. A HASH32 containing the MAC value for the following key.
+  \item Key: DATA containing the encrypted public part of the ephemeral signing key.
+\end{itemize}
 
 \subsubsection{Upflow Message Payload}
 \begin{figure}[H]
@@ -710,11 +786,11 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Upflow Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Recipient] An INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
-  \item[ListLen] An INT containing the length of the following key list.
-  \item[i-th Key] An MPI containing the i-th key of the intermediate key list.
-\end{description}
+\begin{itemize}
+  \item Recipient: an INT indicating the participant this message is intended for. It's actually his position in the ordered participants list.
+  \item ListLen: an INT containing the length of the following key list.
+  \item i-th Key: an MPI containing the i-th key of the intermediate key list.
+\end{itemize}
 
 \subsubsection{Downflow Message Payload}
 \begin{figure}[H]
@@ -734,10 +810,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Downflow Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[ListLen] An INT containing the length of the following key list.
-  \item[i-th Key] An MPI containing the i-th key of the intermediate key list.
-\end{description}
+\begin{itemize}
+  \item ListLen: an INT containing the length of the following key list.
+  \item i-th Key: an MPI containing the i-th key of the intermediate key list.
+\end{itemize}
 
 \subsubsection{Attest Message Payload}
 \begin{figure}[H]
@@ -749,10 +825,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Attest Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Session ID] An HASH64 containing the value of $sid_i$.
-  \item[Association Table Hash] An HASH64 containing the hash of the association table $\mathcal{S}$.
-\end{description}
+\begin{itemize}
+  \item Session ID: a HASH64 containing the value of $sid$.
+  \item Association Table Hash: a HASH64 containing the hash of the association table $\mathcal{S}$.
+\end{itemize}
 
 \subsubsection{Data Message Payload}
 \begin{figure}[H]
@@ -765,10 +841,10 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Data Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[CTR] A CTR. The top half of the counter for AES CTR-mode.
-  \item[Ciphertext] DATA. The encrypted message.
-\end{description}
+\begin{itemize}
+  \item CTR: a CTR containing the top half of the counter for AES CTR-mode.
+  \item Ciphertext: a DATA containing the encrypted message.
+\end{itemize}
 
 \subsubsection{Shutdown Message Payload}
 \begin{figure}[H]
@@ -779,9 +855,9 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Shutdown Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Shutdown Hash] A HASH64 containing the hash of the sender's transcript.
-\end{description}
+\begin{itemize}
+  \item Shutdown Hash: a HASH64 containing the hash of the sender's transcript.
+\end{itemize}
 
 \subsubsection{Digest Message Payload}
 \begin{figure}[H]
@@ -792,12 +868,12 @@ Offer Messages contain no Session ID in the header, since $sid_i$ has not been e
   \caption{The structure of Digest Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Digest] A HASH64 containing the hash of all transcripts.
-\end{description}
+\begin{itemize}
+  \item Digest: a HASH64 containing the hash of all transcripts.
+\end{itemize}
 
 \subsubsection{End Message Payload}
-An End Message contains no payload.
+End Messages contain no payload.
 
 \subsubsection{Key Release Message Payload}
 \begin{figure}[H]
@@ -809,6 +885,6 @@ An End Message contains no payload.
   \caption{The structure of Key Release Message payload}
 \end{figure}
 
-\begin{description}[align=left]
-  \item[Key] DATA. The value of the key to be revealed.
-\end{description}
+\begin{itemize}
+  \item Key: a DATA containing the value of the key to be revealed.
+\end{itemize}

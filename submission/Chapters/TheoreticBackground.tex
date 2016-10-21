@@ -57,30 +57,40 @@ It is easy to see that the decryption is trivial:
   M = D(k, c_1) || \dots || D(k, c_n)
 \]
 
-However this has a crucial weakness.
-You can easily see that if two chunks are the same then the resulting ciphertext will also be the same.
-This might not seem important, but, believe us, it is detrimental to the mode's security.
-Don't believe us yet? Here is an example:
+However, this has a crucial weakness. You can easily see that if two chunks are the same then the resulting ciphertext will also be the same. As a result data patterns in the plaintext may remain in the ciphertext as well. This might not seem important, but, believe us, it is detrimental to the mode's security. Don't believe us yet? A striking example is shown in figure \ref{figures:ecb_in_practice} where ECB mode is used to encrypt a bitmap image which uses large areas of uniform colour.
 
 \begin{figure}[h]
-  \begin{minipage}{0.49\textwidth}
-    \includegraphics[scale=0.8]{Figures/Tux.jpg}
-  \end{minipage}
-  \begin{minipage}{0.49\textwidth}
-    \includegraphics[scale=0.8]{Figures/Tux_ecb.jpg}
-  \end{minipage}
-  \caption[ECB in practice]{The image on the left is the plaintext. The image on the right is the plaintext encrypted with ECB mode. The plaintext image was created by Larry Ewing using GIMP.}
+  \centering
+  \hfill
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{Figures/Tux.jpg}
+    \caption{Original image}
+    \label{figures:tux}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{Figures/Tux_ecb.jpg}
+    \caption{Encrypted using ECB mode}
+    \label{figures:tux_ecb}
+  \end{subfigure}
+  \caption[ECB in practice]{ECB in practice. The original image was created by Larry Ewing using GIMP.}
+  \label{figures:ecb_in_practice}
+  \hfill
 \end{figure}
 
 The other is called Counter mode (CTR).
 In this mode the block cipher itself does not encrypt the plaintext.
 Instead it is used to produce a pseudo-random sequence of bits, in chunks equal to one block, which is then xor'ed with the plaintext.
 
-To produce the $i$-th chunk $s_i$, it "encrypts" the number $i$ with the provided key.
-As a result a bit stream is generated as shown below:
+To produce the $i$-th chunk $s_i$, it "encrypts" the number $i$ with the provided key:
+\[
+  s_i = E(k, i)
+\]
+
+As a result, a bit stream is generated as shown below:
 
 \[
-  S = E(k, 1) || E(k, 2) || \dots || E(k, n)
+  S = s_1 || s_2 || \dots || s_n
 \]
 
 And the resulting ciphertext is:
@@ -149,7 +159,7 @@ If this value is computed in such a way that the hash function $H$ satisfies the
     For essentially any output value $h$ of the hash function $H$ it is computationally infeasible to find any input $x$ such that $H(x) = h$.
 
   \item Second pre-image resistance\\[0.2cm]
-    For a given input $x$ it is computationally infeasible to find a second input $x\prime$ such that $x \ne x\prime$ and $H(x) = H(x\prime)$$x \ne x\prime$ and $H(x) = H(x\prime)$.
+    For a given input $x$ it is computationally infeasible to find a second input $x\prime$ such that $x \ne x\prime$ and $H(x) = H(x\prime)$.
 
   \item Collision resistance\\[0.2cm]
     It is computationally infeasibly to find any pair of inputs $x$ and $x\prime$ such that $H(x) = H(x\prime)$\footnote{This and the previous property might seem the same, but notice that in the Second pre-image property $x$ is fixed, while in the collision resistance property it is not}.
@@ -181,7 +191,7 @@ The algorithm works in a way such that the produced tag $t$ can only be calculat
 \]
 
 When the sending party wants to transmit a message, she calculates the tag and appends it to the message so that she sends $m||t$.
-The receiving can recalculate the tag on his own.
+The receiving party can recalculate the tag on his own.
 He then checks if the appended tag is the same with the tag that he calculated.
 If the two tags are the same then he accepts the message, otherwise he rejects it as it is probably tampered with.
 
@@ -212,14 +222,13 @@ if $result$ is "YES" then she accepts the message. Otherwise she rejects it.
 
 \section{Key Exchange Protocols (KEP)}
 
-The goal of any key exchange protocol is to allow two users to agree on a secret value, known only to them, by exchanging some publicly known information.
+The goal of any Key Exchange Protocol is to allow two users to agree on a secret value, known only to them, by exchanging some publicly known information.
 This might be counter intuitive at first but as we will see in the next section this goal can be achieved with a very simple construction.
 
-Basically a key exchange protocol is any mechanism that provides two functions.
+Basically a Key Exchange Protocol is any mechanism that provides two functions.
 One of them returns a tuple containing some private and some public information.
-The public information returned by that function must be sent to the other so that he can calculate the secret value.
-The other accepts the public values of the other user and the private values of this user.
-It returns the secret value.
+The public information returned by that function must be sent to the other user so that he can calculate the secret value.
+The other function accepts the public values of the other user and the private values of this user and returns the secret value.
 
 \begin{figure}[H]
   \begin{align*}
@@ -304,7 +313,7 @@ From now on, the public and private information of a user will be called public 
   \Begin{
     \Return{$(g^y)^x$}
   }
-  \caption{The $genkey$ function}
+  \caption{The $calculate\_secret$ function}
   \label{algo:dh_calculate_secret}
 \end{algorithm}
 
@@ -313,38 +322,28 @@ From now on, the public and private information of a user will be called public 
 Although \dhname is a great protocol for calculating shared secrets, it has a grave disadvantage.
 Consider the following scenario, where Mallory, an evil attacker can control the network so that she can read, drop, and inject packets:
 
-User $i$ wants to privately communicate with user $j$.
-She generates a private key $x$ and sends the public key $g^x$ to $j$.
+Alice wants to privately communicate with Bob. She generates a private key $x$ and sends the public key $g^x$ to Bob.
 
-Mallory interjects and copies and then drops the packet containing $i$'s public key.
-She generates a private key $x\prime$ and the public counterpart $g^{x\prime}$.
-She performs a \dhname exchange with $i$'s key and calculates $s_1 = g^{xx\prime}$, since she knows $x\prime$.
-She then sends her public key to user $j$.
+Mallory interjects and copies and then drops the packet containing Alice's public key. She generates a private key $x\prime$ and the public counterpart $g^{x\prime}$. She performs a \dhname exchange with Alice's key and calculates $s_1 = g^{xx\prime}$, since she knows $x\prime$.
+She then sends her public key to Bob.
 
-$j$ believes that the public key he just received belongs to $i$.
-He generates his private key $y$, and sends the public key $g^y$ to $i$.
-He also calculates $s_2 = g^{yx\prime}$ what he thinks is a shared secret known only to him and $i$.
+Bob believes that the public key he just received belongs to Alice. He generates his private key $y$, and sends the public key $g^y$ to Alice. He also calculates $s_2 = g^{yx\prime}$ what he thinks is a shared secret known only to him and Alice.
 
-Mallory interjects again to copy and drop the just sent package from the network.
-She calculates $s_2 = g^{yx\prime}$, again she knows $x\prime$.
-Then she sends her public key $g^{x\prime}$ to $i$, posing as $j$.
+Mallory interjects again to copy and drop the just sent package from the network. She calculates $s_2 = g^{yx\prime}$, again she knows $x\prime$. Then she sends her public key $g^{x\prime}$ to Alice, posing as Bob.
 
-Now $i$ receives a public key which she thinks belongs to $j$.
-Like $j$ she calculates the shared secret $s_1 = g^{xx\prime}$ which she thinks is only known between her and $j$.
+Now Alice receives a public key which she thinks belongs to Bob. Like Bob she calculates the shared secret $s_1 = g^{xx\prime}$ which she thinks is only known between her and Bob.
 
 \begin{figure}[h]
 \includegraphics[scale=0.4]{Figures/Person_in_the_middle_attack.jpg}
 \caption[A Person-in-the-Middle attack]{This figure demonstrates the situation just after Mallory has performed her Person-in-the-Middle attack.}
 \end{figure}
 
-The situation now is that $i$ and $j$ use two different secrets to communicate which are both known to Mallory.
-Mallory can decrypt any message sent by $i$, for example, since she knows $s_i$.
-She then can re-encrypt it using $s_2$ and relay it to $j$.
+The situation now is that Alice and Bob use two different secrets to communicate which are both known to Mallory. Mallory can decrypt any message sent by Alice, for example, since she knows $s_1$.
+She then can re-encrypt it using $s_2$ and relay it to Bob.
 
-Nor $i$ neither $j$ will be able to know that such tampering is taking place and will continue to communicate, thinking that everything is fine.
+Neither Alice nor Bob will be able to know that such tampering is taking place and will continue to communicate, thinking that everything is fine.
 
-The above scenario was described with the \dhname key exchange in mind.
-However any similar situation where a malicious attacker can get between two communicating partners who think they are talking directly to each other is known as a Person-in-the-Middle attack.
+The above scenario was described with the \dhname key exchange in mind. However any similar situation where a malicious attacker can get between two communicating partners who think they are talking directly to each other is known as a Person-in-the-Middle attack.
 
 \section{\tdhname key exchange}
 \begin{figure}[h]
@@ -366,9 +365,7 @@ This should be authenticated to other users to exclude a person-in-the-middle at
 When Alice wants to communicate with Bob, she generates an ephemeral \dhname key.
 Suppose $X$ is her longterm private key and $x$ is her ephemeral private key.
 
-She then sends the tuple $(g^X, g^x)$ to Bob, who upon receiving it does exactly what Alice did.
-Supposing $Y$ is his longterm private key, he generates an ephemeral key $y$.
-He then calculates the shared secret $s$ as shown below:
+She then sends the tuple $(g^X, g^x)$ to Bob, who upon receiving it does exactly what Alice did. He generates an ephemeral key $y$. Supposing $Y$ is his longterm private key, he then calculates the shared secret $s$ as shown below:
 
 \[
   s = g^{Xy} || g^{xY} || g^{xy}
@@ -402,27 +399,19 @@ It is deniable since the only values exchanged during the protocol are public ke
 
 \subsection{The catch}
 
-There is a catch however. Suppose Eve would like to be able to read \emph{some} message that Alice has authored and sent to Bob.
-What she can do is create an "ephemeral" key $e$.
-She then starts a conversation with Alice, posing as Bob.
-Alice might respond, create the shared secret and start communicating.
-Eve does NOT know the shared secret, so she can't read any messages or prove anything, but she might be able to calculate it in the future.
+There is a catch however. Suppose Eve would like to be able to read \emph{some} message that Alice has authored and sent to Bob. What she can do is create an "ephemeral" key $e$. She then starts a conversation with Alice, posing as Bob. She can do this since $Y$ is a longterm key, and $g^Y$ may have previously been publicly exchanged. Alice might respond, create the shared secret and start communicating. Eve does NOT know the shared secret, so she can't read any messages or prove anything, but she might be able to calculate it in the future.
 
-If Eve at some point forces Bob to hand over his long term secrets then she can recreate the shared secret.
-She can thus read the first message that Alice has tried to send to "Bob" using the shared secret calculate with the phony ephemeral.
-This is possible since she now knows $Y$ (bob's longterm secret) and she also knows $e$.
-This breaks the forward secrecy of the protocol.
+If Eve at some point in the future forces Bob to hand over his long term secrets then she can recreate the shared secret. She can thus read the first message that Alice has tried to send to "Bob" using the shared secret calculated with the phony ephemeral. This is possible since she now knows $Y$ (Bob's longterm secret) and she also knows $e$. This breaks the forward secrecy of the protocol.
 
 This can be easily solved if both Alice and Bob first make sure that they have both arrived at the same shared secret.
 
-Suppose that Alice has calculated the shared secret $s$. She uses that secret to send an encrypted and authenticated message to Bob.
-That message contains data known to everybody, the word "confirmation" for example.
-She won't send any further messages unless she receives the same confirmation message from Bob.
+Suppose that Alice has calculated the shared secret $s$. She uses that secret to send an encrypted and authenticated message to Bob. That message contains data known to everybody, the word "confirmation" for example. She won't send any further messages unless she receives the same confirmation message from Bob.
 
 On receiving the confirmation message Bob can be sure that Alice has calculated the shared secret.
-He then sends a confirmation message himself, so that Alice too can be sure that Bob has calculated the shared secret.
+He then sends a confirmation message himself, so that Alice too can be sure that Bob has calculated the shared secret. Eve could not have sent such a message because she currently doesn't know $Y$, needed for her to calculate $s$.
 
 \section{Message Ordering}
+\label{sections:message_ordering}
 
 One difficulty that multi-party chat protocols need to overcome is that of message ordering.
 This is confusing at first.
