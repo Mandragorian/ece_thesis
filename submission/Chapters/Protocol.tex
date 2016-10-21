@@ -68,26 +68,51 @@ During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is
 
 \subsection{Offer}
 \label{subsections:offer}
-During the first phase of the setup procedure, which we call "Offer", the participants calculate a unique Session ID, called $sid_i$. This is a value that will be used to distinguish the current session between other sessions created by the same set of participants.
+During the first phase of the setup procedure, which we call "Offer", the participants calculate a unique Session ID, called $sid$. This is a value that will be used to distinguish the current session between other sessions created by the same set of participants $P$.
 
-Each participant $\hat{X}$ chooses a random 256-bit value $x_{\hat{X}}$, which is his contribution to the $sid_i$. We define $sid_i$ as the SHA-512 hash of the serialized ordered list that contains every participant's contribution.
+Each participant $\hat{X}$ chooses a random 256-bit value $c_{\hat{X}}$, which is his contribution to the $sid$. Given an ordering rule described in \ref{sections:participants_ordering}, we define $sid$ as the SHA-512 hash of the serialized ordered list that contains every participant's contribution:
 
-Each offer message contains the sender's contribution along with his position in the participants list.
+\[
+  sid = SHA512(c_{\hat{Y}_1} \Vert c_{\hat{Y}_2} \Vert \cdots)
+\]
 
-The participant who wants to initiate the mpOTR protocol, broadcasts an offer message. Once a participant receives an offer message:
+The contributions are sent with an "Offer Message". An "Offer Message" sent by $\hat{X}$ contains $c_{\hat{X}}$ along with $\hat{X}$'s position in the ordered participants list according to his own perception. The position is sent for technical reasons, so that a disagreement on the participants list can be determined as early as possible.
 
-\begin{itemize}
-	\item[]He checks if the sender's position contained in the message matches his actual position, if not, he rejects the message.
+The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer Message". When other participants receive it, they also broadcast their own "Offer Message". They all store the received contributions as well as their own. Once all messages have been exchanged, all participants can calculate $sid$. Then, they initiate the next sub-protocol. A formal description of the Offer sub-protocol in the context of a participant $\hat{X}$ is shown in algorithm \ref{algo:offer}.
 
-	\item[]He checks if he has already received an offer message from the sender, if so, he rejects the message.
+\begin{algorithm}[H]
+  \KwIn{P : participants list}
+  \KwOut{sid: the session ID}
+  \KwResult{Session ID construction in the context of party $\hat{X}$}
+  \Begin{	
+	$c_{\hat{X}} \leftarrow random$
+	
+	$Broadcast(c_{\hat{X}})$
+	
+	$Outstanding \leftarrow P \textbackslash \{\hat{X}\}$
 
-	\item[]He checks if he has already broadcast his own offer message. If not, creates and broadcasts his own offer message.
+    \While{$Outstanding \neq \emptyset$}{
+    
+      $(\hat{Y}, c) := Receive()$
+      
+      \If{$\hat{Y} \in Outstanding$}{
+      
+        $c_{\hat{Y}} \leftarrow c$
+      
+        $Outstanding \leftarrow Outstanding \textbackslash {\hat{Y}}$
+      }
+    }
+   
+    $sid \leftarrow SHA512(c_{\hat{Y}_1} \Vert c_{\hat{Y}_2} \Vert \cdots)$
 
-	\item[]He checks if he has received every participant's contribution. If so, he calculates the $sid_i$ and proceeds to the next setup phase.
-\end{itemize}
+	\Return{$sid$}
 
-Notice that offer messages are not authenticated and hence $sid_i$ must
-be verified \emph{after} the participants have exchanged signing keys, as described in section \ref{subsections:attest}.
+  }
+  \caption{offer()}
+  \label{algo:offer}
+\end{algorithm}
+
+Notice that "Offer Messages" are not authenticated and hence $sid$ must be verified \emph{after} the participants have exchanged signing keys, as described in section \ref{subsections:attest}.
 
 
 \subsection{Deniable Signature Key Exchange (DSKE)}
@@ -516,6 +541,7 @@ Each message is signed as a whole.
 This means that the signature covers the message and any metadata sent, like session id, counter value etc.
 
 \section{Participants ordering}
+\label{sections:participants_ordering}
 In many cases, the protocol demands some ordering of the participants. For example, in the Offer step of the Setup phase, the sid contributions should be concatenated in some order before hashing them. Same stands for the public signing keys in the association table, during the Attest step. So we define an ordering rule for the participants, that is used whenever an ordering of elements corresponding to participants is needed.
 
 Given that the application provides the mpOTR protocol with a unique name describing each participant, we make the convention that every ordering of the participants list is made lexicographically based on that unique name. We also define the position of the participant, as his position in this order, starting counting from zero (0).
