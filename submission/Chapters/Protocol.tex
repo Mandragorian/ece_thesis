@@ -108,7 +108,7 @@ The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer M
 	\Return{$sid$}
 
   }
-  \caption{offer()}
+  \caption{Offer()}
   \label{algo:offer}
 \end{algorithm}
 
@@ -418,13 +418,47 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
 \subsection{Attest}
 \label{subsections:attest}
-During this sub-protocol the participants must verify that they agree on the $sid_i$ and the association table $\mathcal{S}$. This is needed for two reasons. First, because $sid_i$ is required before $\mathcal{S}$ is constructed, and therefore the messages exchanged for the calculation of $sid_i$ can't be signed. Second, because the participants need to verify that they all have the same view of $\mathcal{S}$.
+During this sub-protocol the participants must verify that they agree on the $sid$ and the association table $\mathcal{S}$. This is needed for two reasons. First, because $sid$ is required before $\mathcal{S}$ is constructed, and therefore the messages exchanged for the calculation of $sid$ can't be signed. Second, because the participants need to verify that they all have the same view of $\mathcal{S}$.
 
-Each participant calculates the SHA-512 hash of $\mathcal{S}$, which is sorted in lexicographical order according to each participant's username. Then they broadcast an authenticated message that contains both the $sid_i$ and the calculated hash.
+Each participant calculates the SHA-512 hash of $\mathcal{S}$, which is sorted according to the rule described in \ref{sections:participants_ordering}. Then they broadcast an authenticated message, called "Attest Message", which contains both the $sid$ and the calculated hash. To authenticate the message, each sender signs it using the ephemeral signing key $e_{\hat{X}}$ that has now exchanged with the other participants.
 
-To authenticate the message, each sender uses the ephemeral signing key she has now exchanged with the other participants. When each participant has received the attest messages from every other participant, she must check two things. First, she must verify that the hashes of $\mathcal{S}$ received from the other participants match the one she computed herself. Second, she must check that all participants have sent their messages using the same $sid_i$.
+When a participant receives an "Attest Message", first she must verify the signature. Then she must check for two things. First, verify the received hash of $\mathcal{S}$ matches the one she computed herself. Second, check that the received message uses the expected $sid$. A formal description of the Attest sub-protocol in the context of a participant $\hat{X}$ is shown in algorithm \ref{algo:attest}.
 
-Provided that SHA-512 is a cryptographic hash function an attacker cannot find two signing keys association tables with the same hash. This means that he is not able to make two participants believe that they have arrived at the same table when they have not. Also by signing the message containing the specific $sid_i$, a user implicitly verifies that he is using that particular $sid_i$ for this session.
+Provided that SHA-512 is a cryptographic hash function an attacker can't find two signing keys association tables with the same hash. This means that he is not able to make two participants believe that they have arrived at the same table when they have not. Also by signing the message containing the specific $sid$, a user implicitly verifies that he is using that particular $sid$ for this session.
+
+\begin{algorithm}[H]
+  \KwIn{$\mathcal{P}$ : participants list, $sid$: the session ID, $\mathcal{S}$: the association table}
+  \KwOut{$\mathcal{A}$: "OK" if verification went good, "Error" if it went wrong}
+  \KwResult{authenticate previously unauthenticated protocol parameters for the current session in the context of party $\hat{X}$}
+  \Begin{	
+	$M \leftarrow sid \Vert SHA512(\mathcal{S})$
+	
+	$Broadcast(M)$
+	
+	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
+
+    \While{$Outstanding \neq \emptyset$}{
+    
+      $(\hat{Y}, M_{\hat{Y}}) := Receive()$
+      
+      \If{$M_{\hat{Y}}) \neq M$}{
+            
+        \Return{"Error"}            
+        
+      }
+      \Else{
+      
+        $Outstanding \leftarrow Outstanding \textbackslash {\hat{Y}}$
+        
+      }
+    }
+
+	\Return{"OK"}
+
+  }
+  \caption{Attest()}
+  \label{algo:attest}
+\end{algorithm}
 
 \subsection{Communication}
 \label{subsections:communication}
