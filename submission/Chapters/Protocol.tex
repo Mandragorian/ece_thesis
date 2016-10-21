@@ -99,7 +99,7 @@ The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer M
       
         $c_{\hat{Y}} \leftarrow c$
       
-        $Outstanding \leftarrow Outstanding \textbackslash {\hat{Y}}$
+        $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
       }
     }
    
@@ -448,7 +448,7 @@ Provided that SHA-512 is a cryptographic hash function an attacker can't find tw
       }
       \Else{
       
-        $Outstanding \leftarrow Outstanding \textbackslash {\hat{Y}}$
+        $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
         
       }
     }
