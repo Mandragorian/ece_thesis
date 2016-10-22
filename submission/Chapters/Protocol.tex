@@ -15,6 +15,20 @@ In the context of the multi-party chat room, one more property is required:
 \item[Chat room transcript consistency] All participants share the same view over the messages exchanged in a given chat room.
 \end{description}
 
+\section{Underlying network setting}
+The mpOTR Protocol is designed to run on top of an existing network setting. This may be any application layer protocol, such as Jabber/XMPP, IRC, etc. 
+
+We assume that the application layer protocol offers the following network primitives in the context of chatrooms:
+\begin{itemize}
+\item $Broadcast(M)$ --- sends a message $M$ over the chat room  where it can be $Receive()$'ed by all other participants.
+\item $Receive() \rightarrow (\hat{A}, M)$ --- returns any waiting message $M$ received by the participant that invokes $Receive()$ along with M's alleged author $\hat{A}$.
+\end{itemize}
+
+In the following, we use M as a representation of either a single value, or multiple values which we denote using the concatenation symbol ($\Vert$). We describe the exact structures and value encodings of mpOTR messages in \ref{sections:message_structure}.
+
+We also assume that any message fragmentation is handled by the application layer protocol, which delivers mpOTR messages as whole to the mpOTR Protocol. However, in some cases this may not be the case. We discuss this in more detail in \ref{sections:fragmentation}.
+
+Finally, notice that we assume no security provided by the underlying network. An adversary may have complete control over the network and may modify, drop and/or deliver messages at will. The realization of the privacy properties exclusively relys on the mpOTR Protocol.
 
 \section{High level protocol overview}
 \begin{algorithm}[H]
@@ -49,7 +63,7 @@ In the context of the multi-party chat room, one more property is required:
   \caption{The mpOTR protocol}
 \end{algorithm}
 
-In Algorithm \ref{algorithms:mpotr_algo} we illustrate high-level overview of the protocol. The whole protocol has been divided into sequential phases, which we call sub-protocols. The first four of them (Offer, DSKE GKA and Attest) are responsible for setting up all the needed parameters, for the private communication to take place. The Communication sub-protocol is the one that governs the actual private group conversation. Finally, the Shutdown sub-protocol is responsible for every action that needs to be done before ending each private session. We briefly describe the function of each sub-protocol below.
+In Algorithm \ref{algorithms:mpotr_algo} we illustrate a high-level overview of a single session of the mpOTR Protocol. The whole protocol has been divided into sequential phases, which we call sub-protocols. The first four of them (Offer, DSKE GKA and Attest) are responsible for setting up all the needed parameters, for the private communication to take place. The Communication sub-protocol is the one that governs the actual private group conversation. Finally, the Shutdown sub-protocol is responsible for every action that needs to be done before ending each private session. We briefly describe the function of each sub-protocol below.
 
 During the Offer sub-protocol, the participants create a Session ID, $sid$. This is a unique (with high probability) number identifying the session. The Offer sub-protocol is described in more detail in section \ref{subsections:offer}. 
 
@@ -256,6 +270,48 @@ can be used as a denAKE.
 \end{figure}
 
 \clearpage
+
+\subsubsection{Authenticated message exchange}
+Once all participants have run the DSKE sub-protocol they all have constructed the association table $\mathcal{S}$ which associates each participant to their ephemeral signing key for this session. From now on, $\mathcal{S}$ can be used to authenticate the messages exchanged in the current session.
+
+In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is sent and in algorithm \ref{algo:auth_receive} we show how an authenticated message is received and verified.
+
+\begin{algorithm}[H]
+  \KwIn{$M$ : message}
+  \KwExtraIn {$\mathcal{S}$ : the ephemeral signing key assocation table}
+  \KwResult{authenticated M is brodcast}
+  \Begin
+  {	
+	$e_{\hat{X}} \leftarrow \mathcal{S}[\hat{X}]$
+	
+	$\sigma \leftarrow Sign_{e_{\hat{X}}}(M)$
+	
+	$Broadcast(M \Vert \sigma)$
+  }
+  \caption{AuthBroadcast($M$, $\mathcal{S}$) --- broadcast message M authenticated under paricipant $\hat{X}$'s ephemeral signing key.}
+  \label{algo:auth_broadcast}
+\end{algorithm}
+
+\begin{algorithm}[H]
+  \KwIn{$\mathcal{S}$ : the ephemeral signing key assocation table}
+  \KwOut{the sender and the message on success, sender and $\perp$ on failure}
+  \Begin
+  {	
+    $(\hat{Y}, M \Vert \sigma) \leftarrow Receive()$  
+  
+    $e_{\hat{Y}} \leftarrow \mathcal{S}[\hat{Y}]$
+  
+    \If{$Verify(M, \sigma, e_{\hat{Y}}) = false$}
+    {
+      \Return{$(\hat{Y}, \perp)$}
+    }  
+  
+    \Return{$(\hat{Y}, M)$}
+  }
+  \caption{AuthReceive($\mathcal{S}$) --- attempt to receive an authenticated message.}
+  \label{algo:auth_receive}
+\end{algorithm}
+
 \subsection{Group Key Agreement (GKA)}
 \label{subsections:gka}
 
@@ -346,7 +402,8 @@ Algorithm \ref{downflow_algo} presents an overview of how the final, downflow me
 In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo} and \ref{downflow_algo}) are used in order to execute a complete run of the GKA protocol.
 \vfill
 \begin{algorithm}[H]
-  \KwIn{$\mathcal{P}$ : participants list}
+  \KwIn {$\mathcal{P}$ : participants list}
+  \KwExtraIn {$\mathcal{S}$ : association table}
   \KwExtraIn {$InterKeys$ : previous intermediate key list}
   \KwExtraIn {$x$ : user's secret key}
   \KwExtraIn {$\hat{Y}$ : the next participant}
@@ -362,14 +419,15 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
       $inter\_key\_list.Append(k^x)$
     }
 
-    $AuthSend(\hat{Y}, inter\_key\_list)$
+    $AuthBroadcast(\hat{Y} \Vert inter\_key\_list, \mathcal{S})$
   }
-  \caption{SendUpflow($\mathcal{P}$, $InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
+  \caption{SendUpflow($\mathcal{P}$, $\mathcal{S}$, $InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
   \label{upflow_algo}
 \end{algorithm}
 \vfill
 \begin{algorithm}[H]
-  \KwIn{$\mathcal{P}$ : participants list}
+  \KwIn {$\mathcal{P}$ : participants list}
+  \KwExtraIn {$\mathcal{S}$ : association table}
   \KwExtraIn {$InterKeys$ : previous intermediate key list}
   \KwExtraIn {$x$ : user's secret key}
   \KwResult{Broadcasts the downflow intermediate key list to the other participants}
@@ -382,14 +440,16 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
       $inter\_key\_list.Append(k^x)$
 	}
 
-    $AuthBroadcast(inter\_key\_list)$
+    $AuthBroadcast(inter\_key\_list, \mathcal{S})$
   }
-  \caption{SendDownflow($\mathcal{P}$, $InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
+  \caption{SendDownflow($\mathcal{P}$, $\mathcal{S}$, $InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
   \label{downflow_algo}
 \end{algorithm}
 \vfill
 \begin{algorithm}[H]
-  \KwIn{$\mathcal{P}$ : participants list}
+  \KwIn{$sid$ : session ID}
+  \KwExtraIn{$\mathcal{S}$ : association table}
+  \KwExtraIn{$\mathcal{P}$ : participants list}
   \KwOut{$\mathcal{K}$: the shared secret}
   \Begin
   {
@@ -400,19 +460,23 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
     $\hat{Y}_{next} \leftarrow \hat{X}.Next()$   
 
     \If{$\hat{Y}_{prev}$ = NULL}{
-      $SendUpflow(P, [G], x, \hat{Y}_{next})$
+      $SendUpflow(P, \mathcal{S}, [G], x, \hat{Y}_{next})$
     }
     \Else
     {
-      $(\hat{Y}, key\_list) \leftarrow AuthReceive()$
+      
+      \Repeat{$\hat{R} = \hat{X}$}
+      {
+        $(\hat{Y}, \hat{R} \Vert key\_list) \leftarrow AuthReceive(\mathcal{S})$
+      }
 
-      \If{$\hat{Y}$ $\neq$ $\hat{Y}_{prev}$ $\lor$ Validate($key\_list$) = false}
+      \If{$\hat{Y}$ $\neq$ $\hat{Y}_{prev}$ $\lor$ $\hat{R} \Vert key\_list = \perp$}
       {
         \Return{error}
       }
       \If{$\hat{Y}_{next}$ $\neq$ NULL}
       {
-        $SendUpflow(P, key\_list, x, \hat{Y}_{next})$
+        $SendUpflow(P, \mathcal{S}, key\_list, x, \hat{Y}_{next})$
       }
       \Else
       {
@@ -420,15 +484,17 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
         $\mathcal{K} \leftarrow final\_key^x$
 
-        $SendDownflow(P, key\_list, x)$
+        $SendDownflow(P, \mathcal{S}, key\_list, x)$
 
         \Return{$\mathcal{K}$}
       }
     }
 
-    $(\hat{Y}, key\_list) \leftarrow AuthReceive()$
-
-    \If{$\hat{Y}$ $\neq$ $\mathcal{P}.Last()$ $\lor$ Validate($key\_list$) = false}
+    \Repeat{$\hat{Y}$ = $\mathcal{P}.Last()$}
+    {
+      $(\hat{Y}, key\_list) \leftarrow AuthReceive(\mathcal{S})$
+    }
+    \If{$key\_list = \perp$}
     {
       \Return{error}
     }
@@ -441,7 +507,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
 	\Return{$\mathcal{K}$}
   }
-  \caption{GKA - executes a Group Key Agreement and produces the shared secret in the context of party $\hat{X}$.}
+  \caption{GKA($sid$, $\mathcal{S}$, $\mathcal{P}$) - executes a Group Key Agreement and produces the shared secret in the context of party $\hat{X}$.}
   \label{gka_proto_algo}
 \end{algorithm}
 
@@ -470,9 +536,9 @@ Provided that SHA-512 is a cryptographic hash function an attacker can't find tw
 
     \While{$Outstanding \neq \emptyset$}
     {
-      $(\hat{Y}, M_{\hat{Y}}) := AuthReceive()$
+      $(\hat{Y}, M_{\hat{Y}}) := AuthReceive(\mathcal{S})$
       
-      \If{$M_{\hat{Y}}) \neq M$}
+      \If{$M_{\hat{Y}} = \perp \lor  M_{\hat{Y}} \neq M$}
       {     
         \Return{"Error"}            
         
@@ -637,7 +703,23 @@ If such a fingerprint is found and it is verified, then the user is verified for
 If the found fingerprint is not verified then the participant is not verified.
 If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list. 
 
+\section{Handling out-of-order messages}
+In the protocol description above, we silently assumed that messages are delivered in-order. In fact, in a distributed context, like the mpOTR, this can be really tricky.
+
+Specificaly in our construction, there are quite a lot messages exchanged during the first four sub-protocols that run automatically to setup the session parameters and hence these messages are usually exchanged in a narrow period of time. Latency differences between participants, either due to the underlying network or due to the participants' equipment may result in out-of-order message delivery to some participants\footnote{In fact, this was one of the first complications we faced during our implementation.}.
+
+For example, there exists a possible scenario where all Offer Messages have been sent, but some of them have only reached some participants in some point of time. In that case, those who have received the Offer Messages proceed to the DSKE sub-protocol and send their Handshake Messages. The latter, may reach participants that haven't yet finished the Offer sub-protocol, and obviously cannot be handled by them.
+
+So, there is a need for some mechanism that ensures that mpOTR messages are handled in-order by the mpOTR Protocol. There are two general approaches to solve this problem in a distributed context.
+
+The first possible approach is the utilization of some synchronization mechanism between the participants so that each participant would ensure that all other participants can handle a message before he sends it. However, this is a rather complicated approach because it would require more messages to be exchanged so that the participants could signal points of synchronization amongst themselves.
+
+We utilized the second approach, which is to make the receivers responsible for handling the received messages in-order. This is a rather simple approach, since it only requires each participant to keep out-of-order messages in a pending queue and handle them when messages supposed to be received ealrier have indeed been received and handled.
+
+
+
 \section{Message Structure}
+\label{sections:message_structure}
 
 \subsection{Top level encoding}
 We follow the OTR rules for the top level encoding of mpOTR messages. That is, all mpOTR messages start with the string "?OTR:" followed by the base64 encoded message and then a "." denoting the end of the message. For a mpOTR message M, we send:
