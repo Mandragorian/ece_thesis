@@ -24,7 +24,11 @@ We assume that the application layer protocol offers the following network primi
 \item $Receive() \rightarrow (\hat{A}, M)$ --- returns any waiting message $M$ received by the participant that invokes $Receive()$ along with M's alleged author $\hat{A}$.
 \end{itemize}
 
+In the following, we use M as a representation of either a single value, or multiple values which we denote using the concatenation symbol ($\Vert$). We describe the exact structures and value encodings of mpOTR messages in \ref{sections:message_structure}.
+
 We also assume that any message fragmentation is handled by the application layer protocol, which delivers mpOTR messages as whole to the mpOTR Protocol. However, in some cases this may not be the case. We discuss this in more detail in \ref{sections:fragmentation}.
+
+Finally, notice that we assume no security provided by the underlying network. An adversary may have complete control over the network and may modify, drop and/or deliver messages at will. The realization of the privacy properties exclusively relys on the mpOTR Protocol.
 
 \section{High level protocol overview}
 \begin{algorithm}[H]
@@ -266,6 +270,48 @@ can be used as a denAKE.
 \end{figure}
 
 \clearpage
+
+\subsubsection{Authenticated message exchange}
+Once all participants have run the DSKE sub-protocol they all have constructed the association table $\mathcal{S}$ which associates each participant to their ephemeral signing key for this session. From now on, $\mathcal{S}$ can be used to authenticate the messages exchanged in the current session.
+
+In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is sent and in algorithm \ref{algo:auth_receive} we show how an authenticated message is received and verified.
+
+\begin{algorithm}[H]
+  \KwIn{$M$ : message}
+  \KwExtraIn {$\mathcal{S}$ : the ephemeral signing key assocation table}
+  \KwResult{authenticated M is brodcast}
+  \Begin
+  {	
+	$e_{\hat{X}} \leftarrow \mathcal{S}[\hat{X}]$
+	
+	$\sigma \leftarrow Sign_{e_{\hat{X}}}(M)$
+	
+	$Broadcast(M \Vert \sigma)$
+  }
+  \caption{AuthBroadcast($M$, $\mathcal{S}$) --- broadcast message M authenticated under paricipant $\hat{X}$'s ephemeral signing key.}
+  \label{algo:auth_broadcast}
+\end{algorithm}
+
+\begin{algorithm}[H]
+  \KwIn{$\mathcal{S}$ : the ephemeral signing key assocation table}
+  \KwOut{the sender and the message on success, sender and $\perp$ on failure}
+  \Begin
+  {	
+    $(\hat{Y}, M \Vert \sigma) \leftarrow Receive()$  
+  
+    $e_{\hat{Y}} \leftarrow \mathcal{S}[\hat{Y}]$
+  
+    \If{$Verify(M, \sigma, e_{\hat{Y}}) = false$}
+    {
+      \Return{$(\hat{Y}, \perp)$}
+    }  
+  
+    \Return{$(\hat{Y}, M)$}
+  }
+  \caption{AuthReceive($\mathcal{S}$) --- attempt to receive an authenticated message.}
+  \label{algo:auth_receive}
+\end{algorithm}
+
 \subsection{Group Key Agreement (GKA)}
 \label{subsections:gka}
 
@@ -356,7 +402,8 @@ Algorithm \ref{downflow_algo} presents an overview of how the final, downflow me
 In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo} and \ref{downflow_algo}) are used in order to execute a complete run of the GKA protocol.
 \vfill
 \begin{algorithm}[H]
-  \KwIn{$\mathcal{P}$ : participants list}
+  \KwIn {$\mathcal{P}$ : participants list}
+  \KwExtraIn {$\mathcal{S}$ : association table}
   \KwExtraIn {$InterKeys$ : previous intermediate key list}
   \KwExtraIn {$x$ : user's secret key}
   \KwExtraIn {$\hat{Y}$ : the next participant}
@@ -372,14 +419,15 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
       $inter\_key\_list.Append(k^x)$
     }
 
-    $AuthBroadcast(\hat{Y} \Vert inter\_key\_list)$
+    $AuthBroadcast(\hat{Y} \Vert inter\_key\_list, \mathcal{S})$
   }
-  \caption{SendUpflow($\mathcal{P}$, $InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
+  \caption{SendUpflow($\mathcal{P}$, $\mathcal{S}$, $InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
   \label{upflow_algo}
 \end{algorithm}
 \vfill
 \begin{algorithm}[H]
-  \KwIn{$\mathcal{P}$ : participants list}
+  \KwIn {$\mathcal{P}$ : participants list}
+  \KwExtraIn {$\mathcal{S}$ : association table}
   \KwExtraIn {$InterKeys$ : previous intermediate key list}
   \KwExtraIn {$x$ : user's secret key}
   \KwResult{Broadcasts the downflow intermediate key list to the other participants}
@@ -392,14 +440,16 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
       $inter\_key\_list.Append(k^x)$
 	}
 
-    $AuthBroadcast(inter\_key\_list)$
+    $AuthBroadcast(inter\_key\_list, \mathcal{S})$
   }
-  \caption{SendDownflow($\mathcal{P}$, $InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
+  \caption{SendDownflow($\mathcal{P}$, $\mathcal{S}$, $InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
   \label{downflow_algo}
 \end{algorithm}
 \vfill
 \begin{algorithm}[H]
-  \KwIn{$\mathcal{P}$ : participants list}
+  \KwIn{$sid$ : session ID}
+  \KwExtraIn{$\mathcal{S}$ : association table}
+  \KwExtraIn{$\mathcal{P}$ : participants list}
   \KwOut{$\mathcal{K}$: the shared secret}
   \Begin
   {
@@ -410,23 +460,23 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
     $\hat{Y}_{next} \leftarrow \hat{X}.Next()$   
 
     \If{$\hat{Y}_{prev}$ = NULL}{
-      $SendUpflow(P, [G], x, \hat{Y}_{next})$
+      $SendUpflow(P, \mathcal{S}, [G], x, \hat{Y}_{next})$
     }
     \Else
     {
       
       \Repeat{$\hat{R} = \hat{X}$}
       {
-        $(\hat{Y}, \hat{R} \Vert key\_list) \leftarrow AuthReceive()$
+        $(\hat{Y}, \hat{R} \Vert key\_list) \leftarrow AuthReceive(\mathcal{S})$
       }
 
-      \If{$\hat{Y}$ $\neq$ $\hat{Y}_{prev}$ $\lor$ Validate($key\_list$) = false}
+      \If{$\hat{Y}$ $\neq$ $\hat{Y}_{prev}$ $\lor$ $\hat{R} \Vert key\_list = \perp$}
       {
         \Return{error}
       }
       \If{$\hat{Y}_{next}$ $\neq$ NULL}
       {
-        $SendUpflow(P, key\_list, x, \hat{Y}_{next})$
+        $SendUpflow(P, \mathcal{S}, key\_list, x, \hat{Y}_{next})$
       }
       \Else
       {
@@ -434,7 +484,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
         $\mathcal{K} \leftarrow final\_key^x$
 
-        $SendDownflow(P, key\_list, x)$
+        $SendDownflow(P, \mathcal{S}, key\_list, x)$
 
         \Return{$\mathcal{K}$}
       }
@@ -442,9 +492,9 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
     \Repeat{$\hat{Y}$ = $\mathcal{P}.Last()$}
     {
-      $(\hat{Y}, key\_list) \leftarrow AuthReceive()$
+      $(\hat{Y}, key\_list) \leftarrow AuthReceive(\mathcal{S})$
     }
-    \If{Validate($key\_list$) = false}
+    \If{$key\_list = \perp$}
     {
       \Return{error}
     }
@@ -457,7 +507,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
 	\Return{$\mathcal{K}$}
   }
-  \caption{GKA - executes a Group Key Agreement and produces the shared secret in the context of party $\hat{X}$.}
+  \caption{GKA($sid$, $\mathcal{S}$, $\mathcal{P}$) - executes a Group Key Agreement and produces the shared secret in the context of party $\hat{X}$.}
   \label{gka_proto_algo}
 \end{algorithm}
 
@@ -486,9 +536,9 @@ Provided that SHA-512 is a cryptographic hash function an attacker can't find tw
 
     \While{$Outstanding \neq \emptyset$}
     {
-      $(\hat{Y}, M_{\hat{Y}}) := AuthReceive()$
+      $(\hat{Y}, M_{\hat{Y}}) := AuthReceive(\mathcal{S})$
       
-      \If{$M_{\hat{Y}}) \neq M$}
+      \If{$M_{\hat{Y}} = \perp \lor  M_{\hat{Y}} \neq M$}
       {     
         \Return{"Error"}            
         
@@ -669,6 +719,7 @@ We utilized the second approach, which is to make the receivers responsible for 
 
 
 \section{Message Structure}
+\label{sections:message_structure}
 
 \subsection{Top level encoding}
 We follow the OTR rules for the top level encoding of mpOTR messages. That is, all mpOTR messages start with the string "?OTR:" followed by the base64 encoded message and then a "." denoting the end of the message. For a mpOTR message M, we send:
