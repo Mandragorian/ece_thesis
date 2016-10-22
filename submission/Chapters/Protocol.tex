@@ -464,13 +464,13 @@ Provided that SHA-512 is a cryptographic hash function an attacker can't find tw
   {	
 	$M \leftarrow sid \Vert SHA512(\mathcal{S})$
 	
-	$Broadcast(M)$
+	$AuthBroadcast(M)$
 	
 	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
 
     \While{$Outstanding \neq \emptyset$}
     {
-      $(\hat{Y}, M_{\hat{Y}}) := Receive()$
+      $(\hat{Y}, M_{\hat{Y}}) := AuthReceive()$
       
       \If{$M_{\hat{Y}}) \neq M$}
       {     
