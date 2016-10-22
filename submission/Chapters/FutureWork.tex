@@ -2,6 +2,7 @@
 \label{chapters:FutureWork}
 
 \section{Message Fragmentation}
+\label{sections:fragmentation}
 Some networks may have a message length limitation that is too small to contain an mpOTR message. To solve this problem, OTR has utilized a fragmentation mechanism since version 2.
 
 The OTR fragmentation mechanism is intuitive. On the sender's side, messages are splitted into a sufficient number of pieces N, so that every fragment does not exceed the specified length limit. Each fragment contains a sequence number k, the value of N and the actual piece. The number k indicates the position of the piece in the whole message, starting from 1 and ending to N. On the recipient's side, the fragments are accumulated so that after receiving the piece with its sequence number k equal to N the whole message can be reconstructed.

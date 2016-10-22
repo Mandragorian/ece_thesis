@@ -15,6 +15,16 @@ In the context of the multi-party chat room, one more property is required:
 \item[Chat room transcript consistency] All participants share the same view over the messages exchanged in a given chat room.
 \end{description}
 
+\section{Underlying network setting}
+The mpOTR Protocol is designed to run on top of an existing network setting. This may be any application layer protocol, such as Jabber/XMPP, IRC, etc. 
+
+We assume that the application layer protocol offers the following network primitives in the context of chatrooms:
+\begin{itemize}
+\item $Broadcast(M)$ --- sends a message $M$ over the chat room  where it can be $Receive()$'ed by all other participants.
+\item $Receive() \rightarrow (\hat{A}, M)$ --- returns any waiting message $M$ received by the participant that invokes $Receive()$ along with M's alleged author $\hat{A}$.
+\end{itemize}
+
+We also assume that any message fragmentation is handled by the application layer protocol, which delivers mpOTR messages as whole to the mpOTR Protocol. However, in some cases this may not be the case. We discuss this in more detail in \ref{sections:fragmentation}.
 
 \section{High level protocol overview}
 \begin{algorithm}[H]
