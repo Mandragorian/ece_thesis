@@ -31,6 +31,13 @@ Thus, we have removed the need to store the messages in order to sort them durin
 the shutdown phase. We only need to store the value of the accumulator which,
 of course, is constant.
 
+\section{Longterm public identity key verification via OTR}
+The authentication of participants' identities premises that each participant has verified the others' longterm public identity keys. This means that each pair of participants should exchange their longterm public identity keys using some already authenticated communication channel. For now, we assume that this exchange is done manually, either in person or using other authenticated channels like simple OTR, GPG-signed emails, etc.
+
+Although our implementation of the mpOTR Protocol is integrated with the OTR library, the longterm identity keys used in mpOTR are completely different than the ones used in OTR. That's because in mpOTR the longterm identity keys are Diffie-Hellman keys while in OTR they are DSA keys. Having to verify two different keys for the same person could prove confusing for casual users.
+
+One possible solution for this problem is to use an already verified OTR IM channel in order to exchange the mpOTR longterm public identity keys behind the scenes.
+
 \section{Message Ordering with OldBlue Protocol}
 \label{sections:ordering_with_oldblue}
 
