@@ -239,30 +239,30 @@ can be used as a denAKE.
   \fbox{%
     \pseudocode{%
       \textbf{Alice} \< \< \textbf{Bob} \\[][\hline]
-      \text{ Choose a random number $x \in Z_p^*$ }\< \< \\
+      x \sample Z_p^* \< \< \\
       \< \sendmessageright*{Send \ \left(g^x,g^X\right)} \< \\
-      \< \< \text{ Choose a random number $y \in Z_p^*$ } \\
-      \< \< s = g^{xy} || g^{Xy} || g^{Yx} \\
-      \< \< k_1 = KDF_1(s) \\
-      \< \< k_2=KDF_2(s) \\
+      \< \< y \sample Z_p^* \\
+      \< \< s \leftarrow g^{xy} || g^{Xy} || g^{Yx} \\
+      \< \< k_1 \leftarrow KDF_1(s) \\
+      \< \< k_2 \leftarrow KDF_2(s) \\
       \< \sendmessageleft*{Send \ \left(g^y,g^Y\right)} \< \\
-      s = g^{xy} || g^{Xy} || g^{Yx} \< \< \\
-      k_1 = KDF_1(s) \< \< \\
-      k_2 = KDF_2(s) \< \< \\
+      s \leftarrow g^{xy} || g^{Xy} || g^{Yx} \< \< \\
+      k_1 \leftarrow KDF_1(s) \< \< \\
+      k_2 \leftarrow KDF_2(s) \< \< \\
       \< \sendmessageright*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
       \< \< \text{Verify mac} \\
-      \< \< m = AES^{-1}_{k_1}(c) \\
+      \< \< m \leftarrow AES^{-1}_{k_1}(c) \\
       \< \< \text{Verify m = "confirm"} \\
       \< \sendmessageleft*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
       \text{Verify mac} \< \< \\
-      m = AES^{-1}_{k_1}(c) \< \< \\
+      m \leftarrow AES^{-1}_{k_1}(c) \< \< \\
       \text{Verify m = "confirm"} \\
-      \< \sendmessageright*{Send \\ c = AES_{k_1}(\pk_a) \\ MAC_{k_2}(c) } \< \\
+      \< \sendmessageright*{Send \\ c = AES_{k_1}(e_{\hat{A}}) \\ MAC_{k_2}(c) } \< \\
       \< \< \text{Verify mac} \\
-      \< \< \text{Add $\pk_a$ to association table} \\
-      \< \sendmessageleft*{Send \\ c = AES_{k_1}(\pk_b) \\ MAC_{k_2}(c) } \< \\
+      \< \< S[\hat{A}] \leftarrow e_{\hat{A}} \\
+      \< \sendmessageleft*{Send \\ c = AES_{k_1}(e_{\hat{B}}) \\ MAC_{k_2}(c) } \< \\
       \text{Verify mac} \< \<  \\
-      \text{Add $\pk_b$ to association table} \< \< \\
+     S[\hat{B}] \leftarrow e_{\hat{B}} \< \< \\
     }
   }
   \caption{The denAKE protocol, where $X$ and $Y$ are the private parts of the long term keys}
