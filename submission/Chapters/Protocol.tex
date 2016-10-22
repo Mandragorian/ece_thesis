@@ -59,7 +59,7 @@ We also assume that any message fragmentation is handled by the application laye
   \caption{The mpOTR protocol}
 \end{algorithm}
 
-In Algorithm \ref{algorithms:mpotr_algo} we illustrate high-level overview of the protocol. The whole protocol has been divided into sequential phases, which we call sub-protocols. The first four of them (Offer, DSKE GKA and Attest) are responsible for setting up all the needed parameters, for the private communication to take place. The Communication sub-protocol is the one that governs the actual private group conversation. Finally, the Shutdown sub-protocol is responsible for every action that needs to be done before ending each private session. We briefly describe the function of each sub-protocol below.
+In Algorithm \ref{algorithms:mpotr_algo} we illustrate a high-level overview of a single session of the mpOTR Protocol. The whole protocol has been divided into sequential phases, which we call sub-protocols. The first four of them (Offer, DSKE GKA and Attest) are responsible for setting up all the needed parameters, for the private communication to take place. The Communication sub-protocol is the one that governs the actual private group conversation. Finally, the Shutdown sub-protocol is responsible for every action that needs to be done before ending each private session. We briefly describe the function of each sub-protocol below.
 
 During the Offer sub-protocol, the participants create a Session ID, $sid$. This is a unique (with high probability) number identifying the session. The Offer sub-protocol is described in more detail in section \ref{subsections:offer}. 
 
