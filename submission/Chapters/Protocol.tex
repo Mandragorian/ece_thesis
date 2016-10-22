@@ -37,21 +37,21 @@ Finally, notice that we assume no security provided by the underlying network. A
   \KwResult{Executes a run of the mpOTR protocol}
   \Begin{
 
-    $sid$ := Offer($\mathcal{P}$)
+    $sid \leftarrow Offer(\mathcal{P})$
     
-    $\mathcal{S}$ := DSKE($sid$, $\mathcal{P}$)
+    $\mathcal{S} \leftarrow DSKE(sid, \mathcal{P})$
     
-    $\mathcal{K}$ := GKA($sid$, $\mathcal{S}$, $\mathcal{P}$)
+    $\mathcal{K} \leftarrow GKA(sid, \mathcal{S}, \mathcal{P})$
     
-    $\mathcal{A}$ := Attest($sid$, $\mathcal{S}$, $\mathcal{P}$)
+    $\mathcal{A} \leftarrow Attest(sid, \mathcal{S}, \mathcal{P})$
     
     \If{$\mathcal{A}$ $\neq$ "OK"}{
       \Return{"Error"}
     }
 
-    $\mathcal{T}$ := Communication($sid$, $\mathcal{K}$, $\mathcal{S}$, $\mathcal{P}$)
+    $\mathcal{T} := Communication(sid, \mathcal{K}, \mathcal{S}, \mathcal{P})$
   
-    $c$ := Shutdown($sid$, $\mathcal{T}$, $\mathcal{S}$, $\mathcal{P}$)
+    $c \leftarrow Shutdown(sid, \mathcal{T}, \mathcal{S}, \mathcal{P})$
     
     \If{$c$ = "consensus"}{
       \Return{"OK"}
@@ -99,7 +99,7 @@ The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer M
   \KwOut{$sid$: the session ID}
   \Begin
   {
-	$c_{\hat{X}} \leftarrow \{0,1\}^{256}$
+	$c_{\hat{X}} \xleftarrow{\$} \{0,1\}^{256}$
 	
 	$Broadcast(c_{\hat{X}})$
 	
@@ -107,7 +107,7 @@ The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer M
 
     \While{$Outstanding \neq \emptyset$}
     {    
-      $(\hat{Y}, c) := Receive()$
+      $(\hat{Y}, c) \leftarrow Receive()$
       
       \If{$\hat{Y} \in Outstanding$}
       {      
@@ -122,7 +122,7 @@ The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer M
 	\Return{$sid$}
 
   }
-  \caption{Offer($\mathcal{P}$) --- session ID construction in the context of party $\hat{X}$.}
+  \caption{Offer($\mathcal{P}$) --- session ID construction in the context of participant $\hat{X}$.}
   \label{algo:offer}
 \end{algorithm}
 
@@ -278,7 +278,7 @@ In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is s
 
 \begin{algorithm}[H]
   \KwIn{$M$ : message}
-  \KwExtraIn {$\mathcal{S}$ : the ephemeral signing key assocation table}
+  \KwExtraIn {$\mathcal{S}$ : assocation table}
   \KwResult{authenticated M is brodcast}
   \Begin
   {	
@@ -293,7 +293,7 @@ In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is s
 \end{algorithm}
 
 \begin{algorithm}[H]
-  \KwIn{$\mathcal{S}$ : the ephemeral signing key assocation table}
+  \KwIn{$\mathcal{S}$ : assocation table}
   \KwOut{the sender and the message on success, sender and $\perp$ on failure}
   \Begin
   {	
@@ -507,7 +507,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
 	\Return{$\mathcal{K}$}
   }
-  \caption{GKA($sid$, $\mathcal{S}$, $\mathcal{P}$) - executes a Group Key Agreement and produces the shared secret in the context of party $\hat{X}$.}
+  \caption{GKA($sid$, $\mathcal{S}$, $\mathcal{P}$) - executes a Group Key Agreement and produces the shared secret in the context of participant $\hat{X}$.}
   \label{gka_proto_algo}
 \end{algorithm}
 
@@ -536,7 +536,7 @@ Provided that SHA-512 is a cryptographic hash function an attacker can't find tw
 
     \While{$Outstanding \neq \emptyset$}
     {
-      $(\hat{Y}, M_{\hat{Y}}) := AuthReceive(\mathcal{S})$
+      $(\hat{Y}, M_{\hat{Y}}) \leftarrow AuthReceive(\mathcal{S})$
       
       \If{$M_{\hat{Y}} = \perp \lor  M_{\hat{Y}} \neq M$}
       {     
@@ -552,7 +552,7 @@ Provided that SHA-512 is a cryptographic hash function an attacker can't find tw
 
 	\Return{"OK"}
   }
-  \caption{Attest($\mathcal{P}$, $sid$, $\mathcal{S}$) --- authenticate previously unauthenticated protocol parameters for the current session in the context of party $\hat{X}$.}
+  \caption{Attest($\mathcal{P}$, $sid$, $\mathcal{S}$) --- authenticate previously unauthenticated protocol parameters for the current session in the context of participant $\hat{X}$.}
   \label{algo:attest}
 \end{algorithm}
 
