@@ -131,49 +131,40 @@ Notice that "Offer Messages" are not authenticated and hence $sid$ must be verif
 
 \subsection{Deniable Signature Key Exchange (DSKE)}
 \label{subsections:DSKE}
-In \cite{mpotr} a construction for a DSKE is proposed:
-
-Given a deniable Authenticated Key Exchange (denAKE), two participants of the chat can generate a deniable and authenticated shared secret. With that secret they can exchange their ephemeral signing public key in an encrypted and authenticated fashion, using symmetric algorithms. This is done for every pair of participants. After that, they will all have created an association table $\mathcal{S}$, which associates each participant with their signing key.
+During the DSKE sub-protocol each participant $\hat{X}$ generates an ephemeral signing key. The public part of this key is denoted by $E_{\hat{X}}$ while the private part is denoted by $e_{\hat{X}}$. Then, they all exchange their ephemeral public signing keys in an authenticated and deniable manner. When DSKE is completed, they all have created an association table $\mathcal{S}$, which associates each participant $\hat{Y}$ to their ephemeral public signing key $E_{\hat{Y}}$.
 
 Afterwards, the participants must make sure that they all have constructed the same $\mathcal{S}$, as described in section \ref{subsections:attest}.
 
+In \cite{mpotr} the following construction for a DSKE is proposed:
+
+Given a deniable Authenticated Key Exchange (denAKE), two participants of the chat can generate a deniable and authenticated shared secret. With that secret they can exchange their ephemeral public signing key in an encrypted and authenticated fashion, using symmetric algorithms. This is done for every pair of participants. After that, they will all have created the association table $\mathcal{S}$.
+
+
 \subsubsection{denAKE}
-In \cite{mpotr} no denAKE is specified. We propose the following protocol:
+In \cite{mpotr} no denAKE is specified. Based on the \tdhname protocol as described in section \ref{sections:tdh_key_exchange}, we propose the following protocol:
 
-\begin{itemize}
+\begin{enumerate}
 
-	\item[] Each participant generates a private/public Diffie-Hellman keypair $(A_i, g^{A_i})$, which will be used as a longterm key to idenitfy him to other participants. This
-is done only once, when a member first used the protocol, then the key remains
-the same for subsequent runs of the protocol.
+  \item Each participant $\hat{X}$ uses a private/public \dhname keypair $(A_{\hat{X}}, g^{A_{\hat{X}}})$ as a longterm key to idenitfy him to other participants. This is generated only once, when a member first used the protocol, then the key remains the same for subsequent runs of the protocol.
 
-	\item[] To initiate a denAKE, each participant creates an ephemeral Diffie-Hellman keypair
-		$(a_i,g^{a_i})$ used only in this run of the protocol (he uses however the same ephemeral key
-		to communicate with all the participants).
+  \item Before initiating any denAKE in this session, each participant $\hat{X}$ creates an ephemeral \dhname keypair $(a_{\hat{X}},g^{a_{\hat{X}}})$ used only in this session. He uses the same ephemeral key	to communicate with all the participants during this session.
 
-	\item[] Then he broadcasts the public components of the longterm and ephemeral keys to
-		all chat participants in the tuple $(g^{A_i}, g^{a_i})$. We shall call this
-		message a "Handshake Message".
+  \item Then he broadcasts the public components of the longterm and ephemeral keys to all chat participants in the tuple $(g^{A_{\hat{X}}}, g^{a_{\hat{X}}})$. We shall call this message a "Handshake Message".
 
-	\item[] When participant $i$ has received a handshake Message $(g^{A_j}, g^{a_j})$ from some
-		other participant $j$, she can compute the shared secret, as specified by the triple
-		Diffie-Hellman protocol. This secret is $g^{a_ia_j} \Vert g^{A_ia_j} \Vert g^{A_ja_i}$
-		.
+  \item When participant $\hat{X}$ has received a Handshake Message $(g^{A_{\hat{Y}}}, g^{a_{\hat{Y}}})$ from some other participant $\hat{Y}$, she can compute the shared secret $s$ as specified by the \tdhname protocol:
+\[
+  s = g^{a_{\hat{X}}a_{\hat{Y}}} \Vert g^{A_{\hat{X}}a_{\hat{Y}}} \Vert g^{A_{\hat{Y}}a_{\hat{X}}}
+\]
 
-	\item[] After computing the shared secret she encrypts and mac's a magic number and sends it
-		to the other party. This is done to verify that the other party has indeed generated
-		the same shared secret and is not an adversary trying to break the forward secrecy
-		property of triple Diffie-Hellman, see \ref{confirm_message_explain}. We shall call
-		this message a "Confirm Message".
+  \item After computing $s$, she uses it as input of Key Derivation Functions (KDF) in order to compute AES and MAC keys.
+  
+  \item Then, she encrypts-then-mac's a magic number and sends it to the other party. This is done to verify that the other party has indeed generated the same shared secret and is not an adversary trying to break the forward secrecy property of \tdhname, see section \ref{confirm_message_explain}. We shall call this message a "Confirm Message".
 
-	\item[] When she herself has received the corresponding Confirm Message she is assured that
-		the shared secret can be safely used and there is no foul play. Now she
-		encrypts-then-macs her signing public key and sends it to the other party. This
-		message is called a "Key Message"
+  \item When she has received the corresponding Confirm Message, she is assured that the shared secret can be safely used and there is no foul play. Now she encrypts-then-macs her ephemeral public signing key $E_{\hat{X}}$ and sends it to the other party. This message is called a "Key Message"
 
-
-	\item[] When a key message is received she first verifies the message using the same mac.
-		If the tag checks out she decrypts the key and adds it in the association table $\mathcal{S}$.
-\end{itemize}
+  \item When a key message is received, she first verifies the message using the same mac. If the tag checks out, she decrypts the key $E_{\hat{Y}}$ and adds it in the association table $\mathcal{S}$.
+  
+\end{enumerate}
 
 In figure \ref{den_ake_schematic} a schematic description of the protocol is provided.
 
@@ -182,18 +173,23 @@ When the shared secret is calculated, three values must be concatenated. Since
 concatenation is not commutative the two parties must agree on the order that the
 concatenation happens.
 
-This is achieved by compare the values $g^{A_i}$ and $g^{A_j}$. If
-$g^{A_i} \le g^{A_j}$ then the shared secret is $g^{a_ia_j} \Vert g^{A_ia_j} \Vert g^{A_ja_i}$
-If not then the shared secret is $g^{a_ia_j} \Vert g^{A_ja_i} \Vert g^{A_ia_j}$. That is, the
-value that is generated using the highest public key takes precedence during the
-concatenation.
+This is achieved by comparing the values $g^{A_{\hat{X}}}$ and $g^{A_{\hat{Y}}}$:
+\begin{equation*}
+  s =
+  \begin{cases}
+    g^{a_{\hat{X}}a_{\hat{Y}}} \Vert g^{A_{\hat{X}}a_{\hat{Y}}} \Vert g^{A_{\hat{Y}}a_{\hat{X}}} & \text{$g^{A_{\hat{X}}} \geq g^{A_{\hat{Y}}}$}\\
 
-In the overview of the algorithm above, it was silently assumed that
-$g^{A_i} \le g^{A_j}$.
+    g^{a_{\hat{X}}a_{\hat{Y}}} \Vert g^{A_{\hat{Y}}a_{\hat{X}}} \Vert g^{A_{\hat{X}}a_{\hat{Y}}} &\text{$g^{A_{\hat{X}}} < g^{A_{\hat{Y}}}$}
+
+  \end{cases}
+\end{equation*}
+
+That is, the value that is generated using the highest public key takes precedence during the
+concatenation. In the overview of the algorithm above, it was silently assumed that $g^{A_{\hat{X}}} \geq g^{A_{\hat{Y}}}$.
 
 \paragraph{The need of a confirmation message}
 \label{confirm_message_explain}
-A confirmation message is needed if want to have forward secrecy in this exchange.
+A confirmation message is needed if we want to have forward secrecy in this exchange.
 We must make sure that we are really speaking with the intended participant. Consider
 the following scenario.
 
@@ -204,35 +200,31 @@ public longterm key.
 After Alice receives the handshake message she can construct the shared secret. Eve
 however cannot construct the secret since she does not know Bob's longterm
 private key. If Alice starts sending data before confirming that the other party
-has indeed arrived at the same secret she is under the danger to lose the forward
+has indeed arrived at the same secret, she is under the danger to lose the forward
 secrecy property for all messages she sends with the secret.
 
 Indeed the only reason Eve can't construct the secret that Alice calculated, is
 that she doesn't have Bob's longterm private key. This of course means that if
-she somehow gets a hold of this key, she can decrypt some messages. This situation
-of course does not satisfy the forward secrecy property.
+she somehow gets a hold of this key in the future, she will be able decrypt some messages. This situation of course does not satisfy the forward secrecy property.
 
 
 \paragraph{Properties}
-Triple Diffie-Hellman is a protocol that is a) authenticated b) forward secret
-and c) deniable.
+\tdhname is a protocol that is:
 
-It is authenticated, because the shared secret can only be calculated by someone
-only if he posses one of the longterm private keys (and the corresponding ephemeral
-of course).
+\begin{enumerate}
 
-It is forward secret, because once the ephemeral key has been destroyed, it is
-impossible to reconstruct the shared secret even when the longterm
-private key is compromised.
+  \item authenticated because the shared secret can only be calculated by someone who does possess one of the longterm private keys (and the corresponding ephemeral of course);
 
-It is deniable, because the only values that are exchanged during a protocol run
-are the two public keys that a participant will use. Nothing is signed, which means
-that nothing can be used to prove that someone took part in a conversation.
+  \item forward secret because once the ephemeral key has been destroyed, it is impossible to reconstruct the shared secret even when the longterm private key is compromised;
+
+  \item deniable because the only values that are exchanged during a protocol run are the two public keys that a participant will use and nothing is signed, which means that nothing can be used to prove that someone took part in a conversation.
+
+\end{enumerate}
 
 Another property of this protocol that comes for free is its very fast key generation
 as, basically, any random number can be used as a secret key.
 
-Thus Triple Diffie-Hellman satisfies the properties required in \cite{mpotr} and
+Thus \tdhname satisfies the properties required in \cite{mpotr} and
 can be used as a denAKE.
 
 \begin{figure}[t]
