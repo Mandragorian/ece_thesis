@@ -257,12 +257,12 @@ can be used as a denAKE.
       \text{Verify mac} \< \< \\
       m \leftarrow AES^{-1}_{k_1}(c) \< \< \\
       \text{Verify m = "confirm"} \\
-      \< \sendmessageright*{Send \\ c = AES_{k_1}(e_{\hat{A}}) \\ MAC_{k_2}(c) } \< \\
+      \< \sendmessageright*{Send \\ c = AES_{k_1}(E_{\hat{A}}) \\ MAC_{k_2}(c) } \< \\
       \< \< \text{Verify mac} \\
-      \< \< S[\hat{A}] \leftarrow e_{\hat{A}} \\
-      \< \sendmessageleft*{Send \\ c = AES_{k_1}(e_{\hat{B}}) \\ MAC_{k_2}(c) } \< \\
+      \< \< S[\hat{A}] \leftarrow E_{\hat{A}} \\
+      \< \sendmessageleft*{Send \\ c = AES_{k_1}(E_{\hat{B}}) \\ MAC_{k_2}(c) } \< \\
       \text{Verify mac} \< \<  \\
-     S[\hat{B}] \leftarrow e_{\hat{B}} \< \< \\
+     S[\hat{B}] \leftarrow E_{\hat{B}} \< \< \\
     }
   }
   \caption{The denAKE protocol, where $X$ and $Y$ are the private parts of the long term keys}
@@ -278,17 +278,15 @@ In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is s
 
 \begin{algorithm}[H]
   \KwIn{$M$ : message}
-  \KwExtraIn {$\mathcal{S}$ : assocation table}
+  \KwExtraIn {$e_{\hat{X}}$: ephemeral private signing key}
   \KwResult{authenticated M is brodcast}
   \Begin
-  {	
-	$e_{\hat{X}} \leftarrow \mathcal{S}[\hat{X}]$
-	
+  {		
 	$\sigma \leftarrow Sign_{e_{\hat{X}}}(M)$
 	
 	$Broadcast(M \Vert \sigma)$
   }
-  \caption{AuthBroadcast($M$, $\mathcal{S}$) --- broadcast message M authenticated under paricipant $\hat{X}$'s ephemeral signing key.}
+  \caption{AuthBroadcast($M$) --- broadcast message M authenticated under paricipant $\hat{X}$'s ephemeral signing key.}
   \label{algo:auth_broadcast}
 \end{algorithm}
 
@@ -299,9 +297,9 @@ In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is s
   {	
     $(\hat{Y}, M \Vert \sigma) \leftarrow Receive()$  
   
-    $e_{\hat{Y}} \leftarrow \mathcal{S}[\hat{Y}]$
+    $E_{\hat{Y}} \leftarrow \mathcal{S}[\hat{Y}]$
   
-    \If{$Verify(M, \sigma, e_{\hat{Y}}) = false$}
+    \If{$Verify(M, \sigma, E_{\hat{Y}}) = false$}
     {
       \Return{$(\hat{Y}, \perp)$}
     }  
@@ -419,7 +417,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
       $inter\_key\_list.Append(k^x)$
     }
 
-    $AuthBroadcast(\hat{Y} \Vert inter\_key\_list, \mathcal{S})$
+    $AuthBroadcast(\hat{Y} \Vert inter\_key\_list)$
   }
   \caption{SendUpflow($\mathcal{P}$, $\mathcal{S}$, $InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
   \label{upflow_algo}
@@ -440,7 +438,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
       $inter\_key\_list.Append(k^x)$
 	}
 
-    $AuthBroadcast(inter\_key\_list, \mathcal{S})$
+    $AuthBroadcast(inter\_key\_list)$
   }
   \caption{SendDownflow($\mathcal{P}$, $\mathcal{S}$, $InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
   \label{downflow_algo}
@@ -515,7 +513,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 \label{subsections:attest}
 During this sub-protocol the participants must verify that they agree on the $sid$ and the association table $\mathcal{S}$. This is needed for two reasons. First, because $sid$ is required before $\mathcal{S}$ is constructed, and therefore the messages exchanged for the calculation of $sid$ can't be signed. Second, because the participants need to verify that they all have the same view of $\mathcal{S}$.
 
-Each participant calculates the SHA-512 hash of $\mathcal{S}$, which is sorted according to the rule described in \ref{sections:participants_ordering}. Then they broadcast an authenticated message, called "Attest Message", which contains both the $sid$ and the calculated hash. To authenticate the message, each sender signs it using the ephemeral signing key $e_{\hat{X}}$ that has now exchanged with the other participants.
+Each participant calculates the SHA-512 hash of $\mathcal{S}$, which is sorted according to the rule described in \ref{sections:participants_ordering}. Then they broadcast an authenticated message, called "Attest Message", which contains both the $sid$ and the calculated hash. To authenticate the message, each sender signs it using the ephemeral private signing key $e_{\hat{X}}$ corresponding to the ephemeral public signing key $E_{\hat{X}}$ that has now exchanged with the other participants.
 
 When a participant receives an "Attest Message", first she must verify the signature. Then she must check for two things. First, verify the received hash of $\mathcal{S}$ matches the one she computed herself. Second, check that the received message uses the expected $sid$. A formal description of the Attest sub-protocol in the context of a participant $\hat{X}$ is shown in algorithm \ref{algo:attest}.
 
@@ -652,6 +650,7 @@ A formal description of the Shutdown sub-protocol in the context of a participan
   \KwExtraIn{$\mathcal{T}$ : chat room table of transcripts}
   \KwExtraIn{$\mathcal{S}$: the association table}
   \KwExtraIn{$\mathcal{P}$ : participants list}
+  \KwExtraIn{$e_{\hat{X}}$ : ephemeral private signing key}
   \KwOut{$s$: "consensus" if verification went good, $\perp$ if it went wrong}
   \Begin
   {	
@@ -663,7 +662,7 @@ A formal description of the Shutdown sub-protocol in the context of a participan
 
     \While{$Outstanding \neq \emptyset$}
     {
-        $(\hat{Y}, M \Vert h_{\hat{Y}}^{'}) \leftarrow AuthReceive()$       
+        $(\hat{Y}, M \Vert h_{\hat{Y}}^{'}) \leftarrow AuthReceive(\mathcal{S})$       
         
         \If{$\hat{Y} \in Outstanding \land M = "shutdown"$}
         {
@@ -681,7 +680,7 @@ A formal description of the Shutdown sub-protocol in the context of a participan
     
     \While{$Outstanding \neq \emptyset$}
     {
-        $(\hat{Y}, M \Vert h^{'}) \leftarrow AuthReceive()$
+        $(\hat{Y}, M \Vert h^{'}) \leftarrow AuthReceive(\mathcal{S})$
         
         \If{$\hat{Y} \in Outstanding \land M = "digest"$}
         {
@@ -697,7 +696,7 @@ A formal description of the Shutdown sub-protocol in the context of a participan
     
     \While{$Outstanding \neq \emptyset$}
     {
-        $(\hat{Y}, M) \leftarrow AuthReceive()$
+        $(\hat{Y}, M) \leftarrow AuthReceive(\mathcal{S})$
         
         \If{$M \neq "end"$}
         {
@@ -708,8 +707,6 @@ A formal description of the Shutdown sub-protocol in the context of a participan
           $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
         }                       
     }
-    
-    $e_{\hat{X}} \leftarrow \mathcal{S}[\hat{X}]$
     
     $Broadcast(e_{\hat{X}})$
     
