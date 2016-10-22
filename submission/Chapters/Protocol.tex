@@ -628,7 +628,7 @@ When he receives a message from user $B$, he adds that message to the transcript
 
 \subsection{Shutdown}
 \label{subsections:shutdown}
-During this sub-protocol, the participants end the current session. Chat room transcript consistency is checked and the ephemeral signing keys are published, in order to permit a posteriori modifications of the chat transcript. The revelation of the ephemeral signing keys adds to the protocol's deniability property. However, the protocol is deniable even without publishing the ephemeral signing keys, since the signing keys are deniable in the first place.
+During the Shutdown sub-protocol, the participants end the current session. Chat room transcript consistency is checked and the ephemeral signing keys are published, in order to permit a posteriori modifications of the chat transcript. The revelation of the ephemeral signing keys adds to the protocol's deniability property. However, the protocol is deniable even without publishing the ephemeral signing keys, since the signing keys are deniable in the first place.
 
 For a session to be terminated, a "Shutdown Message" is sent. This message signals to other participants that the shutdown phase should be initiated. It contains the  hash of all the messages sent by the user sending the "Shutdown Message". When a user receives a "Shutdown Message", he also responds with a "Shutdown Message" containing his own messages hash, if he hasn't already sent one.
 
@@ -644,6 +644,80 @@ When one participant receives a "Digest Message" from some other participant, he
 When one participant has received a "Digest Message" from every other participant, he broadcasts an "End Message". This message signifies that the sender will not use the channel to send any messages anymore.
 
 When a participant receives an "End Message" from all other participants, he is certain that he can release his signing secret key. This is done by broadcasting a message which we shall call "Key Release Message". Now anyone who intercepts the released key can forge chat room messages. However all the participants will no longer accept messages signed with the released secret key, and thus it cannot be used to impersonate its previous owner.
+
+A formal description of the Shutdown sub-protocol in the context of a participant $\hat{X}$ is shown in algorithm \ref{algo:shutdown}.\\
+
+\begin{algorithm}[H]
+  \KwIn{$sid$: the session ID}
+  \KwExtraIn{$\mathcal{T}$ : chat room table of transcripts}
+  \KwExtraIn{$\mathcal{S}$: the association table}
+  \KwExtraIn{$\mathcal{P}$ : participants list}
+  \KwOut{$s$: "consensus" if verification went good, $\perp$ if it went wrong}
+  \Begin
+  {	
+    $h_{\hat{X}} \leftarrow SHA512(\mathcal{T}[\hat{X}])$ 
+    
+    $AuthBroadcast("shutdown" \Vert h_{\hat{X}})$
+    
+	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
+
+    \While{$Outstanding \neq \emptyset$}
+    {
+        $(\hat{Y}, M \Vert h_{\hat{Y}}^{'}) \leftarrow AuthReceive()$       
+        
+        \If{$\hat{Y} \in Outstanding \land M = "shutdown"$}
+        {
+          $h_{\hat{Y}} \leftarrow SHA512(\mathcal{T}[\hat{Y}])$
+        
+          $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
+        }
+    }
+    
+    $h \leftarrow SHA512(h_{\hat{Y}_1} \Vert h_{\hat{Y}_2} \Vert \cdots)$
+    
+    $AuthBroadcast("digest" \Vert h)$
+    
+    $Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
+    
+    \While{$Outstanding \neq \emptyset$}
+    {
+        $(\hat{Y}, M \Vert h^{'}) \leftarrow AuthReceive()$
+        
+        \If{$\hat{Y} \in Outstanding \land M = "digest"$}
+        {
+          $consensus_{\hat{Y}} \leftarrow h = h^{'}$
+        
+          $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
+        }
+    }
+    
+    $AuthBroadcast("end")$
+    
+    $Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
+    
+    \While{$Outstanding \neq \emptyset$}
+    {
+        $(\hat{Y}, M) \leftarrow AuthReceive()$
+        
+        \If{$M \neq "end"$}
+        {
+          \Return{$\perp$}
+        }
+        \Else
+        {
+          $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
+        }                       
+    }
+    
+    $e_{\hat{X}} \leftarrow \mathcal{S}[\hat{X}]$
+    
+    $Broadcast(e_{\hat{X}})$
+    
+    \Return{$"consensus"$} 
+  }
+  \caption{Shutdown($sid$, $\mathcal{T}$, $\mathcal{S}$, $\mathcal{P}$) --- called in the context of participant $\hat{X}$, determines if consensus has been reached with other participants and publishes the ephemeral signing key of $\hat{X}$.}
+  \label{algo:shutdown}
+\end{algorithm}
 
 \section{The primitives}
 \label{setions:Protocol:primitives}
