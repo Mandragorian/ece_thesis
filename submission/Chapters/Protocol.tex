@@ -156,7 +156,7 @@ the same for subsequent runs of the protocol.
 
 	\item[] When participant $i$ has received a handshake Message $(g^{A_j}, g^{a_j})$ from some
 		other participant $j$, she can compute the shared secret, as specified by the triple
-		Diffie-Hellman protocol. This secret is $g^{a_ia_j} || g^{A_ia_j} || g^{A_ja_i}$
+		Diffie-Hellman protocol. This secret is $g^{a_ia_j} \Vert g^{A_ia_j} \Vert g^{A_ja_i}$
 		.
 
 	\item[] After computing the shared secret she encrypts and mac's a magic number and sends it
@@ -183,8 +183,8 @@ concatenation is not commutative the two parties must agree on the order that th
 concatenation happens.
 
 This is achieved by compare the values $g^{A_i}$ and $g^{A_j}$. If
-$g^{A_i} \le g^{A_j}$ then the shared secret is $g^{a_ia_j} || g^{A_ia_j} || g^{A_ja_i}$
-If not then the shared secret is $g^{a_ia_j} || g^{A_ja_i} || g^{A_ia_j}$. That is, the
+$g^{A_i} \le g^{A_j}$ then the shared secret is $g^{a_ia_j} \Vert g^{A_ia_j} \Vert g^{A_ja_i}$
+If not then the shared secret is $g^{a_ia_j} \Vert g^{A_ja_i} \Vert g^{A_ia_j}$. That is, the
 value that is generated using the highest public key takes precedence during the
 concatenation.
 
@@ -242,11 +242,11 @@ can be used as a denAKE.
       x \sample Z_p^* \< \< \\
       \< \sendmessageright*{Send \ \left(g^x,g^X\right)} \< \\
       \< \< y \sample Z_p^* \\
-      \< \< s \leftarrow g^{xy} || g^{Xy} || g^{Yx} \\
+      \< \< s \leftarrow g^{xy} \Vert g^{Xy} \Vert g^{Yx} \\
       \< \< k_1 \leftarrow KDF_1(s) \\
       \< \< k_2 \leftarrow KDF_2(s) \\
       \< \sendmessageleft*{Send \ \left(g^y,g^Y\right)} \< \\
-      s \leftarrow g^{xy} || g^{Xy} || g^{Yx} \< \< \\
+      s \leftarrow g^{xy} \Vert g^{Xy} \Vert g^{Yx} \< \< \\
       k_1 \leftarrow KDF_1(s) \< \< \\
       k_2 \leftarrow KDF_2(s) \< \< \\
       \< \sendmessageright*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
@@ -586,7 +586,7 @@ To encrypt a message, a user concatenates the shared secret with his personal id
 This is the actual encryption key.
 
 \[
-k_{enc} = H(id_{personal} || master\ key)
+k_{enc} = H(id_{personal} \Vert master\ key)
 \]
 
 For the counter, each user stores locally his personal upper half (8 most significant bytes).
@@ -595,18 +595,18 @@ The top half of the counter is prepended in the sent message.
 The ciphertext is produced as follows (where $ctr$ is the top half of the locally stored counter):
 
 \[
-ciphertext = AES_{CTR}(k_{enc}, ctr||0, plaintext)
+ciphertext = AES_{CTR}(k_{enc}, ctr \Vert 0, plaintext)
 \]
 
 To decrypt a message, a user concatenates the shared secret with the id of the message's sender.
 \[
-k_{dec} = H(id_{sender} || master\ key)
+k_{dec} = H(id_{sender} \Vert master\ key)
 \]
 
 He uses the prepended top half of the counter.
 
 \[
-plaintext = AES_{CTR}(k_{dec}, ctr||0, ciphertext)
+plaintext = AES_{CTR}(k_{dec}, ctr \Vert 0, ciphertext)
 \]
 
 This encryption scheme is used, so that the possibility that a certain encryption key and counter pair is eliminated.
@@ -634,7 +634,7 @@ When one participant has received a "Shutdown Message" from all other participan
 \begin{itemize}
   \item[] Sort the participants using their usernames in lexicographic order.
   \item[] For each participant $i$ (in that order) calculate the hash $h_i = H(S_i)$, where $S_i$ is set of all the messages sent by this user, sorted in lexicographic order too.
-  \item[] Calculate the digest $h = H(h_1 || h_2 \dots || h_N)$, where N is the number of participants.
+  \item[] Calculate the digest $h = H(h_1 \Vert h_2 \dots \Vert h_N)$, where N is the number of participants.
 \end{itemize}
 
 When one participant receives a "Digest Message" from some other participant, he checks whether the two of them agree on the chat room transcript. He simply compares the digest he computed locally to the one sent by the other participant. He deduces that consensus is reached only if the two digests are the same.
