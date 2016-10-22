@@ -272,7 +272,7 @@ can be used as a denAKE.
 \clearpage
 
 \subsubsection{Authenticated message exchange}
-Once all participants have run the DSKE sub-protocol they all have constructed the association table $\mathcal{S}$ which associates each participant to their ephemeral signing key for this session. From now on, $\mathcal{S}$ can be used to authenticate the messages exchanged in the current session.
+Once all participants have run the DSKE sub-protocol they all have constructed the association table $\mathcal{S}$ which associates each participant $\hat{X}$ to their ephemeral public signing key for this session $E_{\hat{X}}$. Each participant $\hat{X}$ also has his own ephemeral private signing key $e_{\hat{X}}$. From now on, participants can authenticate the messages exchanged in the current session.
 
 In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is sent and in algorithm \ref{algo:auth_receive} we show how an authenticated message is received and verified.
 
