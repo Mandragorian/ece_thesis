@@ -647,6 +647,21 @@ If such a fingerprint is found and it is verified, then the user is verified for
 If the found fingerprint is not verified then the participant is not verified.
 If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list. 
 
+\section{Handling out-of-order messages}
+In the protocol description above, we silently assumed that messages are delivered in-order. In fact, in a distributed context, like the mpOTR, this can be really tricky.
+
+Specificaly in our construction, there are quite a lot messages exchanged during the first four sub-protocols that run automatically to setup the session parameters and hence these messages are usually exchanged in a narrow period of time. Latency differences between participants, either due to the underlying network or due to the participants' equipment may result in out-of-order message delivery to some participants\footnote{In fact, this was one of the first complications we faced during our implementation.}.
+
+For example, there exists a possible scenario where all Offer Messages have been sent, but some of them have only reached some participants in some point of time. In that case, those who have received the Offer Messages proceed to the DSKE sub-protocol and send their Handshake Messages. The latter, may reach participants that haven't yet finished the Offer sub-protocol, and obviously cannot be handled by them.
+
+So, there is a need for some mechanism that ensures that mpOTR messages are handled in-order by the mpOTR Protocol. There are two general approaches to solve this problem in a distributed context.
+
+The first possible approach is the utilization of some synchronization mechanism between the participants so that each participant would ensure that all other participants can handle a message before he sends it. However, this is a rather complicated approach because it would require more messages to be exchanged so that the participants could signal points of synchronization.
+
+We utilized the second approach, which is to make the receivers responsible for handling the received messages in-order. This is a rather simple approach, since it only requires each participant to keep out-of-order messages in a pending queue and handle them when messages supposed to be received ealrier have indeed been handled.
+
+
+
 \section{Message Structure}
 
 \subsection{Top level encoding}
