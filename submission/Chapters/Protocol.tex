@@ -656,9 +656,9 @@ For example, there exists a possible scenario where all Offer Messages have been
 
 So, there is a need for some mechanism that ensures that mpOTR messages are handled in-order by the mpOTR Protocol. There are two general approaches to solve this problem in a distributed context.
 
-The first possible approach is the utilization of some synchronization mechanism between the participants so that each participant would ensure that all other participants can handle a message before he sends it. However, this is a rather complicated approach because it would require more messages to be exchanged so that the participants could signal points of synchronization.
+The first possible approach is the utilization of some synchronization mechanism between the participants so that each participant would ensure that all other participants can handle a message before he sends it. However, this is a rather complicated approach because it would require more messages to be exchanged so that the participants could signal points of synchronization amongst themselves.
 
-We utilized the second approach, which is to make the receivers responsible for handling the received messages in-order. This is a rather simple approach, since it only requires each participant to keep out-of-order messages in a pending queue and handle them when messages supposed to be received ealrier have indeed been handled.
+We utilized the second approach, which is to make the receivers responsible for handling the received messages in-order. This is a rather simple approach, since it only requires each participant to keep out-of-order messages in a pending queue and handle them when messages supposed to be received ealrier have indeed been received and handled.
 
 
 
