@@ -372,7 +372,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
       $inter\_key\_list.Append(k^x)$
     }
 
-    $AuthSend(\hat{Y}, inter\_key\_list)$
+    $AuthBroadcast(\hat{Y} \Vert inter\_key\_list)$
   }
   \caption{SendUpflow($\mathcal{P}$, $InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
   \label{upflow_algo}
@@ -414,7 +414,11 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
     }
     \Else
     {
-      $(\hat{Y}, key\_list) \leftarrow AuthReceive()$
+      
+      \Repeat{$\hat{R} = \hat{X}$}
+      {
+        $(\hat{Y}, \hat{R} \Vert key\_list) \leftarrow AuthReceive()$
+      }
 
       \If{$\hat{Y}$ $\neq$ $\hat{Y}_{prev}$ $\lor$ Validate($key\_list$) = false}
       {
@@ -436,9 +440,11 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
       }
     }
 
-    $(\hat{Y}, key\_list) \leftarrow AuthReceive()$
-
-    \If{$\hat{Y}$ $\neq$ $\mathcal{P}.Last()$ $\lor$ Validate($key\_list$) = false}
+    \Repeat{$\hat{Y}$ = $\mathcal{P}.Last()$}
+    {
+      $(\hat{Y}, key\_list) \leftarrow AuthReceive()$
+    }
+    \If{Validate($key\_list$) = false}
     {
       \Return{error}
     }
