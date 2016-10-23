@@ -24,15 +24,28 @@ We assume that the application layer protocol offers the following network primi
 \item $Receive() \rightarrow (\hat{A}, M)$ --- returns any waiting message $M$ received by the participant that invokes $Receive()$ along with M's alleged author $\hat{A}$.
 \end{itemize}
 
-In the following, we use M as a representation of either a single value, or multiple values which we denote using the concatenation symbol ($\Vert$). We describe the exact structures and value encodings of mpOTR messages in \ref{sections:message_structure}.
+In the following, we use M as a representation of either a single value, or multiple values which we denote using the concatenation symbol ($\Vert$). We describe the exact structures and value encodings of mpOTR messages in section \ref{sections:message_structure}.
 
-We also assume that any message fragmentation is handled by the application layer protocol, which delivers mpOTR messages as whole to the mpOTR Protocol. However, in some cases this may not be the case. We discuss this in more detail in \ref{sections:fragmentation}.
+We also assume that any message fragmentation is handled by the application layer protocol, which delivers mpOTR messages as whole to the mpOTR Protocol. However, in some cases this may not be the case. We discuss this in more detail in section \ref{sections:fragmentation}.
 
 Finally, notice that we assume no security provided by the underlying network. An adversary may have complete control over the network and may modify, drop and/or deliver messages at will. The realization of the privacy properties exclusively relys on the mpOTR Protocol.
 
 \section{High level protocol overview}
-\begin{algorithm}[H]
-  \label{algorithms:mpotr_algo}
+In Algorithm \ref{algorithms:mpotr_algo} we illustrate a high-level overview of a single session of the mpOTR Protocol. The whole protocol has been divided into sequential phases, which we call sub-protocols. The first four of them (Offer, DSKE GKA and Attest) are responsible for setting up all the needed parameters, for the private communication to take place. The Communication sub-protocol is the one that governs the actual private group conversation. Finally, the Shutdown sub-protocol is responsible for every action that needs to be done before ending each private session. We briefly describe the function of each sub-protocol below.
+
+During the Offer sub-protocol, the participants create a Session ID, $sid$. This is a unique (with high probability) number identifying the session. The Offer sub-protocol is described in more detail in section \ref{subsections:offer}. 
+
+During the DSKE sub-protocol, every participant creates an association table $\mathcal{S}$ which maps each participant $\hat{X}$ to the public part of the signing key $E_{\hat{X}}$ he is going to use for this session. Each participant generates an ephemeral signing key that she will be using in order to sign her messages during this session. This way she ensures her messages are authenticated. Then, every participant exchanges their ephemeral public signing keys with every other participant, using a Deniable Authenticated Key Exchange (denAKE) algorithm. When all exchanges have taken place, every participant has created $\mathcal{S}$. The ephemeral signing keys to be used in this session are deniable and hence messages signed by them are deniable as well. The DSKE sub-protocol and the denAKE are described in more detail in section \ref{subsections:DSKE}.
+
+During the GKA sub-protocol, the participants generate a shared secret key $\mathcal{K}$ that encryption keys will be derived from. The derived keys, in turn, will be used to encrypt the messages during this session. The GKA sub-protocol is described in more detail in section \ref{subsections:gka}.
+
+During the Attest sub-protocol, the participants authenticate $sid$ and ensure that they agree on $\mathcal{S}$. The Attest sub-protocol is described in more detail in section \ref{subsections:attest}. 
+
+During the Communication sub-protocol, the actual private conversation takes place. The users use $\mathcal{K}$, their ephemeral signing keys, and $\mathcal{S}$, in order to encrypt and authenticate their messages. When this phase is finished, a transcript of the chat room $\mathcal{T}$ is returned, which contains all the messages of the chatroom per participant. The Communication sub-protocol is described in more detail in section \ref{subsections:communication}. 
+
+During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is consistent, and reveal their ephemeral signing keys. If the transcript is indeed consistent we say that consensus has been reached. The revelation of the ephemeral signing keys adds to the deniability property of the protocol, in the same manner the key revelation in OTR protocol does. However, it’s an optional feature, since the signing keys are deniable in the first place. The Shutdown sub-protocol is described in more detail in section \ref{subsections:shutdown}. 
+
+\begin{algorithm}[t]
   \KwIn{$\mathcal{P}$ : participants list}
   \KwResult{Executes a run of the mpOTR protocol}
   \Begin{
@@ -61,21 +74,8 @@ Finally, notice that we assume no security provided by the underlying network. A
     }
   }
   \caption{The mpOTR protocol}
+  \label{algorithms:mpotr_algo}
 \end{algorithm}
-
-In Algorithm \ref{algorithms:mpotr_algo} we illustrate a high-level overview of a single session of the mpOTR Protocol. The whole protocol has been divided into sequential phases, which we call sub-protocols. The first four of them (Offer, DSKE GKA and Attest) are responsible for setting up all the needed parameters, for the private communication to take place. The Communication sub-protocol is the one that governs the actual private group conversation. Finally, the Shutdown sub-protocol is responsible for every action that needs to be done before ending each private session. We briefly describe the function of each sub-protocol below.
-
-During the Offer sub-protocol, the participants create a Session ID, $sid$. This is a unique (with high probability) number identifying the session. The Offer sub-protocol is described in more detail in section \ref{subsections:offer}. 
-
-During the DSKE sub-protocol, each participant creates an association table $\mathcal{S}$ which maps each participant to the signing key he is going to use for this session. Each participant generates an ephemeral signing key, that she will be using in order to sign her messages during this session. This way she ensures her messages are authenticated. Then, every participant exchanges their ephemeral signing keys with every other participant, using a Deniable Authenticated Key Exchange (DAKE) algorithm. When all exchanges have taken place, every participant has created $\mathcal{S}$. The ephemeral signing keys to be used in this session are deniable. The DSKE sub-protocol and the DAKE are described in more detail in section \ref{subsections:DSKE}.
-
-During the GKA sub-protocol, the participants generate a shared key $\mathcal{K}$ that will be used to derive encryption keys. The derived keys, in turn, will be used to encrypt the messages during this session. The GKA sub-protocol is described in more detail in section \ref{subsections:gka}
-
-During the Attest sub-protocol, the participants authenticate $sid$ and ensure that they agree on $\mathcal{S}$. The Attest sub-protocol is described in more detail in section \ref{subsections:attest}. 
-
-During the Communication sub-protocol, the actual private conversation takes place. The users use $\mathcal{K}$, ephemeral signing keys, and $\mathcal{S}$, in order to encrypt and authenticate their messages. When this phase is finished, a transcript of the chat room $\mathcal{T}$ is returned, which contains all the messages of the chatroom, by participant. The Communication sub-protocol is described in more detail in section \ref{subsections:communication}. 
-
-During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is consistent, and reveal their ephemeral signing keys. If the transcript is indeed consistent we say that consensus has been reached. The revelation of the ephemeral signing keys adds to the deniability property of the protocol, in the same manner the key revelation in OTR protocol does. However, it’s an optional feature, since the signing keys are deniable in the first place. The Shutdown sub-protocol is described in more detail in section \ref{subsections:shutdown}. 
 
 
 \section{Sub-protocols}
@@ -94,7 +94,9 @@ The contributions are sent with an "Offer Message". An "Offer Message" sent by $
 
 The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer Message". When other participants receive it, they also broadcast their own "Offer Message". They all store the received contributions as well as their own. Once all messages have been exchanged, all participants can calculate $sid$. Then, they initiate the next sub-protocol. A formal description of the Offer sub-protocol in the context of a participant $\hat{X}$ is shown in algorithm \ref{algo:offer}.
 
-\begin{algorithm}[H]
+Notice that "Offer Messages" are not authenticated and hence $sid$ must be verified \emph{after} the participants have exchanged signing keys, as described in section \ref{subsections:attest}.
+
+\begin{algorithm}[t]
   \KwIn{$\mathcal{P}$ : participants list}
   \KwOut{$sid$ : the session ID}
   \Begin
@@ -125,8 +127,6 @@ The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer M
   \caption{Offer($\mathcal{P}$) --- session ID construction in the context of participant $\hat{X}$.}
   \label{algo:offer}
 \end{algorithm}
-
-Notice that "Offer Messages" are not authenticated and hence $sid$ must be verified \emph{after} the participants have exchanged signing keys, as described in section \ref{subsections:attest}.
 
 
 \subsection{Deniable Signature Key Exchange (DSKE)}
@@ -167,6 +167,40 @@ In \cite{mpotr} no denAKE is specified. Based on the \tdhname protocol as descri
 \end{enumerate}
 
 In figure \ref{den_ake_schematic} a schematic description of the protocol is provided.
+
+\begin{figure}[p]
+  \fbox{%
+    \pseudocode{%
+      \textbf{Alice} \< \< \textbf{Bob} \\[][\hline]
+      x \sample Z_p^* \< \< \\
+      \< \sendmessageright*{Send \ \left(g^x,g^X\right)} \< \\
+      \< \< y \sample Z_p^* \\
+      \< \< s \leftarrow g^{xy} \Vert g^{Xy} \Vert g^{Yx} \\
+      \< \< k_1 \leftarrow KDF_1(s) \\
+      \< \< k_2 \leftarrow KDF_2(s) \\
+      \< \sendmessageleft*{Send \ \left(g^y,g^Y\right)} \< \\
+      s \leftarrow g^{xy} \Vert g^{Xy} \Vert g^{Yx} \< \< \\
+      k_1 \leftarrow KDF_1(s) \< \< \\
+      k_2 \leftarrow KDF_2(s) \< \< \\
+      \< \sendmessageright*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
+      \< \< \text{Verify mac} \\
+      \< \< m \leftarrow AES^{-1}_{k_1}(c) \\
+      \< \< \text{Verify m = "confirm"} \\
+      \< \sendmessageleft*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
+      \text{Verify mac} \< \< \\
+      m \leftarrow AES^{-1}_{k_1}(c) \< \< \\
+      \text{Verify m = "confirm"} \\
+      \< \sendmessageright*{Send \\ c = AES_{k_1}(E_{\hat{A}}) \\ MAC_{k_2}(c) } \< \\
+      \< \< \text{Verify mac} \\
+      \< \< S[\hat{A}] \leftarrow E_{\hat{A}} \\
+      \< \sendmessageleft*{Send \\ c = AES_{k_1}(E_{\hat{B}}) \\ MAC_{k_2}(c) } \< \\
+      \text{Verify mac} \< \<  \\
+     S[\hat{B}] \leftarrow E_{\hat{B}} \< \< \\
+    }
+  }
+  \caption{The denAKE protocol, where $X$ and $Y$ are the private parts of the long term keys}
+  \label{den_ake_schematic}
+\end{figure}
 
 \paragraph{Order of the concatenation}
 When the shared secret is calculated, three values must be concatenated. Since
@@ -227,48 +261,12 @@ as, basically, any random number can be used as a secret key.
 Thus \tdhname satisfies the properties required in \cite{mpotr} and
 can be used as a denAKE.
 
-\begin{figure}[t]
-  \fbox{%
-    \pseudocode{%
-      \textbf{Alice} \< \< \textbf{Bob} \\[][\hline]
-      x \sample Z_p^* \< \< \\
-      \< \sendmessageright*{Send \ \left(g^x,g^X\right)} \< \\
-      \< \< y \sample Z_p^* \\
-      \< \< s \leftarrow g^{xy} \Vert g^{Xy} \Vert g^{Yx} \\
-      \< \< k_1 \leftarrow KDF_1(s) \\
-      \< \< k_2 \leftarrow KDF_2(s) \\
-      \< \sendmessageleft*{Send \ \left(g^y,g^Y\right)} \< \\
-      s \leftarrow g^{xy} \Vert g^{Xy} \Vert g^{Yx} \< \< \\
-      k_1 \leftarrow KDF_1(s) \< \< \\
-      k_2 \leftarrow KDF_2(s) \< \< \\
-      \< \sendmessageright*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
-      \< \< \text{Verify mac} \\
-      \< \< m \leftarrow AES^{-1}_{k_1}(c) \\
-      \< \< \text{Verify m = "confirm"} \\
-      \< \sendmessageleft*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
-      \text{Verify mac} \< \< \\
-      m \leftarrow AES^{-1}_{k_1}(c) \< \< \\
-      \text{Verify m = "confirm"} \\
-      \< \sendmessageright*{Send \\ c = AES_{k_1}(E_{\hat{A}}) \\ MAC_{k_2}(c) } \< \\
-      \< \< \text{Verify mac} \\
-      \< \< S[\hat{A}] \leftarrow E_{\hat{A}} \\
-      \< \sendmessageleft*{Send \\ c = AES_{k_1}(E_{\hat{B}}) \\ MAC_{k_2}(c) } \< \\
-      \text{Verify mac} \< \<  \\
-     S[\hat{B}] \leftarrow E_{\hat{B}} \< \< \\
-    }
-  }
-  \caption{The denAKE protocol, where $X$ and $Y$ are the private parts of the long term keys}
-  \label{den_ake_schematic}
-\end{figure}
-
-\clearpage
-
 \subsubsection{Authenticated message exchange}
 Once all participants have run the DSKE sub-protocol they all have constructed the association table $\mathcal{S}$ which associates each participant $\hat{X}$ to their ephemeral public signing key for this session $E_{\hat{X}}$. Each participant $\hat{X}$ also has his own ephemeral private signing key $e_{\hat{X}}$. From now on, participants can authenticate the messages exchanged in the current session.
 
 In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is sent and in algorithm \ref{algo:auth_receive} we show how an authenticated message is received and verified.
 
-\begin{algorithm}[H]
+\begin{algorithm}[t]
   \KwIn{$M$ : message}
   \KwExtraIn {$e_{\hat{X}}$ : ephemeral private signing key}
   \KwResult{authenticated M is brodcast}
@@ -282,7 +280,7 @@ In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is s
   \label{algo:auth_broadcast}
 \end{algorithm}
 
-\begin{algorithm}[H]
+\begin{algorithm}[t]
   \KwIn {$\mathcal{S}$ : assocation table}
   \KwOut {$(\hat{Y}, M)$ : sender and message on success, sender and $\perp$ on failure}
   \Begin
@@ -316,32 +314,7 @@ The key agreement is performed in $n$ steps. Given the ordering rule of particip
 
 In the first step, no previous list is received and the new list is created from scratch. In the last step, the new list is broadcasted to all other participants. We call each of the $n-1$ first steps "Upflow", and the last step "Downflow".
 
-\subsubsection{Upflows}
-The first participant sends a list containing $g$ and $g^{x_1}$ where $x_1$ is his private exponent. To construct the new key list, each next participant prepends a copy of the last element to the reveived list, and raises every other element to his private exponent. These messages shall be called "Upflow Messages" and the Upflow forwarding procedure is illustrated in figure \ref{figures:gka_upflow}
- 
-\subsubsection{Downflow}
-Once the last participant has received the Upflow, he calculates $\mathcal{K}$ by raising the last element of the received list to his private exponent. Then, he constructs the final intermediate key list by removing that last element and raising all other elements of the received list to his private exponent. He finally sends the final key list back to all previous participants, as illustrated in figure \ref{figures:gka_downflow}. This message, containing the final intermediate key list shall be called "Downflow Message".
-
-All other participants now can also caclulate the shared secret $\mathcal{K}$. The $i-th$ participant calculates $\mathcal{K}$ by raising $i-th$, {\bf counting from the end}, element of the final intermediate key list to his private exponent. Then, they can use $\mathcal{K}$ for encryption.
-
-\subsubsection{Example}
-To illustrate the intermediate key list construction we give an example of a GKA between 5 participants with private exponents $a$, $b$, $c$, $d$ and $e$, so that:
-\[
-\mathcal{K} = g^{abcde}
-\]
-
-The messages exchanged contain the following intermediate key lists:
-
-\[ 1 \rightarrow 2: g, g^a \]
-\[ 2 \rightarrow 3: g^a, g^b, g^{ab} \]
-\[ 3 \rightarrow 4: g^{ab}, g^{ac}, g^{bc}, g^{abc} \]
-\[ 4 \rightarrow 5: g^{abc}, g^{abd}, g^{acd}, g^{bcd}, g^{abcd} \]
-\[ 5 \rightarrow all: g^{abce}, g^{abde}, g^{acde}, g^{bcde} \]
-
-It's obvious how participant 5 can calculate $\mathcal{K}$ using the last element of the list received, $g^{abcd}$, and his private exponent $e$. It's also obvious how each of the rest participants can calculate $\mathcal{K}$ using his own private exponent and the proper element of the final list.
-
-
-\begin{figure}[H]
+\begin{figure}[t]
   \begin{minipage}{0.49\textwidth}
     \begin{tikzpicture}[scale=.9]	
       \def \n {5}
@@ -382,16 +355,15 @@ It's obvious how participant 5 can calculate $\mathcal{K}$ using the last elemen
   \end{minipage}
 \end{figure}
 
-\subsubsection{Detailed description}
-For a more detailed description of the sub-protocol we refer to \cite{mpenc}, however a pseudocode is provided.
+\subsubsection{Upflows}
+The first participant sends a list containing $g$ and $g^{x_1}$ where $x_1$ is his private exponent. To construct the new key list, each next participant prepends a copy of the last element to the reveived list, and raises every other element to his private exponent. These messages shall be called "Upflow Messages" and the Upflow forwarding procedure is illustrated in figure \ref{figures:gka_upflow}
+ 
+\subsubsection{Downflow}
+Once the last participant has received the Upflow, he calculates $\mathcal{K}$ by raising the last element of the received list to his private exponent. Then, he constructs the final intermediate key list by removing that last element and raising all other elements of the received list to his private exponent. He finally sends the final key list back to all previous participants, as illustrated in figure \ref{figures:gka_downflow}. This message, containing the final intermediate key list shall be called "Downflow Message".
 
-Algorithm \ref{upflow_algo} presents an overview of how each upflow message is constructed, using the data received from the previous upflow message.
+All other participants now can also caclulate the shared secret $\mathcal{K}$. The $i-th$ participant calculates $\mathcal{K}$ by raising $i-th$, {\bf counting from the end}, element of the final intermediate key list to his private exponent. Then, they can use $\mathcal{K}$ for encryption.
 
-Algorithm \ref{downflow_algo} presents an overview of how the final, downflow message is constructed using the data received from the last upflow message.
-
-In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo} and \ref{downflow_algo}) are used in order to execute a complete run of the GKA protocol.
-\vfill
-\begin{algorithm}[H]
+\begin{algorithm}[t]
   \KwIn {$InterKeys$ : previous intermediate key list}
   \KwExtraIn {$x$ : user's secret key}
   \KwExtraIn {$\hat{Y}$ : the next participant}
@@ -413,7 +385,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
   \label{upflow_algo}
 \end{algorithm}
 
-\begin{algorithm}[H]
+\begin{algorithm}[t]
   \KwIn {$InterKeys$ : previous intermediate key list}
   \KwExtraIn {$x$ : user's secret key}
   \KwResult{Broadcasts the downflow intermediate key list to the other participants}
@@ -431,8 +403,8 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
   \caption{SendDownflow($InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
   \label{downflow_algo}
 \end{algorithm}
-\vfill
-\begin{algorithm}[H]
+
+\begin{algorithm}[p]
   \KwIn{$\mathcal{P}$ : participants list}
   \KwExtraIn{$sid$ : the session ID}
   \KwExtraIn{$\mathcal{S}$ : association table}
@@ -498,6 +470,31 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
   \label{gka_proto_algo}
 \end{algorithm}
 
+\subsubsection{Example}
+To illustrate the intermediate key list construction we give an example of a GKA between 5 participants with private exponents $a$, $b$, $c$, $d$ and $e$, so that:
+\[
+\mathcal{K} = g^{abcde}
+\]
+
+The messages exchanged contain the following intermediate key lists:
+
+\[ 1 \rightarrow 2: g, g^a \]
+\[ 2 \rightarrow 3: g^a, g^b, g^{ab} \]
+\[ 3 \rightarrow 4: g^{ab}, g^{ac}, g^{bc}, g^{abc} \]
+\[ 4 \rightarrow 5: g^{abc}, g^{abd}, g^{acd}, g^{bcd}, g^{abcd} \]
+\[ 5 \rightarrow all: g^{abce}, g^{abde}, g^{acde}, g^{bcde} \]
+
+It's obvious how participant 5 can calculate $\mathcal{K}$ using the last element of the list received, $g^{abcd}$, and his private exponent $e$. It's also obvious how each of the rest participants can calculate $\mathcal{K}$ using his own private exponent and the proper element of the final list.
+
+\subsubsection{Detailed description}
+For a more detailed description of the sub-protocol we refer to \cite{mpenc}, however a pseudocode is provided.
+
+Algorithm \ref{upflow_algo} presents an overview of how each upflow message is constructed, using the data received from the previous upflow message.
+
+Algorithm \ref{downflow_algo} presents an overview of how the final, downflow message is constructed using the data received from the last upflow message.
+
+In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo} and \ref{downflow_algo}) are used in order to execute a complete run of the GKA protocol.
+
 \subsection{Attest}
 \label{subsections:attest}
 During this sub-protocol the participants must verify that they agree on the $sid$ and the association table $\mathcal{S}$. This is needed for two reasons. First, because $sid$ is required before $\mathcal{S}$ is constructed, and therefore the messages exchanged for the calculation of $sid$ can't be signed. Second, because the participants need to verify that they all have the same view of $\mathcal{S}$.
@@ -508,7 +505,7 @@ When a participant receives an "Attest Message", first she must verify the signa
 
 Provided that SHA-512 is a cryptographic hash function an attacker can't find two signing keys association tables with the same hash. This means that he is not able to make two participants believe that they have arrived at the same table when they have not. Also by signing the message containing the specific $sid$, a user implicitly verifies that he is using that particular $sid$ for this session.
 
-\begin{algorithm}[H]
+\begin{algorithm}[t]
   \KwIn{$\mathcal{P}$ : participants list}
   \KwExtraIn{$sid$ : the session ID}
   \KwExtraIn{$\mathcal{S}$ : the association table}
@@ -615,26 +612,8 @@ When he receives a message from user $B$, he adds that message to the transcript
 
 \subsection{Shutdown}
 \label{subsections:shutdown}
-During the Shutdown sub-protocol, the participants end the current session. Chat room transcript consistency is checked and the ephemeral signing keys are published, in order to permit a posteriori modifications of the chat transcript. The revelation of the ephemeral signing keys adds to the protocol's deniability property. However, the protocol is deniable even without publishing the ephemeral signing keys, since the signing keys are deniable in the first place.
 
-For a session to be terminated, a "Shutdown Message" is sent. This message signals to other participants that the shutdown phase should be initiated. It contains the  hash of all the messages sent by the user sending the "Shutdown Message". When a user receives a "Shutdown Message", he also responds with a "Shutdown Message" containing his own messages hash, if he hasn't already sent one.
-
-When one participant has received a "Shutdown Message" from all other participants he can send a "Digest Message". This message contains a digest of all the messages in the chat room and is calculated as follows:
-\begin{itemize}
-  \item[] Sort the participants using their usernames in lexicographic order.
-  \item[] For each participant $i$ (in that order) calculate the hash $h_i = H(S_i)$, where $S_i$ is set of all the messages sent by this user, sorted in lexicographic order too.
-  \item[] Calculate the digest $h = H(h_1 \Vert h_2 \dots \Vert h_N)$, where N is the number of participants.
-\end{itemize}
-
-When one participant receives a "Digest Message" from some other participant, he checks whether the two of them agree on the chat room transcript. He simply compares the digest he computed locally to the one sent by the other participant. He deduces that consensus is reached only if the two digests are the same.
-
-When one participant has received a "Digest Message" from every other participant, he broadcasts an "End Message". This message signifies that the sender will not use the channel to send any messages anymore.
-
-When a participant receives an "End Message" from all other participants, he is certain that he can release his signing secret key. This is done by broadcasting a message which we shall call "Key Release Message". Now anyone who intercepts the released key can forge chat room messages. However all the participants will no longer accept messages signed with the released secret key, and thus it cannot be used to impersonate its previous owner.
-
-A formal description of the Shutdown sub-protocol in the context of a participant $\hat{X}$ is shown in algorithm \ref{algo:shutdown}.\\
-
-\begin{algorithm}[H]
+\begin{algorithm}[p]
   \KwIn{$\mathcal{P}$ : participants list}
   \KwExtraIn{$sid$ : the session ID}
   \KwExtraIn{$\mathcal{S}$ : association table}
@@ -716,6 +695,25 @@ A formal description of the Shutdown sub-protocol in the context of a participan
   \caption{Shutdown($\mathcal{P}$, $sid$, $\mathcal{S}$), $\mathcal{T}$) --- called in the context of participant $\hat{X}$, determines if consensus has been reached with other participants and publishes the ephemeral signing key of $\hat{X}$.}
   \label{algo:shutdown}
 \end{algorithm}
+
+During the Shutdown sub-protocol, the participants end the current session. Chat room transcript consistency is checked and the ephemeral signing keys are published, in order to permit a posteriori modifications of the chat transcript. The revelation of the ephemeral signing keys adds to the protocol's deniability property. However, the protocol is deniable even without publishing the ephemeral signing keys, since the signing keys are deniable in the first place.
+
+For a session to be terminated, a "Shutdown Message" is sent. This message signals to other participants that the shutdown phase should be initiated. It contains the  hash of all the messages sent by the user sending the "Shutdown Message". When a user receives a "Shutdown Message", he also responds with a "Shutdown Message" containing his own messages hash, if he hasn't already sent one.
+
+When one participant has received a "Shutdown Message" from all other participants he can send a "Digest Message". This message contains a digest of all the messages in the chat room and is calculated as follows:
+\begin{itemize}
+  \item[] Sort the participants using their usernames in lexicographic order.
+  \item[] For each participant $i$ (in that order) calculate the hash $h_i = H(S_i)$, where $S_i$ is set of all the messages sent by this user, sorted in lexicographic order too.
+  \item[] Calculate the digest $h = H(h_1 \Vert h_2 \dots \Vert h_N)$, where N is the number of participants.
+\end{itemize}
+
+When one participant receives a "Digest Message" from some other participant, he checks whether the two of them agree on the chat room transcript. He simply compares the digest he computed locally to the one sent by the other participant. He deduces that consensus is reached only if the two digests are the same.
+
+When one participant has received a "Digest Message" from every other participant, he broadcasts an "End Message". This message signifies that the sender will not use the channel to send any messages anymore.
+
+When a participant receives an "End Message" from all other participants, he is certain that he can release his signing secret key. This is done by broadcasting a message which we shall call "Key Release Message". Now anyone who intercepts the released key can forge chat room messages. However all the participants will no longer accept messages signed with the released secret key, and thus it cannot be used to impersonate its previous owner.
+
+A formal description of the Shutdown sub-protocol in the context of a participant $\hat{X}$ is shown in algorithm \ref{algo:shutdown}.
 
 \section{The primitives}
 \label{setions:Protocol:primitives}
