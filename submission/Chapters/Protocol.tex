@@ -392,9 +392,7 @@ Algorithm \ref{downflow_algo} presents an overview of how the final, downflow me
 In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo} and \ref{downflow_algo}) are used in order to execute a complete run of the GKA protocol.
 \vfill
 \begin{algorithm}[H]
-  \KwIn {$\mathcal{P}$ : participants list}
-  \KwExtraIn {$\mathcal{S}$ : association table}
-  \KwExtraIn {$InterKeys$ : previous intermediate key list}
+  \KwIn {$InterKeys$ : previous intermediate key list}
   \KwExtraIn {$x$ : user's secret key}
   \KwExtraIn {$\hat{Y}$ : the next participant}
   \KwResult{Sends the new intermediate key list to the next participant}
@@ -411,14 +409,12 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
     $AuthBroadcast(\hat{Y} \Vert inter\_key\_list)$
   }
-  \caption{SendUpflow($\mathcal{P}$, $\mathcal{S}$, $InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
+  \caption{SendUpflow($InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
   \label{upflow_algo}
 \end{algorithm}
 \vfill
 \begin{algorithm}[H]
-  \KwIn {$\mathcal{P}$ : participants list}
-  \KwExtraIn {$\mathcal{S}$ : association table}
-  \KwExtraIn {$InterKeys$ : previous intermediate key list}
+  \KwIn {$InterKeys$ : previous intermediate key list}
   \KwExtraIn {$x$ : user's secret key}
   \KwResult{Broadcasts the downflow intermediate key list to the other participants}
   \Begin
@@ -432,7 +428,7 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
     $AuthBroadcast(inter\_key\_list)$
   }
-  \caption{SendDownflow($\mathcal{P}$, $\mathcal{S}$, $InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
+  \caption{SendDownflow($InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
   \label{downflow_algo}
 \end{algorithm}
 \vfill
@@ -449,13 +445,14 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
 
     $\hat{Y}_{next} \leftarrow \hat{X}.Next()$   
 
-    \If{$\hat{Y}_{prev}$ = NULL}{
-      $SendUpflow(P, \mathcal{S}, [G], x, \hat{Y}_{next})$
+    \uIf(\tcc*[f]{$\hat{X}$ is first}){$\hat{Y}_{prev}$ = NULL}
+    {
+      $SendUpflow([G], x, \hat{Y}_{next})$
     }
     \Else
     {
       
-      \Repeat{$\hat{R} = \hat{X}$}
+      \Repeat(\tcc*[f]{wait for previous upflow}){$\hat{R} = \hat{X}$}
       {
         $(\hat{Y}, \hat{R} \Vert key\_list) \leftarrow AuthReceive(\mathcal{S})$
       }
@@ -464,23 +461,23 @@ In algorithm \ref{gka_proto_algo} the two previous algorithms (\ref{upflow_algo}
       {
         \Return{error}
       }
-      \If{$\hat{Y}_{next}$ $\neq$ NULL}
+      \uIf(\tcc*[f]{$\hat{X}$ is not first or last}){$\hat{Y}_{next}$ $\neq$ NULL}
       {
-        $SendUpflow(P, \mathcal{S}, key\_list, x, \hat{Y}_{next})$
+        $SendUpflow(key\_list, x, \hat{Y}_{next})$
       }
-      \Else
+      \Else(\tcc*[f]{$\hat{X}$ is last})
       {
         $final\_key \leftarrow key\_list.Last()$
 
         $\mathcal{K} \leftarrow final\_key^x$
 
-        $SendDownflow(P, \mathcal{S}, key\_list, x)$
+        $SendDownflow(key\_list, x)$
 
         \Return{$\mathcal{K}$}
       }
     }
 
-    \Repeat{$\hat{Y}$ = $\mathcal{P}.Last()$}
+    \Repeat(\tcc*[f]{wait for downflow}){$\hat{Y}$ = $\mathcal{P}.Last()$}
     {
       $(\hat{Y}, key\_list) \leftarrow AuthReceive(\mathcal{S})$
     }
