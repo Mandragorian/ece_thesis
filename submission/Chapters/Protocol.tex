@@ -45,7 +45,7 @@ Finally, notice that we assume no security provided by the underlying network. A
     
     $\mathcal{A} \leftarrow Attest(sid, \mathcal{S}, \mathcal{P})$
     
-    \If{$\mathcal{A}$ $\neq$ "OK"}{
+    \If{$\mathcal{A}$ = $\perp$}{
       \Return{"Error"}
     }
 
@@ -53,7 +53,7 @@ Finally, notice that we assume no security provided by the underlying network. A
   
     $c \leftarrow Shutdown(sid, \mathcal{T}, \mathcal{S}, \mathcal{P})$
     
-    \If{$c$ = "consensus"}{
+    \uIf{ConsensusForAll($c$)}{
       \Return{"OK"}
     }
     \Else{
@@ -512,7 +512,7 @@ Provided that SHA-512 is a cryptographic hash function an attacker can't find tw
   \KwIn{$\mathcal{P}$ : participants list}
   \KwExtraIn{$sid$: the session ID}
   \KwExtraIn{$\mathcal{S}$: the association table}
-  \KwOut{$\mathcal{A}$: "OK" if verification went good, "Error" if it went wrong}
+  \KwOut{$\mathcal{A}$: "OK" if verification went good, $\perp$ if it went wrong}
   \Begin
   {	
 	$M \leftarrow sid \Vert SHA512(\mathcal{S})$
@@ -525,9 +525,9 @@ Provided that SHA-512 is a cryptographic hash function an attacker can't find tw
     {
       $(\hat{Y}, M_{\hat{Y}}) \leftarrow AuthReceive(\mathcal{S})$
       
-      \If{$M_{\hat{Y}} = \perp \lor  M_{\hat{Y}} \neq M$}
+      \uIf{$M_{\hat{Y}} = \perp \lor  M_{\hat{Y}} \neq M$}
       {     
-        \Return{"Error"}            
+        \Return{$\perp$}            
         
       }
       \Else{
@@ -640,12 +640,16 @@ A formal description of the Shutdown sub-protocol in the context of a participan
   \KwExtraIn{$\mathcal{S}$: the association table}
   \KwExtraIn{$\mathcal{P}$ : participants list}
   \KwExtraIn{$e_{\hat{X}}$ : ephemeral private signing key}
-  \KwOut{$s$: "consensus" if verification went good, $\perp$ if it went wrong}
+  \KwOut{$s$: boolean array of consensus status for each participant, $\perp$ if shutdown went wrong}
   \Begin
   {	
+    \tcp{Broadcast digest of our transcript}  
+  
     $h_{\hat{X}} \leftarrow SHA512(\mathcal{T}[\hat{X}])$ 
     
     $AuthBroadcast("shutdown" \Vert h_{\hat{X}})$
+    
+    \tcp{Collect digests of others' transcripts}  
     
 	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
 
@@ -661,9 +665,13 @@ A formal description of the Shutdown sub-protocol in the context of a participan
         }
     }
     
+    \tcp{Broadcast digest of full chat} 
+    
     $h \leftarrow SHA512(h_{\hat{Y}_1} \Vert h_{\hat{Y}_2} \Vert \cdots)$
     
     $AuthBroadcast("digest" \Vert h)$
+    
+    \tcp{Determine consenus} 
     
     $Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
     
@@ -673,11 +681,13 @@ A formal description of the Shutdown sub-protocol in the context of a participan
         
         \If{$\hat{Y} \in Outstanding \land M = "digest"$}
         {
-          $consensus_{\hat{Y}} \leftarrow h = h^{'}$
+          $consensus[\hat{Y}] \leftarrow h = h^{'}$
         
           $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
         }
     }
+    
+    \tcp{Assure that everybody aborted the session}  
     
     $AuthBroadcast("end")$
     
@@ -687,7 +697,7 @@ A formal description of the Shutdown sub-protocol in the context of a participan
     {
         $(\hat{Y}, M) \leftarrow AuthReceive(\mathcal{S})$
         
-        \If{$M \neq "end"$}
+        \uIf{$M \neq "end"$}
         {
           \Return{$\perp$}
         }
@@ -697,9 +707,11 @@ A formal description of the Shutdown sub-protocol in the context of a participan
         }                       
     }
     
+     \tcp{Reveal the ephemeral private signing key}
+    
     $Broadcast(e_{\hat{X}})$
     
-    \Return{$"consensus"$} 
+    \Return{$consensus$} 
   }
   \caption{Shutdown($sid$, $\mathcal{T}$, $\mathcal{S}$, $\mathcal{P}$) --- called in the context of participant $\hat{X}$, determines if consensus has been reached with other participants and publishes the ephemeral signing key of $\hat{X}$.}
   \label{algo:shutdown}
