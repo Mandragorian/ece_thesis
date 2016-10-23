@@ -272,7 +272,7 @@ In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is s
   \KwResult{authenticated M is brodcast}
   \Begin
   {		
-	$\sigma \leftarrow Sign_{e_{\hat{X}}}(M)$
+	$\sigma \leftarrow Sign(e_{\hat{X}}, M)$
 	
 	$Broadcast(M \Vert \sigma)$
   }

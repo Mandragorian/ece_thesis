@@ -254,12 +254,11 @@ This means that if:
   ab = np + r
 \]
 
-Then:
+then:
 
 \[
   a \odot b  = r
 \]
-.
 
 In general we will abuse the notation of exponentiation and symbolize:
 
@@ -292,7 +291,7 @@ In algorithm \ref{algo:dh_genkey} we see the $genkey$ function, and in algorithm
 
 From now on, the public and private information of a user will be called public and private keys accordingly.
 
-\begin{algorithm}
+\begin{algorithm}[t]
   \KwResult{The private and public information needed by the protocol}
   \Begin{
     $x \leftarrow random\_in\_range(1,p-1)$
@@ -305,7 +304,7 @@ From now on, the public and private information of a user will be called public 
   \label{algo:dh_genkey}
 \end{algorithm}
 
-\begin{algorithm}
+\begin{algorithm}[t]
   \KwIn{$g^y$: the public value of the other user, $x$: the secret value of the user calling the function}
   \KwResult{The shared secret, which is known only to the two users}
   \Begin{
