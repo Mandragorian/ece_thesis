@@ -80,8 +80,60 @@ By applying \textit{sizeof} to variables the dependency is removed and the chang
   OneType* var = malloc(sizeof *var);
 \end{lstlisting}
 
-\section{Design Model}
-PLACEHOLDER
+\section{Design Architecture}
+
+\subsection{Top level protocol component}
+The top level component of our implementation is called protocol. It incorporates the basic API endpoints that start a private session, handle received or about to send messages and end a private session.
+
+Regarding the received messages, it's responsible to check if session ID matches, verify signed received messages and finally sort them out forwarding them to the proper sub-protocol component, adding them to the pending queue or discarding them.
+
+\subsection{The Context component}
+
+
+\subsection{Sub-protocol components}
+
+\subsubsection{Offer}
+
+\subsubsection{DSKE}
+
+\subsubsection{DAKE}
+
+\subsubsection{GKA}
+
+\subsubsection{Attest}
+
+\subsubsection{Communication}
+
+\subsubsection{Shutdown}
+
+
+\subsection{Functional components}
+
+\subsubsection{Sign}
+
+\subsubsection{Encryption}
+
+\subsubsection{Serialize}
+
+
+\subsection{Infrastructure components}
+Each of the following infrastructure components incorporates a First-Class ADT implementation accompanied by relevant functions.
+
+\subsubsection{Message}
+
+\subsubsection{Participant}
+
+\subsubsection{Private identity keys}
+
+\subsubsection{Fingerprint component}
+
+\subsubsection{Pending message}
+
+\subsubsection{Event}
+
+\subsubsection{Chat info}
+
+\subsubsection{Messages}
 
 \section{Application Programming Interface}
 
