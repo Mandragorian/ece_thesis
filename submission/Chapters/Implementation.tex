@@ -43,9 +43,10 @@ Instances of the declared pointer serve as a handle for the clients. This mechan
 We implemented most of the infrastructure modules as First-Class ADTs, namely \textit{ChatParticipant}, \textit{ChatContext}, \textit{ChatEvent}, \textit{ChatParticipant} and other.
 
 \subsection{Observer}
+PLACEHOLDER
 
 \subsection{Iterator}
-
+PLACEHOLDER
 
 \section{Idiomatic Expressions}
 Idiomatic expressions, also reffered to as idioms, are low-level patterns that depend upon the implementation technology. Usually idioms are only applicable in a specific language.
@@ -69,18 +70,243 @@ if(0 == x) {
 \subsection{Sizeof to variables}
 When using functions for dynamic memory allocation in the C language the client has to provide the required size information. Many programmers use to dynamically allocate memory as in the following example:
 \begin{lstlisting}[language=C]
-OneType* var = malloc(sizeof(OneType));
+  OneType* var = malloc(sizeof(OneType));
 \end{lstlisting}
 
 Code like this contains a subtle form of dependency, that is the size given as an argument of malloc must match the size of the left sife of the assignment. A change in the variable type requires a change in two places. A failure to update both places would leave the code with undefined behaviour.
 
 By applying \textit{sizeof} to variables the dependency is removed and the change is limited to one place. When the idiom is applied the code will look like this:
 \begin{lstlisting}[language=C]
-OneType* var = malloc(sizeof *var);
+  OneType* var = malloc(sizeof *var);
 \end{lstlisting}
 
-\section{Naming Conventions}
+\section{Design Model}
+PLACEHOLDER
 
 \section{Application Programming Interface}
 
-\section{Overall Design}
+\subsection{The \texttt{OtrlUserState} instance handle}
+The OTR library uses a handle to associate internal protocol data with the client. This is a variable of type \texttt{OtrlUserState}. We used this handle to associate mpOTR Protocol internal data too. Regarding the mpOTR implementation, it encapsulates the list of private keys, the list of known fingerprints and a list of mpOTR sessions. The \texttt{OtrlUserState} instance handle will be passed as an argument to various library endpoints.
+
+Most clients will only need one instance handle, but in a case of a client implementing a multi-user context there may be the need of more instance handles.
+
+A new \texttt{OtrlUserState} handle is created using:
+\begin{lstlisting}[language=C]
+OtrlUserState otrl_userstate_create(void);
+\end{lstlisting}  
+    
+Any created \texttt{OtrlUserState} handle should be freed using:
+\begin{lstlisting}[language=C]
+void otrl_userstate_free(OtrlUserState us);
+\end{lstlisting}
+
+\subsection{The \texttt{otrl\_chat\_token\_t} chat room identifier}
+When the client wants to call chat room specific library functions, it should provide a value that identifies the specific chat room. We call this type of value \texttt{otrl\_chat\_token\_t} which is defined:
+\begin{lstlisting}[language=C]
+typedef int otrl_chat_token_t;
+\end{lstlisting}
+
+\subsection{The \texttt{OtrlChatInfoPtr} chat room descriptor}
+\texttt{OtrlChatInfoPtr} is a First-Class ADT used to encapsulate information about a specific chat room. The following interface is provided for the client:
+\begin{lstlisting}
+char * otrl_chat_info_get_accountname(OtrlChatInfoPtr info);
+char * otrl_chat_info_get_protocol(OtrlChatInfoPtr info);
+otrl_chat_token_t otrl_chat_info_get_chat_token(OtrlChatInfoPtr info);
+OtrlChatPrivacyLevel otrl_chat_info_get_privacy_level(OtrlChatInfoPtr info);
+\end{lstlisting}
+
+The \texttt{OtrlChatPrivacyLevel} is defined as follows:
+\begin{lstlisting}
+typedef enum {
+	OTRL_CHAT_PRIVACY_LEVEL_NONE,
+	OTRL_CHAT_PRIVACY_LEVEL_UNVERIFIED,
+	OTRL_CHAT_PRIVACY_LEVEL_PRIVATE,
+	OTRL_CHAT_PRIVACY_LEVEL_FINISHED,
+	OTRL_CHAT_PRIVACY_LEVEL_UNKNOWN
+} OtrlChatPrivacyLevel;
+\end{lstlisting}
+
+\subsection{The \texttt{OtrlMessageAppOps} callbacks structure}
+\label{section:callbacks_structure}
+In order for a client to use OTR Library, it must provide a structure containing pointers to functions that must be defined by the client but called by the library. We added callbacks needed for mpOTR in this structure. Regarding the mpOTR implementation the following callbacks were added:
+
+\begin{lstlisting}
+int (*chat_inject_message)(void *opdata, const OtrlChatInfoPtr info, const char *message);
+void (*chat_handle_event)(void *odata, const OtrlChatInfoPtr info, const OtrlChatEventPtr event);
+void (*chat_display_notification_cb)(void *opdata, const OtrlChatInfoPtr info, const char *notification);
+char **(*chat_get_participants)(void *opdata, const OtrlChatInfoPtr info, unsigned int *size);
+void (*chat_privkey_create)(void *opdata, const char *accountname, const char *protocol);
+void (*chat_fingerprints_write)(void *opdata);
+void (*chat_privkeys_write)(void *opdata);
+void (*chat_info_refresh)(void *opdata, const OtrlChatInfoPtr info);
+\end{lstlisting}
+
+\begin{description}
+  \item[] \texttt{chat\_inject\_message}: Broadcasts \texttt{message} to the chatroom defined by \texttt{info}. Return 0 on success, non-zero on error.
+
+  \item[] \texttt{chat\_handle\_event}: Reacts to \texttt{event} that happened in the chatroom defined by \texttt{info}. The events are described in section \ref{section:events}.
+
+  \item[] \texttt{chat\_display\_notification\_cb}: Displays \texttt{notification} regarding the chatroom defined by \texttt{info}.
+  
+  \item[] \texttt{chat\_get\_participants}: Provides the list of the participants' usernames that are currently in the chatroom defined by \texttt{info}. Returns a pointer to an array of the usernames along with the size in the output parameter \texttt{size} on success, NULL on error.
+    
+  \item[] \texttt{chat\_privkey\_create}: Invokes the library's function that creates a new private key for this \texttt{accountname} and \texttt{protocol}, providing it with the proper file descriptor. The invoked function is described in \ref{section:private_key_management}.
+
+  \item[] \texttt{chat\_fingerprints\_write}: Invokes the library's function that writes the known fingerprints to a file, providing it with the proper file descriptor. The invoked function is described in section \ref{section:fingerprint_management}.
+  
+  \item[] \texttt{chat\_privkeys\_write}: Invokes the library's function that writes the private identity keys to a file, providing it with the proper file descriptor. The invoked function is described in \ref{section:private_key_management}.
+
+  \item[] \texttt{chat\_info\_refresh}: Reacts to a change regarding the status of the chatroom defined by \texttt{info}.
+  
+\end{description}
+
+\subsection{Starting and ending a private session}
+To start a private session the client should use:
+\begin{lstlisting}
+int otrl_chat_protocol_send_query(OtrlUserState us, const OtrlMessageAppOps *ops, const char *accountname, const char *protocol, otrl_chat_token_t chat_token);
+\end{lstlisting}
+where:
+\begin{description}
+  \item[] us: the instance handle.
+  \item[] ops: the callbacks structure.
+  \item[] accountname: the identifying name for the account in use.
+  \item[] protocol: the identifying name for the protocol in use.
+  \item[] chat\_token: the chat room identifier.
+\end{description}
+
+To end a private session the client should use:
+\begin{lstlisting}
+int otrl_chat_protocol_shutdown(OtrlUserState us, const OtrlMessageAppOps *ops, const char *accountname, const char *protocol, otrl_chat_token_t chat_token);
+\end{lstlisting}
+
+where:
+\begin{description}
+  \item[] us: the instance handle
+  \item[] ops: the callbacks structure
+  \item[] accountname: the identifying name for the account in use
+  \item[] protocol: the identifying name for the protocol in use
+  \item[] chat\_token: the chat room identifier
+\end{description}
+
+\subsection{Handling messages}
+Since the client knows nothing about active mpOTR sessions and the structure of mpOTR messages, it should pass every message to mpOTR functions before sending or after receiving them. The following two functions are provided. 
+
+Upon receiving a message in a chatroom and before displaying it to the user the client application should call:
+\begin{lstlisting}
+int otrl_chat_protocol_receiving(OtrlUserState us, const OtrlMessageAppOps *ops, void *opdata, const char *accountname, const char *protocol, const char *sender, otrl_chat_token_t chat_token, const char *message, char **newmessagep);
+\end{lstlisting}
+where:
+\begin{description}
+  \item[] us: the instance handle
+  \item[] ops: the callbacks structure
+  \item[] opdata: 
+  \item[] accountname: the identifying name for the account in use
+  \item[] protocol: the identifying name for the protocol in use
+  \item[] sender: the username of the message sender
+  \item[] chat\_token: the chat room identifier
+  \item[] message: the received message
+  \item[] *newmessagep: output parameter that contains contains a newly allocated string that should be displayed to the user instead of message, or NULL if no modification is needed.
+\end{description}
+If 0 is returned, the message was an ordinary, non-OTR message, which should be delivered to the user without modification.
+If 1 is returned, the message was handled by mpOTR. In this case, if *newmessagep is NULL then nothing should be displayed to the user. Else *newmessagep should be displayed to the user intead of the received one and be freed afterwards.
+
+Before sending a user's message the client application should call:
+\begin{lstlisting}
+int otrl_chat_protocol_sending(OtrlUserState us, const OtrlMessageAppOps *ops, void *opdata, const char *accountname, const char *protocol, const char *message, otrl_chat_token_t chat_token, char **messagep);
+\end{lstlisting}
+where:
+\begin{description}
+  \item[] us: the instance handle
+  \item[] ops: the callbacks structure
+  \item[] opdata: 
+  \item[] accountname: the identifying name for the account in use
+  \item[] protocol: the identifying name for the protocol in use
+  \item[] sender: the username of the message sender
+  \item[] message: the message to be sent
+  \item[] chat\_token: the chat room identifier
+  \item[] *messagep: output parameter that contains contains a newly allocated string that should be sent instead of message, or NULL if no modification is needed.
+\end{description}
+Returns a non-zero in case of error. In this case, nothing is safe to be sent.
+If zero is returned then the client should check *messagep. If *messagep is NULL then message should be sent unmodified. Else *messagep should be sent to the caht intead of message and be freed afterwards.
+
+\subsection{Private identity key management}
+\label{section:private_key_management}
+The following functions are provided for the management of the private identity keys:
+\begin{lstlisting}
+int otrl_chat_protocol_id_key_read_file(OtrlUserState us, FILE *privf);
+int otrl_chat_protocol_id_keys_write_file(OtrlUserState us, FILE *privf);
+int otrl_chat_protocol_id_key_generate_new(OtrlUserState us, const OtrlMessageAppOps *ops, const char *accountname, const char *protocol);
+OtrlListPtr otrl_chat_protocol_id_key_list_create(OtrlUserState us);
+**messagep);
+\end{lstlisting}
+
+\begin{description}
+  \item[] \texttt{otrl\_chat\_protocol\_id\_key\_read\_file}: Loads the private identity key list from the specified file to the memory. It should be called once before using the mpOTR Library for instance handle \texttt{us}.
+  
+  \item[] \texttt{otrl\_chat\_protocol\_id\_keys\_write\_file}: Writes the private identity key list loaded in the memory, to the specified file. It is meant to be called only inside the proper callback function, see section \ref{section:callbacks_structure}.
+  
+  \item[] \texttt{otrl\_chat\_protocol\_id\_key\_generate\_new}: Creates a new private identity key for the specified \texttt{accountname} and \texttt{protocol}.
+  
+  \item[] \texttt{otrl\_chat\_protocol\_id\_key\_list\_create}: Creates and returns a list containing elements of type \texttt{OtrlChatIdKeyInfoPtr}. Each element contains information about each private identity key.
+
+\end{description}
+
+\texttt{OtrlChatIdKeyInfoPtr} is defined as follows:
+\begin{lstlisting}
+typedef struct OtrlChatIdKeyInfo * OtrlChatIdKeyInfoPtr;
+
+struct OtrlChatIdKeyInfo {
+	char *accountname;
+	char *protocol;
+	char *fingerprint_hex;
+};
+\end{lstlisting}
+
+\subsection{The \texttt{OtrlChatFingerprintPtr} fingerprint Frist-Class ADT}
+The fingerprints are implemented as First-Class ADT. The following interface is provided:
+
+\begin{lstlisting}
+char *otrl_chat_fingerprint_bytes_to_hex(const unsigned char *fingerprint);
+size_t chat_fingerprint_size();
+char * otrl_chat_fingerprint_get_accountname(OtrlChatFingerprintPtr fnprnt);
+char * otrl_chat_fingerprint_get_protocol(OtrlChatFingerprintPtr fnprnt);
+char * otrl_chat_fingerprint_get_username(OtrlChatFingerprintPtr fnprnt);
+unsigned char * otrl_chat_fingerprint_get_bytes(OtrlChatFingerprintPtr fnprnt);
+\end{lstlisting}
+
+\begin{description}
+  \item[] \texttt{otrl\_chat\_fingerprint\_bytes\_to\_hex}: Converts fingerprint bytes to human-readable form. The result should be freed by the caller.
+  
+  \item[] \texttt{otrl\_chat\_fingerprint\_get\_accountname}: Returns the username of the user that knows this fingerprint.
+  
+  \item[] \texttt{otrl\_chat\_fingerprint\_get\_protocol}: Returns the protocol used when this fingerprint was met.
+  
+  \item[] \texttt{otrl\_chat\_fingerprint\_get\_username}: Returns the username of the user who has an identity key with that fingerprint.
+  
+  \item[] \texttt{otrl\_chat\_fingerprint\_get\_bytes}: Returns the actual bytes of the fingerprint.
+
+\end{description}
+
+\subsection{Known fingerprints management}
+\label{section:fingerprint_management}
+The following functions are provided regarding the management of the known fingerprints:
+\begin{lstlisting}
+int otrl_chat_protocol_fingerprints_read_file(OtrlUserState us, FILE *fingerfile);
+int otrl_chat_protocol_fingerprints_write_file(OtrlUserState us, FILE *fingerfile);
+void otrl_chat_protocol_fingerprint_verify(OtrlUserState us, const OtrlMessageAppOps *ops, OtrlChatFingerprintPtr fnprnt);
+void otrl_chat_protocol_fingerprint_forget(OtrlUserState us, const OtrlMessageAppOps *ops, OtrlChatFingerprintPtr fnprnt);
+\end{lstlisting}
+
+\begin{description}
+  \item[] \texttt{otrl\_chat\_protocol\_fingerprints\_read\_file}: Loads the known fingerprints list from the specified file to the memory. It should be called once before using the mpOTR Library for instance handle \texttt{us}.
+  
+  \item[] \texttt{otrl\_chat\_protocol\_fingerprints\_write\_file}: Writes the known fingerprints list loaded in the memory, to the specified file. It is meant to be called only inside the proper callback function, see section \ref{section:callbacks_structure}.
+  
+  \item[] \texttt{otrl\_chat\_protocol\_fingerprint\_verify}: Marks the specified fingerprint as verified.
+  
+  \item[] \texttt{otrl\_chat\_protocol\_fingerprint\_forget}: Removes the specified fingerprint from the known fingerprints list.
+
+\end{description}
+
+\subsection{Events}
+\label{section:events}
