@@ -70,70 +70,163 @@ if(0 == x) {
 \subsection{Sizeof to variables}
 When using functions for dynamic memory allocation in the C language the client has to provide the required size information. Many programmers use to dynamically allocate memory as in the following example:
 \begin{lstlisting}[language=C]
-  OneType* var = malloc(sizeof(OneType));
+OneType* var = malloc(sizeof(OneType));
 \end{lstlisting}
 
 Code like this contains a subtle form of dependency, that is the size given as an argument of malloc must match the size of the left sife of the assignment. A change in the variable type requires a change in two places. A failure to update both places would leave the code with undefined behaviour.
 
 By applying \textit{sizeof} to variables the dependency is removed and the change is limited to one place. When the idiom is applied the code will look like this:
 \begin{lstlisting}[language=C]
-  OneType* var = malloc(sizeof *var);
+OneType* var = malloc(sizeof *var);
 \end{lstlisting}
 
 \section{Design Architecture}
 
 \subsection{Top level protocol component}
-The top level component of our implementation is called protocol. It incorporates the basic API endpoints that start a private session, handle received or about to send messages and end a private session.
+The top level component of our implementation is called protocol. It incorporates the basic API endpoints that start a private session, handle received or about to send messages and end a private session. It also provides API endpoints for private identity key management and known fingeprints management, that are actually wrappers of functions provided by other components.
 
 Regarding the received messages, it's responsible to check if session ID matches, verify signed received messages and finally sort them out forwarding them to the proper sub-protocol component, adding them to the pending queue or discarding them.
 
-\subsection{The Context component}
-
-
 \subsection{Sub-protocol components}
+Sub-protocols are implemented as separate components. The general form of each one incorporates an implementation of a First-Class ADT holding internal sub-protocol information. It also provides an interface to be utilized by the top level protocol component.
+
+Each \emph{ChatContextPtr} instance holds a handle of the incorporated First-Class ADT for each sub-protocol. Received messages are forwarded by the top level protocol to the proper sub-protocol along with the \emph{ChatContextPtr} handle.
+
+Each sub-protocol impplements its own state machine. The current state is provided by the interface of the First-Class ADT so that state transitions can be determined by the top level protocol component.
+
+The First-Class ADT handle type is named \emph{Chat[...]InfoPtr} and the state type \emph{Chat[...]State}, where \emph{[...]} is the name of the subprotocol.
+
+The basic interface, common in most of sub-protocols contains the following functions:
+
+\begin{lstlisting}[caption={General sub-protocol interface},label={lst:subprotocol-interface}]
+void chat_[...]_info_free(Chat[...]InfoPtr info);
+Chat[...]State chat_[...]_info_get_state(Chat[...]InfoPtr info);
+int chat_[...]_init(ChatContextPtr ctx, ChatMessage **msgToSend);
+int chat_[...]_is_my_message(const ChatMessage *msg);
+int chat_[...]_handle_message(ChatContextPtr ctx, ChatMessage *msg, ChatMessage **msgToSend);
+\end{lstlisting}
+
+\begin{description}
+  \item \emph{chat\_[...]\_info\_free}: Frees the internal data of the First-Class ADT specified by \emph{info} handle.
+
+  \item \emph{chat\_[...]\_info\_get\_state}: Returns the current state of the sub-protocol specified by the \emph{info} handle.
+
+  \item \emph{chat\_[...]\_init}: Initiates the sub-protocol regarding the session indicated by \emph{ctx}. Output parameter \emph{*msgToSend} returns a message that should be sent after the initialization, if any. Returns \emph{0} if no error occured, \emph{non-zero} in case of an error. 
+
+  \item \emph{chat\_[...]\_is\_my\_message}: Returns \emph{1} if the message should be handled by this sub-protocol or \emph{0} if not.
+
+  \item \emph{chat\_[...]\_handle\_message}: Handles the message \emph{msg} received in the session specified by \emph{ctx}. Output parameter \emph{*msgToSend} returns a message that should be sent after handling, if any. Returns \emph{0} if no error occured, \emph{non-zero} in case of an error. 
+\end{description}
 
 \subsubsection{Offer}
+The states of the offer subprotocol are defined following:
+\begin{lstlisting}[caption={Offer states}]
+typedef enum {
+	CHAT_OFFERSTATE_NONE,
+	CHAT_OFFERSTATE_AWAITING,
+	CHAT_OFFERSTATE_FINISHED
+} ChatOfferState;
+\end{lstlisting}
+
+In addition to the general interface, offer interface provides the following function, which is called when we want to start a new private session:
+\begin{lstlisting}[caption={Offer specific interface}]
+int chat_offer_start(ChatContextPtr ctx, ChatMessage **msgToSend);
+\end{lstlisting}
+
+The code of the offer component is listed in \ref{APPENDIX REFERENCE}
 
 \subsubsection{DSKE}
+The states of the DSKE subprotocol are defined as following:
+\begin{lstlisting}[caption={DSKE states}]
+typedef enum {
+	CHAT_DSKESTATE_NONE,
+	CHAT_DSKESTATE_AWAITING_KEYS,
+	CHAT_DSKESTATE_FINISHED
+} ChatDSKEState;
+\end{lstlisting}
 
-\subsubsection{DAKE}
+The code of the DSKE component is listed in \ref{APPENDIX REFERENCE}
 
 \subsubsection{GKA}
+The states of the GKA subprotocol are defined as following:
+\begin{lstlisting}[caption={GKA states}]
+typedef enum {
+    CHAT_GKASTATE_NONE,
+    CHAT_GKASTATE_AWAITING_UPFLOW,
+    CHAT_GKASTATE_AWAITING_DOWNFLOW,
+    CHAT_GKASTATE_FINISHED
+} ChatGKAState;
+\end{lstlisting}
+
+The code of the GKA component is listed in \ref{APPENDIX REFERENCE}
 
 \subsubsection{Attest}
+The states of the Attest subprotocol are defined as following:
+\begin{lstlisting}[caption={Attest states}]
+typedef enum {
+    CHAT_ATTESTSTATE_NONE,
+    CHAT_ATTESTSTATE_AWAITING,
+    CHAT_ATTESTSTATE_FINISHED
+} ChatAttestState;
+\end{lstlisting}
+
+The code of the Attest component is listed in \ref{APPENDIX REFERENCE}
+
 
 \subsubsection{Communication}
+Communication has no internal information, so its interface contains only the last 2 of the functions of listing \ref{lst:subprotocol-interface}.
+
+In addition, it provides the following function, used to broadcast an authenticated and encrypted message in an already set up session:
+\begin{lstlisting}[caption={Communication specific interface}]
+int chat_communication_broadcast(ChatContextPtr ctx, const char *message, ChatMessage **msgToSend);
+\end{lstlisting}
+
+The code of the Communication component is listed in \ref{APPENDIX REFERENCE}
 
 \subsubsection{Shutdown}
+In addition to the general interface functions, Shutdown provides the following functions, used to send specific shutdown messages:
+\begin{lstlisting}[caption={Shutdown specific interface}]
+int chat_shutdown_send_shutdown(ChatContextPtr ctx, ChatMessage **msgToSend);
+int chat_shutdown_send_digest(ChatContextPtr ctx, ChatMessage **msgToSend);
+int chat_shutdown_send_end(ChatContextPtr ctx, ChatMessage **msgToSend);
+int chat_shutdown_release_secrets(ChatContextPtr ctx, ChatMessage **msgToSend);
+\end{lstlisting}
 
+The code of the Shutdown component is listed in \ref{APPENDIX REFERENCE}
 
-\subsection{Functional components}
-
-\subsubsection{Sign}
-
-\subsubsection{Encryption}
-
-\subsubsection{Serialize}
-
+\subsubsection{DAKE}
 
 \subsection{Infrastructure components}
 Each of the following infrastructure components incorporates a First-Class ADT implementation accompanied by relevant functions.
 
-\subsubsection{Message}
+\begin{description}
+  \item chat\_context:
 
-\subsubsection{Participant}
+  \item chat\_message:
 
-\subsubsection{Private identity keys}
+  \item chat\_participant:
+  
+  \item chat\_id\_key:
 
-\subsubsection{Fingerprint component}
+  \item chat\_fingerprint:
 
-\subsubsection{Pending message}
+  \item chat\_pending:
+  
+  \item chat\_event:
 
-\subsubsection{Event}
+  \item chat\_info: 
+\end{description}
 
-\subsubsection{Chat info}
+\subsection{Functional components}
+These are the components that provide low level functions. There are three of them:
 
-\subsubsection{Messages}
+\begin{description}
+  \item chat\_sign: It provides functions for signature generation and verification.
+
+  \item chat\_enc: It provides functions for encryption and decryption.
+
+  \item chat\_serial: It provides functions for serialization and parsing of several variable types used in mpOTR messages. 
+\end{description}
 
 \section{Application Programming Interface}
 
