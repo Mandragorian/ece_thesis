@@ -1,4 +1,58 @@
 \chapter{Related Work}
 \label{chapter:related_work}
 
-PLACEHOLDER
+As we have already stated, end-to-end encrypted instant messaging is a very trending topic in  the crypto community.
+Consequently, a plethora of protocols and implementations achieving the above goal exist, the majority of them handling the two-party case.
+
+Here we will present a brief collection of the aforementioned protocols.
+Our goal is not to be exhaustive, but rather to give credit to the authors of those protocols.
+Either because their ideas gave us inspiration, or because we experienced first hand the difficulties of implementing and designing secure communication applications, and would like to acknowledge their contributions.
+
+\section{Two-party Protocols}
+
+First we will take a look at protocols providing conversations between two parties.
+
+\subsection{Off-the-Record Messaging}
+
+This protocol could not be missing from this section.
+It is designed by the same team which authored the original Multi-part OTR paper \cite{mpotr}.
+
+As far as we know it is the first complete protocol to provide end-to-end encrypted Instant Messaging with strong cryptography.
+It set the ground for many other protocols and algorithms, like the axolotl key ratchet, which later evolved into the Signal protocol.
+
+\subsection{Vuvuzela}
+
+\noindent\enquote{\itshape We kill people based on metadata}\bigbreak
+
+\hfill {\small Michael Hayden, former NSA director}
+\bigbreak
+
+While end-to-end encryption is an essential component for any privacy protecting protocol, it is not perfect on its own.
+The metadata can reveal a bunch of crucial information that can be used to even determine the contents of encrypted data.
+
+Vuvuzela \cite{vuvuzela} is a protocol that provides strong metadata privacy that scales.
+It utilizes onion encryption (like TOR) to hide metadata.
+Messages are sent in rounds, and noise packets are injected in the network in order to defend against traffic analysis attacks.
+
+\section{Multi-party Protocols}
+
+And now let's see some multi-party protocols.
+
+\subsection{Flute}
+
+Flute is a secure multiparty messaging protocol, currently available as a weechat plugin for irc chatrooms.
+It provides end-to-end encryption, but does not offer other desirable properties like deniability or chatroom message consistency.
+
+Flute does not provide everything that is needed for a multi-party protocol to be completely secure.
+It's simplicity however, allowed it to have a quick implementation, and also provides the challenge to figure out what protocol are crucial in multi-party messaging, and must be added, or do not really enhance the security and should better be left out.
+
+\subsection{Signal}
+
+Signal, developed by Open Whisper Systems, is currently the most complete solution to the multi-party messaging problem.
+It is a robust protocol providing all the necessary properties like \emph{confidentiality, authentication, deniability} and \emph{forward secrecy}.
+It does not provide \emph{transcript consistency} but the double-ratchet it uses provides some resistance against reordering attacks.
+
+It is available as an Android and iOS application, and for two party conversation can be used through the chrome browser.
+Independently from its authors various applications also use it.
+What'sApp, Viber, and Facebook Messenger to name a few, are some of the applications that use the Signal protocol to provide secure chats.
+Cryptocat is a firefox plugin that closely follows the Signal approach and is completely open source.
