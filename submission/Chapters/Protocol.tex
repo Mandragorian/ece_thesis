@@ -145,7 +145,7 @@ In \cite{mpotr} no denAKE is specified. Based on the \tdhname protocol as descri
 
 \begin{enumerate}
 
-  \item Each participant $\hat{X}$ uses a private/public \dhname keypair $(A_{\hat{X}}, g^{A_{\hat{X}}})$ as a longterm key to idenitfy him to other participants. This is generated only once, when a member first used the protocol, then the key remains the same for subsequent runs of the protocol.
+  \item Each participant $\hat{X}$ uses a \dhname keypair $(A_{\hat{X}}, g^{A_{\hat{X}}})$ as a longterm key to idenitfy him to other participants. This is generated only once, when a member first used the protocol, then the key remains the same for subsequent runs of the protocol.
 
   \item Before initiating any denAKE in this session, each participant $\hat{X}$ creates an ephemeral \dhname keypair $(a_{\hat{X}},g^{a_{\hat{X}}})$ used only in this session. He uses the same ephemeral key	to communicate with all the participants during this session.
 
@@ -723,9 +723,13 @@ The identity of a participant is verified during the DSKE phase.
 In order for a participant to be verified the fingerprint of his longterm key must be stored in the known fingerprints file, and be explicitly marked as verified.
 In our implementation this file is comma separated and is of the form:
 
+{
+\small
+\centering
 \begin{verbatim}
-<account_name>,<protocol>,<buddy_name>,<fingerprint>,<is_verified>
+  <account_name>,<protocol>,<buddy_name>,<fingerprint>,<is_verified>
 \end{verbatim}
+}
 
 The account name is the "address" of the library user in the form username@host, and is provided by the application.
 The protocol is a string that is characteristic of the underlying protocol that the specific account uses.
