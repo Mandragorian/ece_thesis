@@ -4,25 +4,25 @@
 %--------------------------------------------
 
 \section{Summary}
-Our primary goal was to design and implement the protocol we specified as a production-grade software, aiming to meet the needs of a wide user base. Of course every user would expect of such a software to offer privacy in communication between two parties too. That said, implementing mpOTR as part of the OTR library was a natural decision. Not only would this result in a complete IM privacy library, but it would, as well, affect an already existing wide user base.
+Our primary goal was to design and implement the protocol we specified as a production-grade software, aiming to meet the needs of a wide user base. Of course every user would expect of such a software to offer privacy in communication between two parties, too. That said, implementing mpOTR as part of the OTR library was a natural decision. Not only would this result in a complete IM privacy library, but it would, as well, apply to an already existing wide user base.
 
-There exist quite a few implementations of the OTR Library, but only two of them have been actually developed by the OTR Development Team. The first one is implemented in C, it's the very first implementation and the most actively developed having 4 major versions with latest release in March of 2016. The other one is implemented in Java, and has only one release in October of 2009. We chose to develop mpOTR as part of the C implementation of the OTR Library.
+Quite a few implementations of the OTR Library exist, but only two of them have been actually developed by the OTR Development Team. The first one is implemented in C, it's the very first implementation and the most actively developed having 4 major versions with latest release in March of 2016. The other one is implemented in Java, and has only one release in October of 2009. We chose to develop mpOTR as part of the C implementation of the OTR Library.
 
 
 \section{Designing the Integration}
 Integrating a new feature into an existing software is quite a challenge. Ideally, a good design would at least follow the same coding style, make the best possible reuse of the existing code and follow the same design patters. However, after a carefull inspection of the OTR Library source code we realized that following this approach was unfeasible.
 
-First of all, the coding style in OTR Librady source code is inconsistent. Different characters have been used for indentation, there is no standard error handling style, etc. Reusing parts of the existing code was not an option most of the time due to extensive coupling between the various modules. Finally, no specific design patterns had been used in the existing code.
+First of all, the coding style in OTR Library source code is inconsistent. Different characters have been used for indentation, there is no standard error handling style, etc. Reusing parts of the existing code was not an option most of the time due to extensive coupling between the various modules. Finally, no specific design patterns had been used in the existing code.
 
-Our approach was rather different. First, we used the coding style used more frequently in the existing code. The code reuse was limitted to the Diffie-Hellman and Base64 implementations that were the only reusable modules of the existing code. As for the design patterns, we decided to use them based on theory.
+Our approach was rather different. First, we used the coding style used more frequently in the existing code. The code reuse was limitted to the Diffie-Hellman and Base64 implementations that were the only reusable components of the existing code. As for the design patterns, we decided to use them based on theory.
 
 
 \section{Design Challenges in C}
 A great deal of the callenges a software engineer is going to face when designing a software to be developed in C origins in the lack of literature regarding the Design Patterns. Most of the relative literature, such as the commonly referenced \cite{gofdesignpatterns}, describe the actual implementations of the patterns in the context of an object oriented design.
 
-Given that C is not object oriented language, a developer should be innovative when implementing commonly used design patterns. Fortunately, C is a powerfull language offering the mechanisms to implement almost any design pattern. This power mainly comes from two features, the ability to specify incomplete types in order to achieve abstraction in the sense of information hiding, and the use of \textit{void*} in order to achieve generality as interface and inheritence would do in an object oriented context. The latter must be used carefully, since it could raise the risks regarding type-safety.
+Given that C is not an object oriented language, a developer should be innovative when implementing commonly used design patterns. Fortunately, C is a powerfull language offering the mechanisms to implement almost any design pattern. This power mainly comes from two features, the ability to specify incomplete types in order to achieve abstraction in the sense of information hiding, and the use of \textit{void*} in order to achieve generality as interface and inheritence would do in an object oriented context. The latter must be used carefully, since it could raise type-safety risks.
 
-The most complete reference of design patterns in C can be found in \cite{patternsinc}. Although it only covers a small number of patterns, it equips the reader with a clear approach of designing patterns when object-oriented techniques are not natively supported by the language. We also used \cite{patternsinc} as a reference for various patterns we implemented.
+The most complete reference of design patterns in C can be found in \cite{patternsinc}. Although it only covers a small number of patterns, it equips the reader with a clear approach of designing patterns when object-oriented techniques are not natively supported by the language. We used \cite{patternsinc} as a reference for various patterns we implemented.
 
 
 \section{Design Patterns}
@@ -36,20 +36,22 @@ ADT stands for Abstract Data Type and it is basically a set of values and operat
 
 Our implementation of First-Class ADTs is based on the paradigm found in \cite{patternsinc}.
 
-The header file of each First-Class ADT contains the declaration of a pointer to an incomplete type and the declaration of all functions that the interface constists of. The source file of each First-Class ADT contains the definition of the incomplete type, as a structure and the definition of each interface function.
+The header file of each First-Class ADT contains the declaration of a pointer to an incomplete type and the declaration of all functions that the interface constists of. The source file of each First-Class ADT contains the definition of the incomplete type as a structure and the definition of each interface function.
 
 Instances of the declared pointer serve as a handle for the clients. This mechanism enforces the clients to use the provided interface functions rather than directly accessing the fields of the structure.
 
-We implemented most of the infrastructure modules as First-Class ADTs, namely \textit{ChatParticipant}, \textit{ChatContext}, \textit{ChatEvent}, \textit{ChatParticipant} and other.
+We implemented most of the infrastructure components as First-Class ADTs, as described in section \ref{section:infrastructure-components}.
 
 \subsection{Observer}
-PLACEHOLDER
+In \cite{patternsinc} a C implementation of the Observer Pattern is proposed. It's a complete approach enabling an arbitrary number of observers to attach to an event emitter.
+
+In our mpOTR implementation, the library utilizes an event emitting mechanism meant to signal different types of events to the client application. In our case, only one observer exists. So, our implementation of the pattern is simpler. The client-application (observer), attaches to the mpOTR library (event emitter) by providing a pointer to its event handling function.
 
 \subsection{Iterator}
-PLACEHOLDER
+Our implementation utilizes lists of several entities. We implemented the list as a First-Class ADT, so that the the internal structure remains hidden from higher level components. In order for the list client to traverse the list and access the list's elements we had to follow the Iterator Pattern. We implemented the list iterator as a First-Class ADT, too.
 
 \section{Idiomatic Expressions}
-Idiomatic expressions, also reffered to as idioms, are low-level patterns that depend upon the implementation technology. Usually idioms are only applicable in a specific language.
+Idiomatic expressions, also reffered to as idioms, are low-level patterns that depend upon the implementation technology and usually are only applicable in a specific language. We briefly explain the ones we used, that otherwise could seem strange when reading the source code.
 
 \subsection{Constants to the left}
 The C language allows assignments inside conditional statement. This can be convenient in various cases, but can also lead to serious bugs when a programmer accidentaly uses the assignment symbol instead of the comparison symbol, as in the following example:
@@ -81,22 +83,27 @@ OneType* var = malloc(sizeof *var);
 \end{lstlisting}
 
 \section{Design Architecture}
+In this section we present the different components that our mpOTR Library implementation consists of. We follow a top-down approach starting from the top-level component and then presenting lower-level components.
 
-\subsection{Top level protocol component}
-The top level component of our implementation is called protocol. It incorporates the basic API endpoints that start a private session, handle received or about to send messages and end a private session. It also provides API endpoints for private identity key management and known fingeprints management, that are actually wrappers of functions provided by other components.
+\subsection{Top-level protocol component}
+The top-level component of our implementation is called \emph{chat\_protocol}. It incorporates the basic API endpoints that start a private session, handle received or about to send messages and end a private session. It also provides API endpoints for private identity key management and known fingeprints management, that are actually wrappers of functions provided by other components. For a detailed API description see section \ref{section:api}.
 
-Regarding the received messages, it's responsible to check if session ID matches, verify signed received messages and finally sort them out forwarding them to the proper sub-protocol component, adding them to the pending queue or discarding them.
+A great portion of the mpOTR Protocol implementation is carried out when handling received messages, since this is when state transitions occur. Regarding the received messages, the protocol component is responsible to check if session ID matches, verify the signature of signed messages and finally sort them out forwarding them to the proper sub-protocol component, adding them to the pending queue or discarding them. After a message is forwarded to a sub-protocol component, the protocol component checks if a state transition occured, and initializes the subsequent subprotocol as needed.
+
+Regarding the messages that are about to be sent, it's responsible to check if a private session has been set up. In that case, it should sign and encrypt them properly or discard them if any error occurs.
+
+The code of the protocol component is listed in \ref{APPENDIX REFERENCE}.
 
 \subsection{Sub-protocol components}
-Sub-protocols are implemented as separate components. The general form of each one incorporates an implementation of a First-Class ADT holding internal sub-protocol information. It also provides an interface to be utilized by the top level protocol component.
+Sub-protocols are implemented as separate components. The general form of each one incorporates an implementation of a First-Class ADT holding internal sub-protocol information. It also provides an interface to be utilized by the top-level protocol component.
 
-Each \emph{ChatContextPtr} instance holds a handle of the incorporated First-Class ADT for each sub-protocol. Received messages are forwarded by the top level protocol to the proper sub-protocol along with the \emph{ChatContextPtr} handle.
+For each chat room, the corresponding \emph{ChatContextPtr} instance holds a handle of the incorporated First-Class ADT for each sub-protocol. Received messages are forwarded by the top-level protocol to the proper sub-protocol along with the \emph{ChatContextPtr} instance handle. \emph{ChatContextPtr} is described in section \ref{section:infrastructure-components}.
 
-Each sub-protocol impplements its own state machine. The current state is provided by the interface of the First-Class ADT so that state transitions can be determined by the top level protocol component.
+Each sub-protocol impplements its own state machine. The current state is provided by the interface of the First-Class ADT so that state transitions can be determined by the top-level protocol component.
 
 The First-Class ADT handle type is named \emph{Chat[...]InfoPtr} and the state type \emph{Chat[...]State}, where \emph{[...]} is the name of the subprotocol.
 
-The basic interface, common in most of sub-protocols contains the following functions:
+The basic interface, common in most of sub-protocols, contains the following functions:
 
 \begin{lstlisting}[caption={General sub-protocol interface},label={lst:subprotocol-interface}]
 void chat_[...]_info_free(Chat[...]InfoPtr info);
@@ -111,15 +118,15 @@ int chat_[...]_handle_message(ChatContextPtr ctx, ChatMessage *msg, ChatMessage 
 
   \item \emph{chat\_[...]\_info\_get\_state}: Returns the current state of the sub-protocol specified by the \emph{info} handle.
 
-  \item \emph{chat\_[...]\_init}: Initiates the sub-protocol regarding the session indicated by \emph{ctx}. Output parameter \emph{*msgToSend} returns a message that should be sent after the initialization, if any. Returns \emph{0} if no error occured, \emph{non-zero} in case of an error. 
+  \item \emph{chat\_[...]\_init}: Initiates the sub-protocol regarding the chat room indicated by \emph{ctx}. Output parameter \emph{*msgToSend} returns a message that should be sent after the initialization, if any. Returns \emph{0} if no error occured, \emph{non-zero} in case of an error. 
 
   \item \emph{chat\_[...]\_is\_my\_message}: Returns \emph{1} if the message should be handled by this sub-protocol or \emph{0} if not.
 
-  \item \emph{chat\_[...]\_handle\_message}: Handles the message \emph{msg} received in the session specified by \emph{ctx}. Output parameter \emph{*msgToSend} returns a message that should be sent after handling, if any. Returns \emph{0} if no error occured, \emph{non-zero} in case of an error. 
+  \item \emph{chat\_[...]\_handle\_message}: Handles the message \emph{msg} received in the chat room specified by \emph{ctx}. Output parameter \emph{*msgToSend} returns a message that should be sent after handling, if any. Returns \emph{0} if no error occured, \emph{non-zero} in case of an error. 
 \end{description}
 
 \subsubsection{Offer}
-The states of the offer subprotocol are defined following:
+The states of the offer sub-protocol are defined as following:
 \begin{lstlisting}[caption={Offer states}]
 typedef enum {
 	CHAT_OFFERSTATE_NONE,
@@ -128,15 +135,15 @@ typedef enum {
 } ChatOfferState;
 \end{lstlisting}
 
-In addition to the general interface, offer interface provides the following function, which is called when we want to start a new private session:
+In addition to the general sub-protocol interface shown in listing \ref{lst:subprotocol-interface}, offer interface provides the following function, which is called when we want to start a new private session:
 \begin{lstlisting}[caption={Offer specific interface}]
 int chat_offer_start(ChatContextPtr ctx, ChatMessage **msgToSend);
 \end{lstlisting}
 
-The code of the offer component is listed in \ref{APPENDIX REFERENCE}
+The code of the offer component is listed in \ref{APPENDIX REFERENCE}.
 
 \subsubsection{DSKE}
-The states of the DSKE subprotocol are defined as following:
+The states of the DSKE sub-protocol are defined as following:
 \begin{lstlisting}[caption={DSKE states}]
 typedef enum {
 	CHAT_DSKESTATE_NONE,
@@ -145,10 +152,12 @@ typedef enum {
 } ChatDSKEState;
 \end{lstlisting}
 
-The code of the DSKE component is listed in \ref{APPENDIX REFERENCE}
+The DSKE sub-protocol component uses a component called \emph{chat\_dake} which implements the denAKE protocol.
+
+The code of the DSKE component is listed in \ref{APPENDIX REFERENCE} and for the denAKE component in \ref{APPENDIX REFERENCE}.
 
 \subsubsection{GKA}
-The states of the GKA subprotocol are defined as following:
+The states of the GKA sub-protocol are defined as following:
 \begin{lstlisting}[caption={GKA states}]
 typedef enum {
     CHAT_GKASTATE_NONE,
@@ -158,10 +167,10 @@ typedef enum {
 } ChatGKAState;
 \end{lstlisting}
 
-The code of the GKA component is listed in \ref{APPENDIX REFERENCE}
+The code of the GKA component is listed in \ref{APPENDIX REFERENCE}.
 
 \subsubsection{Attest}
-The states of the Attest subprotocol are defined as following:
+The states of the Attest sub-protocol are defined as following:
 \begin{lstlisting}[caption={Attest states}]
 typedef enum {
     CHAT_ATTESTSTATE_NONE,
@@ -170,21 +179,32 @@ typedef enum {
 } ChatAttestState;
 \end{lstlisting}
 
-The code of the Attest component is listed in \ref{APPENDIX REFERENCE}
+The code of the Attest component is listed in \ref{APPENDIX REFERENCE}.
 
 
 \subsubsection{Communication}
-Communication has no internal information, so its interface contains only the last 2 of the functions of listing \ref{lst:subprotocol-interface}.
+Communication has no internal information, so its interface contains only the last two functions of listing \ref{lst:subprotocol-interface}.
 
-In addition, it provides the following function, used to broadcast an authenticated and encrypted message in an already set up session:
+In addition, it provides the following function, used to broadcast an encrypted and signed message in an already set up session:
 \begin{lstlisting}[caption={Communication specific interface}]
 int chat_communication_broadcast(ChatContextPtr ctx, const char *message, ChatMessage **msgToSend);
 \end{lstlisting}
 
-The code of the Communication component is listed in \ref{APPENDIX REFERENCE}
+The code of the Communication component is listed in \ref{APPENDIX REFERENCE}.
 
 \subsubsection{Shutdown}
-In addition to the general interface functions, Shutdown provides the following functions, used to send specific shutdown messages:
+The states of the Shutdown sub-protocol are defined as following:
+\begin{lstlisting}[caption={Shutdown states}]
+typedef enum {
+	CHAT_SHUTDOWNSTATE_NONE,
+	CHAT_SHUTDOWNSTATE_AWAITING_SHUTDOWNS,
+	CHAT_SHUTDOWNSTATE_AWAITING_DIGESTS,
+	CHAT_SHUTDOWNSTATE_AWAITING_ENDS,
+	CHAT_SHUTDOWNSTATE_FINISHED
+} ChatShutdownState;
+\end{lstlisting}
+
+In addition to the general sub-protocol interface shown in listing \ref{lst:subprotocol-interface}, Shutdown provides the following functions, used to send specific shutdown messages:
 \begin{lstlisting}[caption={Shutdown specific interface}]
 int chat_shutdown_send_shutdown(ChatContextPtr ctx, ChatMessage **msgToSend);
 int chat_shutdown_send_digest(ChatContextPtr ctx, ChatMessage **msgToSend);
@@ -192,30 +212,44 @@ int chat_shutdown_send_end(ChatContextPtr ctx, ChatMessage **msgToSend);
 int chat_shutdown_release_secrets(ChatContextPtr ctx, ChatMessage **msgToSend);
 \end{lstlisting}
 
-The code of the Shutdown component is listed in \ref{APPENDIX REFERENCE}
-
-\subsubsection{DAKE}
+The code of the Shutdown component is listed in \ref{APPENDIX REFERENCE}.
 
 \subsection{Infrastructure components}
-Each of the following infrastructure components incorporates a First-Class ADT implementation accompanied by relevant functions.
+\label{section:infrastructure-components}
+Each of the following infrastructure components incorporates a First-Class ADT implementation accompanied by relevant functions:
 
 \begin{description}
-  \item chat\_context:
+  \item chat\_context: It incorporates a First-Class ADT with handle type \emph{ChatContextPtr} that models the context of a chat room. Each instance contains details of the chat room (user's account, protocol in use, list of participants, etc.), handles for each sub-protocol info and details of the mpOTR session (session ID, ehpemeral signing key, shared secret, long-term identity key, etc.). It also provides functions to add or find a context in a list of contexts.
 
-  \item chat\_message:
+  \item chat\_message: It provides functions to create each different type of mpOTR message. Each mpOTR message is modeled as a structure of type \emph{ChatMessage}. It also provides functions to serialize and parse a serialized mpOTR message.
 
-  \item chat\_participant:
+  \item chat\_participant: It incorporates a First-Class ADT with handle type \emph{ChatParticipantPtr} that models a participant of the chat room. It also provides functions to add of find a participant in a list of participants.
   
-  \item chat\_id\_key:
-
-  \item chat\_fingerprint:
-
-  \item chat\_pending:
+  \item chat\_id\_key: It incorporates a First-Class ADT with handle type \emph{ChatIdKeyPtr} that models a longterm identity key of the user. The actual type of the identity key may be any type that implements the interface shown in listing \ref{lst:internal-key-interface}. It also provides functions to generate a new identity key for an account, and to find an identity key in a list of identity keys. Finally, it provides functions to read an identity key list from or write to a file.
   
-  \item chat\_event:
+\begin{lstlisting}[caption={Internal key interface},label={lst:internal-key-interface}]
+struct ChatInternalKeyOps{
+    ChatInternalKeyPtr (*generate)(void);
+    int (*serialize)(ChatInternalKeyPtr, gcry_sexp_t *);
+    ChatInternalKeyPtr (*parse)(gcry_sexp_t);
+    unsigned char * (*fingerprint_create)(ChatInternalKeyPtr);
+    void (*free)(ChatInternalKeyPtr);
+};
+\end{lstlisting}
 
-  \item chat\_info: 
+  \item chat\_dh\_key: A First-Class ADT with handle type \emph{ChatDHKeyPtr} that models a \dhname key pair and implements the internal key interface listed in listing \ref{lst:internal-key-interface}.
+
+  \item chat\_fingerprint: It incorporates a First-Class ADT with handle type \emph{OtrlChatFingerprintPtr} that models a fingerprint of a participant's public identity key. It also provides functions to find, add or remove a fingerprint in a list of fingerprints. Finally, it provides functions to read a fingerprint list from or write to a file.
+
+  \item chat\_pending: It incorporates a First-Class ADT with handle type \emph{ChatPendingPtr} that models a fingerprint of a participant's public identity key. Each instance contains the sender username and the message string.
+  
+  \item chat\_event: It incorporates a First-Class ADT with handle type \emph{OtrlChatEventPtr} that models a fingerprint of a participant's public identity key. Each instance contains the event type and the type specific data. It provides an event creating function for each type of event.
+
+  \item chat\_info:  It incorporates a First-Class ADT with handle type \emph{OtrlChatInfoPtr} that models a chat room descriptor that contains chat room specific information to be sent to the client application.
+  
+  \item{list}: It incorporates a doubly linked list implementation and a list iterator implementation. The list is implemented as a First-Class ADT with handle type \emph{OtrlListPtr}. The iterator is also implemented as a First-Class ADT with handle type \emph{OtrlListIteratorPtr}.
 \end{description}
+
 
 \subsection{Functional components}
 These are the components that provide low level functions. There are three of them:
@@ -229,6 +263,7 @@ These are the components that provide low level functions. There are three of th
 \end{description}
 
 \section{Application Programming Interface}
+\label{section:api}
 
 \subsection{The \emph{OtrlUserState} instance handle}
 The OTR library uses a handle to associate internal protocol data with the client. This is a variable of type \emph{OtrlUserState}. We used this handle to associate mpOTR Protocol internal data, too. Regarding the mpOTR implementation, it encapsulates the list of private identity keys, the list of known fingerprints and a list of mpOTR session descriptors. The \emph{OtrlUserState} instance handle will be passed as an argument to various mpOTR library API endpoints.
