@@ -6,7 +6,7 @@ Following the conventions of the OTR protocol, the term "private" is used to des
 \begin{description}
 \item[Confidentiality] No one else apart from the chat room participants can read the messages exchanged.
 \item[Authentication] You are assured that the participants are who you think they are.
-\item[Repudiation] The messages sent do not have digital signatures that are checkable by a third party. Anyone can forge messages after a conversation to make them look like they came from you. However, during a conversation, other participants are assured the messages they see are authentic and unmodified. 
+\item[Repudiation] The messages sent do not have digital signatures that are checkable by a third party. Anyone can forge messages after a conversation to make them look like they came from you. However, during a conversation, other participants are assured the messages they see are authentic and unmodified.
 \item[Forward secrecy] If you lose control of your private keys, no previous conversation is compromised.
 \end{description}
 
@@ -16,7 +16,7 @@ In the context of the multi-party chat room, one more property is required:
 \end{description}
 
 \section{Underlying network setting}
-The mpOTR Protocol is designed to run on top of an existing network setting. This may be any application layer protocol, such as Jabber/XMPP, IRC, etc. 
+The mpOTR Protocol is designed to run on top of an existing network setting. This may be any application layer protocol, such as Jabber/XMPP, IRC, etc.
 
 We assume that the application layer protocol offers the following network primitives in the context of chatrooms:
 \begin{itemize}
@@ -33,17 +33,17 @@ Finally, notice that we assume no security provided by the underlying network. A
 \section{High level protocol overview}
 In Algorithm \ref{algorithms:mpotr_algo} we illustrate a high-level overview of a single session of the mpOTR Protocol. The whole protocol has been divided into sequential phases, which we call sub-protocols. The first four of them (Offer, DSKE GKA and Attest) are responsible for setting up all the needed parameters, for the private communication to take place. The Communication sub-protocol is the one that governs the actual private group conversation. Finally, the Shutdown sub-protocol is responsible for every action that needs to be done before ending each private session. We briefly describe the function of each sub-protocol below.
 
-During the Offer sub-protocol, the participants create a Session ID, $sid$. This is a unique (with high probability) number identifying the session. The Offer sub-protocol is described in more detail in section \ref{subsections:offer}. 
+During the Offer sub-protocol, the participants create a Session ID, $sid$. This is a unique (with high probability) number identifying the session. The Offer sub-protocol is described in more detail in section \ref{subsections:offer}.
 
 During the DSKE sub-protocol, every participant creates an association table $\mathcal{S}$ which maps each participant $\hat{X}$ to the public part of the signing key $E_{\hat{X}}$ he is going to use for this session. Each participant generates an ephemeral signing key that she will be using in order to sign her messages during this session. This way she ensures her messages are authenticated. Then, every participant exchanges their ephemeral public signing keys with every other participant, using a Deniable Authenticated Key Exchange (denAKE) algorithm. When all exchanges have taken place, every participant has created $\mathcal{S}$. The ephemeral signing keys to be used in this session are deniable and hence messages signed by them are deniable as well. The DSKE sub-protocol and the denAKE are described in more detail in section \ref{subsections:DSKE}.
 
 During the GKA sub-protocol, the participants generate a shared secret key $\mathcal{K}$ that encryption keys will be derived from. The derived keys, in turn, will be used to encrypt the messages during this session. The GKA sub-protocol is described in more detail in section \ref{subsections:gka}.
 
-During the Attest sub-protocol, the participants authenticate $sid$ and ensure that they agree on $\mathcal{S}$. The Attest sub-protocol is described in more detail in section \ref{subsections:attest}. 
+During the Attest sub-protocol, the participants authenticate $sid$ and ensure that they agree on $\mathcal{S}$. The Attest sub-protocol is described in more detail in section \ref{subsections:attest}.
 
-During the Communication sub-protocol, the actual private conversation takes place. The users use $\mathcal{K}$, their ephemeral signing keys, and $\mathcal{S}$, in order to encrypt and authenticate their messages. When this phase is finished, a transcript of the chat room $\mathcal{T}$ is returned, which contains all the messages of the chatroom per participant. The Communication sub-protocol is described in more detail in section \ref{subsections:communication}. 
+During the Communication sub-protocol, the actual private conversation takes place. The users use $\mathcal{K}$, their ephemeral signing keys, and $\mathcal{S}$, in order to encrypt and authenticate their messages. When this phase is finished, a transcript of the chat room $\mathcal{T}$ is returned, which contains all the messages of the chatroom per participant. The Communication sub-protocol is described in more detail in section \ref{subsections:communication}.
 
-During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is consistent, and reveal their ephemeral signing keys. If the transcript is indeed consistent we say that consensus has been reached. The revelation of the ephemeral signing keys adds to the deniability property of the protocol, in the same manner the key revelation in OTR protocol does. However, it’s an optional feature, since the signing keys are deniable in the first place. The Shutdown sub-protocol is described in more detail in section \ref{subsections:shutdown}. 
+During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is consistent, and reveal their ephemeral signing keys. If the transcript is indeed consistent we say that consensus has been reached. The revelation of the ephemeral signing keys adds to the deniability property of the protocol, in the same manner the key revelation in OTR protocol does. However, it’s an optional feature, since the signing keys are deniable in the first place. The Shutdown sub-protocol is described in more detail in section \ref{subsections:shutdown}.
 
 \begin{algorithm}[t]
   \KwIn{$\mathcal{P}$ : participants list}
@@ -51,21 +51,21 @@ During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is
   \Begin{
 
     $sid \leftarrow Offer(\mathcal{P})$
-    
+
     $\mathcal{S} \leftarrow DSKE(\mathcal{P}, sid)$
-    
+
     $\mathcal{K} \leftarrow GKA(\mathcal{P}, sid, \mathcal{S})$
-    
+
     $\mathcal{A} \leftarrow Attest(\mathcal{P}, sid, \mathcal{S})$
-    
+
     \If{$\mathcal{A}$ = $\perp$}{
       \Return{"Error"}
     }
 
     $\mathcal{T} := Communication(\mathcal{P}, sid, \mathcal{S}, \mathcal{K})$
-  
+
     $\mathcal{C} \leftarrow Shutdown(\mathcal{P}, sid, \mathcal{S}, \mathcal{T})$
-    
+
     \uIf{ConsensusForAll($\mathcal{C}$)}{
       \Return{"OK"}
     }
@@ -102,23 +102,23 @@ Notice that "Offer Messages" are not authenticated and hence $sid$ must be verif
   \Begin
   {
 	$c_{\hat{X}} \xleftarrow{\$} \{0,1\}^{256}$
-	
+
 	$Broadcast(c_{\hat{X}})$
-	
+
 	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
 
     \While{$Outstanding \neq \emptyset$}
-    {    
+    {
       $(\hat{Y}, c) \leftarrow Receive()$
-      
+
       \If{$\hat{Y} \in Outstanding$}
-      {      
+      {
         $c_{\hat{Y}} \leftarrow c$
-      
+
         $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
       }
     }
-   
+
     $sid \leftarrow SHA512(c_{\hat{Y}_1} \Vert c_{\hat{Y}_2} \Vert \cdots)$
 
 	\Return{$sid$}
@@ -157,47 +157,19 @@ In \cite{mpotr} no denAKE is specified. Based on the \tdhname protocol as descri
 \]
 
   \item After computing $s$, she uses it as input of Key Derivation Functions (KDF) in order to compute AES and MAC keys.
-  
+
   \item Then, she encrypts-then-mac's a magic number and sends it to the other party. This is done to verify that the other party has indeed generated the same shared secret and is not an adversary trying to break the forward secrecy property of \tdhname, see section \ref{confirm_message_explain}. We shall call this message a "Confirm Message".
 
   \item When she has received the corresponding Confirm Message, she is assured that the shared secret can be safely used and there is no foul play. Now she encrypts-then-macs her ephemeral public signing key $E_{\hat{X}}$ and sends it to the other party. This message is called a "Key Message"
 
   \item When a key message is received, she first verifies the message using the same mac. If the tag checks out, she decrypts the key $E_{\hat{Y}}$ and adds it in the association table $\mathcal{S}$.
-  
+
 \end{enumerate}
 
 In figure \ref{den_ake_schematic} a schematic description of the protocol is provided.
 
 \begin{figure}[p]
-  \fbox{%
-    \pseudocode{%
-      \textbf{Alice} \< \< \textbf{Bob} \\[][\hline]
-      x \sample Z_p^* \< \< \\
-      \< \sendmessageright*{Send \ \left(g^x,g^X\right)} \< \\
-      \< \< y \sample Z_p^* \\
-      \< \< s \leftarrow g^{xy} \Vert g^{Xy} \Vert g^{Yx} \\
-      \< \< k_1 \leftarrow KDF_1(s) \\
-      \< \< k_2 \leftarrow KDF_2(s) \\
-      \< \sendmessageleft*{Send \ \left(g^y,g^Y\right)} \< \\
-      s \leftarrow g^{xy} \Vert g^{Xy} \Vert g^{Yx} \< \< \\
-      k_1 \leftarrow KDF_1(s) \< \< \\
-      k_2 \leftarrow KDF_2(s) \< \< \\
-      \< \sendmessageright*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
-      \< \< \text{Verify mac} \\
-      \< \< m \leftarrow AES^{-1}_{k_1}(c) \\
-      \< \< \text{Verify m = "confirm"} \\
-      \< \sendmessageleft*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
-      \text{Verify mac} \< \< \\
-      m \leftarrow AES^{-1}_{k_1}(c) \< \< \\
-      \text{Verify m = "confirm"} \\
-      \< \sendmessageright*{Send \\ c = AES_{k_1}(E_{\hat{A}}) \\ MAC_{k_2}(c) } \< \\
-      \< \< \text{Verify mac} \\
-      \< \< S[\hat{A}] \leftarrow E_{\hat{A}} \\
-      \< \sendmessageleft*{Send \\ c = AES_{k_1}(E_{\hat{B}}) \\ MAC_{k_2}(c) } \< \\
-      \text{Verify mac} \< \<  \\
-     S[\hat{B}] \leftarrow E_{\hat{B}} \< \< \\
-    }
-  }
+  \input{Figures/DAKE}
   \caption{The denAKE protocol, where $X$ and $Y$ are the private parts of the long term keys}
   \label{den_ake_schematic}
 \end{figure}
@@ -271,9 +243,9 @@ In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is s
   \KwExtraIn {$e_{\hat{X}}$ : ephemeral private signing key}
   \KwResult{authenticated M is brodcast}
   \Begin
-  {		
+  {
 	$\sigma \leftarrow Sign(e_{\hat{X}}, M)$
-	
+
 	$Broadcast(M \Vert \sigma)$
   }
   \caption{AuthBroadcast($M$) --- broadcast message M authenticated under paricipant $\hat{X}$'s ephemeral signing key.}
@@ -284,16 +256,16 @@ In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is s
   \KwIn {$\mathcal{S}$ : assocation table}
   \KwOut {$(\hat{Y}, M)$ : sender and message on success, sender and $\perp$ on failure}
   \Begin
-  {	
-    $(\hat{Y}, M \Vert \sigma) \leftarrow Receive()$  
-  
+  {
+    $(\hat{Y}, M \Vert \sigma) \leftarrow Receive()$
+
     $E_{\hat{Y}} \leftarrow \mathcal{S}[\hat{Y}]$
-  
+
     \If{$Verify(M, \sigma, E_{\hat{Y}}) = false$}
     {
       \Return{$(\hat{Y}, \perp)$}
-    }  
-  
+    }
+
     \Return{$(\hat{Y}, M)$}
   }
   \caption{AuthReceive($\mathcal{S}$) --- attempt to receive an authenticated message.}
@@ -305,7 +277,7 @@ In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is s
 
 During the GKA sub-protocol the participants construct a shared secret key $\mathcal{K}$. The latter will be used in order for symmetric encryption keys to be derived.
 
-The main idea is to compute a combined Diffie-Hellman-like key for all participants. To do this, each participant in the chatroom generates a private exponent $x_i$. Given that $g$ is the shared base and $n$ the number of participants, the shared secret $\mathcal{K}$ will be: 
+The main idea is to compute a combined Diffie-Hellman-like key for all participants. To do this, each participant in the chatroom generates a private exponent $x_i$. Given that $g$ is the shared base and $n$ the number of participants, the shared secret $\mathcal{K}$ will be:
 \[
 \mathcal{K} = g^{x_1 \cdot x_2 \cdots x_n}
 \]
@@ -316,7 +288,7 @@ In the first step, no previous list is received and the new list is created from
 
 \begin{figure}[t]
   \begin{minipage}{0.49\textwidth}
-    \begin{tikzpicture}[scale=.9]	
+    \begin{tikzpicture}[scale=.9]
       \def \n {5}
       \def \ndec {4}
       \def \radius {3cm}
@@ -328,9 +300,9 @@ In the first step, no previous list is received and the new list is created from
         \draw[->, >=latex] ({145 + 36 + (360/\n * (\s - 1))+\margin}:\radius)
           arc ({145 + 36 + (360/\n * (\s - 1))+\margin}:{145 + 36 + 360/\n * (\s)-\margin}:\radius);
       }
-      \node[draw, circle] at ({181 + 360/\n * (\n - 1)}:\radius) {$\n$};    
+      \node[draw, circle] at ({181 + 360/\n * (\n - 1)}:\radius) {$\n$};
     \end{tikzpicture}
-    \caption{This diagram demonstrates the upflow of the intermediate keys}    
+    \caption{This diagram demonstrates the upflow of the intermediate keys}
     \label{figures:gka_upflow}
   \end{minipage}
   \begin{minipage}{0.49\textwidth}
@@ -357,7 +329,7 @@ In the first step, no previous list is received and the new list is created from
 
 \subsubsection{Upflows}
 The first participant sends a list containing $g$ and $g^{x_1}$ where $x_1$ is his private exponent. To construct the new key list, each next participant prepends a copy of the last element to the reveived list, and raises every other element to his private exponent. These messages shall be called "Upflow Messages" and the Upflow forwarding procedure is illustrated in figure \ref{figures:gka_upflow}
- 
+
 \subsubsection{Downflow}
 Once the last participant has received the Upflow, he calculates $\mathcal{K}$ by raising the last element of the received list to his private exponent. Then, he constructs the final intermediate key list by removing that last element and raising all other elements of the received list to his private exponent. He finally sends the final key list back to all previous participants, as illustrated in figure \ref{figures:gka_downflow}. This message, containing the final intermediate key list shall be called "Downflow Message".
 
@@ -415,7 +387,7 @@ All other participants now can also caclulate the shared secret $\mathcal{K}$. T
 
     $\hat{Y}_{prev} \leftarrow \hat{X}.Previous()$
 
-    $\hat{Y}_{next} \leftarrow \hat{X}.Next()$   
+    $\hat{Y}_{next} \leftarrow \hat{X}.Next()$
 
     \uIf(\tcc*[f]{$\hat{X}$ is first}){$\hat{Y}_{prev}$ = NULL}
     {
@@ -423,7 +395,7 @@ All other participants now can also caclulate the shared secret $\mathcal{K}$. T
     }
     \Else
     {
-      
+
       \Repeat(\tcc*[f]{wait for previous upflow}){$\hat{R} = \hat{X}$}
       {
         $(\hat{Y}, \hat{R} \Vert key\_list) \leftarrow AuthReceive(\mathcal{S})$
@@ -457,7 +429,7 @@ All other participants now can also caclulate the shared secret $\mathcal{K}$. T
     {
       \Return{error}
     }
-    
+
     $pos \leftarrow \mathcal{P}.IndexOf(\hat{X})$
 
     $final\_key \leftarrow key\_list.Reverse().Get(pos)$
@@ -511,26 +483,26 @@ Provided that SHA-512 is a cryptographic hash function an attacker can't find tw
   \KwExtraIn{$\mathcal{S}$ : the association table}
   \KwOut{$\mathcal{A}$ : "OK" if verification went good, $\perp$ if it went wrong}
   \Begin
-  {	
+  {
 	$M \leftarrow sid \Vert SHA512(\mathcal{S})$
-	
+
 	$AuthBroadcast(M)$
-	
+
 	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
 
     \While{$Outstanding \neq \emptyset$}
     {
       $(\hat{Y}, M_{\hat{Y}}) \leftarrow AuthReceive(\mathcal{S})$
-      
+
       \uIf{$M_{\hat{Y}} = \perp \lor  M_{\hat{Y}} \neq M$}
-      {     
-        \Return{$\perp$}            
-        
+      {
+        \Return{$\perp$}
+
       }
       \Else{
-      
+
         $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
-        
+
       }
     }
 
@@ -621,61 +593,61 @@ When he receives a message from user $B$, he adds that message to the transcript
   \KwExtraIn{$e_{\hat{X}}$ : ephemeral private signing key}
   \KwOut{$\mathcal{C}$ : boolean array of consensus status for each participant, $\perp$ if shutdown went wrong}
   \Begin
-  {	
-    \tcp{Broadcast digest of our transcript}  
-  
-    $h_{\hat{X}} \leftarrow SHA512(\mathcal{T}[\hat{X}])$ 
-    
+  {
+    \tcp{Broadcast digest of our transcript}
+
+    $h_{\hat{X}} \leftarrow SHA512(\mathcal{T}[\hat{X}])$
+
     $AuthBroadcast("shutdown" \Vert h_{\hat{X}})$
-    
-    \tcp{Collect digests of others' transcripts}  
-    
+
+    \tcp{Collect digests of others' transcripts}
+
 	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
 
     \While{$Outstanding \neq \emptyset$}
     {
-        $(\hat{Y}, M \Vert h_{\hat{Y}}^{'}) \leftarrow AuthReceive(\mathcal{S})$       
-        
+        $(\hat{Y}, M \Vert h_{\hat{Y}}^{'}) \leftarrow AuthReceive(\mathcal{S})$
+
         \If{$\hat{Y} \in Outstanding \land M = "shutdown"$}
         {
           $h_{\hat{Y}} \leftarrow SHA512(\mathcal{T}[\hat{Y}])$
-        
+
           $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
         }
     }
-    
-    \tcp{Broadcast digest of full chat} 
-    
+
+    \tcp{Broadcast digest of full chat}
+
     $h \leftarrow SHA512(h_{\hat{Y}_1} \Vert h_{\hat{Y}_2} \Vert \cdots)$
-    
+
     $AuthBroadcast("digest" \Vert h)$
-    
-    \tcp{Determine consenus} 
-    
+
+    \tcp{Determine consenus}
+
     $Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
-    
+
     \While{$Outstanding \neq \emptyset$}
     {
         $(\hat{Y}, M \Vert h^{'}) \leftarrow AuthReceive(\mathcal{S})$
-        
+
         \If{$\hat{Y} \in Outstanding \land M = "digest"$}
         {
           $consensus[\hat{Y}] \leftarrow h = h^{'}$
-        
+
           $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
         }
     }
-    
-    \tcp{Assure that everybody aborted the session}  
-    
+
+    \tcp{Assure that everybody aborted the session}
+
     $AuthBroadcast("end")$
-    
+
     $Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
-    
+
     \While{$Outstanding \neq \emptyset$}
     {
         $(\hat{Y}, M) \leftarrow AuthReceive(\mathcal{S})$
-        
+
         \uIf{$M \neq "end"$}
         {
           \Return{$\perp$}
@@ -683,14 +655,14 @@ When he receives a message from user $B$, he adds that message to the transcript
         \Else
         {
           $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
-        }                       
+        }
     }
-    
+
      \tcp{Reveal the ephemeral private signing key}
-    
+
     $Broadcast(e_{\hat{X}})$
-    
-    \Return{$consensus$} 
+
+    \Return{$consensus$}
   }
   \caption{Shutdown($\mathcal{P}$, $sid$, $\mathcal{S}$), $\mathcal{T}$) --- called in the context of participant $\hat{X}$, determines if consensus has been reached with other participants and publishes the ephemeral signing key of $\hat{X}$.}
   \label{algo:shutdown}
@@ -771,7 +743,7 @@ When a new chatroom is created, each participant is assigned a list with all kno
 When a "Handshake Message" is received the participants known fingerprints list is checked to find (if it exists) a fingerprint matching the currently used public key.
 If such a fingerprint is found and it is verified, then the user is verified for this session.
 If the found fingerprint is not verified then the participant is not verified.
-If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list. 
+If no key is found then again the participant is not verified and an entry for this new key is added in the known fingerprints list.
 
 \section{Handling out-of-order messages}
 In the protocol description above, we silently assumed that messages are delivered in-order. In fact, in a distributed context, like the mpOTR, this can be really tricky.
@@ -794,7 +766,7 @@ We utilized the second approach, which is to make the receivers responsible for 
 \subsection{Top level encoding}
 We follow the OTR rules for the top level encoding of mpOTR messages. That is, all mpOTR messages start with the string "?OTR:" followed by the base64 encoded message and then a "." denoting the end of the message. For a mpOTR message M, we send:
 
-\[ 
+\[
   "?OTR:" \Vert Base64(M) \Vert "."
 \]
 
@@ -857,8 +829,8 @@ There are 12 different types of mpOTR messages. Each type is indicated by a posi
     \end{rightwordgroup} \\
     \wordbox{4}{Payload} \\
     \wordbox{2}{Signature}
-  \end{bytefield}  
-  
+  \end{bytefield}
+
   \caption{General message structure}
   \label{figures:general_message_structure}
 \end{figure}
@@ -1002,7 +974,7 @@ In the following paragraphs we show the payload structure of each mpOTR message 
   \begin{bytefield}[bitwidth=0.11111\linewidth]{8}
     \bitheader{0-7} \\
     \wordbox{2}{Session ID} \\
-    \wordbox{2}{Association Table Hash} 
+    \wordbox{2}{Association Table Hash}
   \end{bytefield}
   \caption{The structure of Attest Message payload}
 \end{figure}
