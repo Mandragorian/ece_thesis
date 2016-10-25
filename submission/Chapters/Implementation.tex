@@ -92,7 +92,7 @@ A great portion of the mpOTR Protocol implementation is carried out when handlin
 
 Regarding the messages that are about to be sent, it's responsible to check if a private session has been set up. In that case, it should sign and encrypt them properly or discard them if any error occurs.
 
-The code of the protocol component is listed in \ref{APPENDIX REFERENCE}.
+The code of the protocol component is listed in appendix \ref{appendices:protocol-code}.
 
 \subsection{Sub-protocol components}
 Sub-protocols are implemented as separate components. The general form of each one incorporates an implementation of a First-Class ADT holding internal sub-protocol information. It also provides an interface to be utilized by the top-level protocol component.
@@ -140,7 +140,7 @@ In addition to the general sub-protocol interface shown in listing \ref{lst:subp
 int chat_offer_start(ChatContextPtr ctx, ChatMessage **msgToSend);
 \end{lstlisting}
 
-The code of the offer component is listed in \ref{APPENDIX REFERENCE}.
+The code of the offer component is listed in appendix \ref{appendices:offer-code}.
 
 \subsubsection{DSKE}
 The states of the DSKE sub-protocol are defined as following:
@@ -154,7 +154,7 @@ typedef enum {
 
 The DSKE sub-protocol component uses a component called \emph{chat\_dake} which implements the denAKE protocol.
 
-The code of the DSKE component is listed in \ref{APPENDIX REFERENCE} and for the denAKE component in \ref{APPENDIX REFERENCE}.
+The code of the DSKE component is listed in appendix \ref{appendices:dske-code}.
 
 \subsubsection{GKA}
 The states of the GKA sub-protocol are defined as following:
@@ -167,7 +167,7 @@ typedef enum {
 } ChatGKAState;
 \end{lstlisting}
 
-The code of the GKA component is listed in \ref{APPENDIX REFERENCE}.
+The code of the GKA component is listed in appendix \ref{appendices:gka-code}.
 
 \subsubsection{Attest}
 The states of the Attest sub-protocol are defined as following:
@@ -179,7 +179,7 @@ typedef enum {
 } ChatAttestState;
 \end{lstlisting}
 
-The code of the Attest component is listed in \ref{APPENDIX REFERENCE}.
+The code of the Attest component is listed in appendix \ref{appendices:attest-code}.
 
 
 \subsubsection{Communication}
@@ -190,7 +190,7 @@ In addition, it provides the following function, used to broadcast an encrypted 
 int chat_communication_broadcast(ChatContextPtr ctx, const char *message, ChatMessage **msgToSend);
 \end{lstlisting}
 
-The code of the Communication component is listed in \ref{APPENDIX REFERENCE}.
+The code of the Communication component is listed in appendix \ref{appendices:communication-code}.
 
 \subsubsection{Shutdown}
 The states of the Shutdown sub-protocol are defined as following:
@@ -212,7 +212,7 @@ int chat_shutdown_send_end(ChatContextPtr ctx, ChatMessage **msgToSend);
 int chat_shutdown_release_secrets(ChatContextPtr ctx, ChatMessage **msgToSend);
 \end{lstlisting}
 
-The code of the Shutdown component is listed in \ref{APPENDIX REFERENCE}.
+The code of the Shutdown component is listed in appendix \ref{appendices:shutdown-code}.
 
 \subsection{Infrastructure components}
 \label{section:infrastructure-components}
