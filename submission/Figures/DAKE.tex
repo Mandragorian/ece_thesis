@@ -1,0 +1,29 @@
+\fbox{%
+    \pseudocode{%
+      \textbf{Alice} \< \< \textbf{Bob} \\[][\hline]
+      x \sample Z_p^* \< \< \\
+      \< \sendmessageright*{Send \ \left(g^x,g^X\right)} \< \\
+      \< \< y \sample Z_p^* \\
+      \< \< s \leftarrow g^{xy} \Vert g^{Xy} \Vert g^{Yx} \\
+      \< \< k_1 \leftarrow KDF_1(s) \\
+      \< \< k_2 \leftarrow KDF_2(s) \\
+      \< \sendmessageleft*{Send \ \left(g^y,g^Y\right)} \< \\
+      s \leftarrow g^{xy} \Vert g^{Xy} \Vert g^{Yx} \< \< \\
+      k_1 \leftarrow KDF_1(s) \< \< \\
+      k_2 \leftarrow KDF_2(s) \< \< \\
+      \< \sendmessageright*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
+      \< \< \text{Verify mac} \\
+      \< \< m \leftarrow AES^{-1}_{k_1}(c) \\
+      \< \< \text{Verify m = "confirm"} \\
+      \< \sendmessageleft*{ Send \\ c = AES_{k_1}("confirm") \\ MAC_{k_2}(c)\ } \< \\
+      \text{Verify mac} \< \< \\
+      m \leftarrow AES^{-1}_{k_1}(c) \< \< \\
+      \text{Verify m = "confirm"} \\
+      \< \sendmessageright*{Send \\ c = AES_{k_1}(E_{\hat{A}}) \\ MAC_{k_2}(c) } \< \\
+      \< \< \text{Verify mac} \\
+      \< \< S[\hat{A}] \leftarrow E_{\hat{A}} \\
+      \< \sendmessageleft*{Send \\ c = AES_{k_1}(E_{\hat{B}}) \\ MAC_{k_2}(c) } \< \\
+      \text{Verify mac} \< \<  \\
+     S[\hat{B}] \leftarrow E_{\hat{B}} \< \< \\
+    }
+  }
