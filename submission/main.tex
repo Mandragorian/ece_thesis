@@ -40,7 +40,7 @@ headsepline, % Uncomment to get a line under the header
 \usepackage[utf8]{inputenc} % Required for inputting international characters
 \usepackage[T1]{fontenc} % Output font encoding for international characters
 
-\usepackage{palatino} % Use the Palatino font by default
+%\usepackage{palatino} % Use the Palatino font by default
 
 \usepackage[backend=bibtex,natbib=true]{biblatex} % Use the bibtex backend with the authoryear citation style (which resembles APA)
 
@@ -56,6 +56,12 @@ headsepline, % Uncomment to get a line under the header
 \usepackage{enumitem}
 \usepackage[keys, operators]{cryptocode}
 \usepackage{subcaption}
+
+
+\usepackage{xgreek}
+\usepackage{unicode-math}
+
+\setmainfont{CMU Serif}
 
 \usepackage{listings}
 \usepackage{color}
@@ -349,7 +355,7 @@ Finally i must thank the members of the Free Software society of National Techni
 % Include the appendices of the thesis as separate files from the Appendices folder
 % Uncomment the lines as you write the Appendices
 
-\include{Appendices/AppendixA}
+\include{Appendices/Greek}
 %\include{Appendices/AppendixB}
 %\include{Appendices/AppendixC}
 
