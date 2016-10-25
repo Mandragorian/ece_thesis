@@ -170,7 +170,7 @@ In figure \ref{den_ake_schematic} a schematic description of the protocol is pro
 
 \begin{figure}[p]
   \input{Figures/DAKE}
-  \caption{The denAKE protocol, where $X$ and $Y$ are the private parts of the long term keys}
+  \caption[The denAKE protocol]{The denAKE protocol, where $X$ and $Y$ are the private parts of the long term keys}
   \label{den_ake_schematic}
 \end{figure}
 
@@ -302,7 +302,7 @@ In the first step, no previous list is received and the new list is created from
       }
       \node[draw, circle] at ({181 + 360/\n * (\n - 1)}:\radius) {$\n$};
     \end{tikzpicture}
-    \caption{This diagram demonstrates the upflow of the intermediate keys}
+    \caption[GKA intermediate keys upflow]{This diagram demonstrates the upflow of the intermediate keys}
     \label{figures:gka_upflow}
   \end{minipage}
   \begin{minipage}{0.49\textwidth}
@@ -322,7 +322,7 @@ In the first step, no previous list is received and the new list is created from
       \draw[->, >=latex] (5) -- (3);
       \draw[->, >=latex] (5) -- (4);
     \end{tikzpicture}
-    \caption{This diagram demonstrates the downflow of the intermediate keys}
+    \caption[GKA intermediate keys downflow]{This diagram demonstrates the downflow of the intermediate keys}
     \label{figures:gka_downflow}
   \end{minipage}
 \end{figure}
