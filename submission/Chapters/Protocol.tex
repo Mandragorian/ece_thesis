@@ -73,7 +73,7 @@ During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is
       \Return{"Error"}
     }
   }
-  \caption{The mpOTR protocol}
+  \caption{mpOTR($\mathcal{P}$) --- run a session of the mpOTR protocol}
   \label{algorithms:mpotr_algo}
 \end{algorithm}
 
@@ -170,7 +170,7 @@ In figure \ref{den_ake_schematic} a schematic description of the protocol is pro
 
 \begin{figure}[p]
   \input{Figures/DAKE}
-    \caption{The messages exchanged between two users in order to authenticate each other's signing keys. $X$ and $Y$ are the private parts of the long term keys. $KDF_1$ and $KDF_2$ are two key derivation functions.}
+  \caption[The denAKE protocol]{The denAKE protocol, where $X$ and $Y$ are the private parts of the long term keys}
   \label{den_ake_schematic}
 \end{figure}
 
@@ -372,7 +372,7 @@ All other participants now can also caclulate the shared secret $\mathcal{K}$. T
 
     $AuthBroadcast(inter\_key\_list)$
   }
-  \caption{SendDownflow($InterKeys$, $x$) --- broadcasts the downflow intermediate key list to the other participants.}
+  \caption{SendDownflow($InterKeys$, $x$) --- broadcast the downflow intermediate key list to the other participants.}
   \label{downflow_algo}
 \end{algorithm}
 
@@ -438,7 +438,7 @@ All other participants now can also caclulate the shared secret $\mathcal{K}$. T
 
 	\Return{$\mathcal{K}$}
   }
-  \caption{GKA($\mathcal{P}$, $sid$, $\mathcal{S}$) - executes a Group Key Agreement and produces the shared secret in the context of participant $\hat{X}$.}
+  \caption{GKA($\mathcal{P}$, $sid$, $\mathcal{S}$) - execute a Group Key Agreement and produce the shared secret in the context of participant $\hat{X}$.}
   \label{gka_proto_algo}
 \end{algorithm}
 
