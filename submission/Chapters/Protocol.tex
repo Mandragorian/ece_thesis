@@ -693,8 +693,8 @@ In the protocol description we talked generally about \dhname Key exchanges, enc
 Here we shall present the specific algorithms and parameters we used in our implementation.
 
 \subsection{Diffie--Hellman Group}
-The already existing libotr implementation of the DH key exchange is used.
-As a result we use classic Diffie--Hellman , and specifically the group no. 5 \cite{website:dh-rfc} with a 1536 bit modulus.
+The already existing libotr implementation of the \dhname key exchange is used.
+As a result we use classic \dhname and specifically the group no. 5 \cite{website:dh-rfc} with a 1536 bit modulus.
 In the algorithms presented above, all exponentiations are performed in this group.
 
 \subsection{Encryption}
@@ -736,7 +736,7 @@ This implies that the underlying protocol provides addresses which do not change
 It also means that users from multiple hosts are not allowed or else two users with the same username might conflict.
 The above holds for a protocol like jabber for example, but is not the case for protocols like IRC.
 As a result our implementation is not fully protocol agnostic at this moment.
-Finally the fingerprint is the sha256 hash of the public identity key, and the last field is 1 if the key is verified and 0 otherwise.
+Finally the fingerprint is the SHA-256 hash of the public identity key, and the last field is 1 if the key is verified and 0 otherwise.
 
 This file is read during the plugin start up and initializes the list of all known fingerprints.
 When a new chatroom is created, each participant is assigned a list with all known fingerprints used by this participant (from the above list).
