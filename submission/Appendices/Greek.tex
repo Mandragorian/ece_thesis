@@ -44,40 +44,8 @@
 %------------------------------------------------
 
 \section{Το Πρωτόκολλο}
-\begin{algorithm}[h]
-  \KwIn{$\mathcal{P}$ : participants list}
-	\KwResult{Executes a run of the mpOTR protocol}
-	\Begin{
 
-  $sid$ := Offer($\mathcal{P}$)
-
-  $\mathcal{S}$ := DSKE($sid$, $\mathcal{P}$)
-
-  $\mathcal{K}$ := GKA($sid$, $\mathcal{S}$, $\mathcal{P}$)
-
-  $A$ := Attest($sid$, $\mathcal{S}$, $\mathcal{P}$)
-
-  \If{$A$ $\ne$ "OK"}{
-    \Return{"Error"}
-  }
-
-  $\mathcal{T}$ := Communication($sid$, $\mathcal{K}$, $\mathcal{S}$, $\mathcal{P}$)
-
-  $consensus$ := Shutdown($sid$, $\mathcal{T}$, $\mathcal{S}$, $\mathcal{P}$)
-
-  \If{$consensus$ = "consensus"}{
-    \Return{"OK"}
-  }
-  \Else{
-    \Return{"Error"}
-  }
-
-	}
-	\caption{The mpOTR protocol}
-	\label{mpotr_algo}
-\end{algorithm}
-
-Στον αλγόριθμο \ref{mpotr_algo} παρουσιάζουμε τη συμπεριφορά του πρωτοκόλλου.
+Στον αλγόριθμο \ref{algorithms:mpotr_algo} παρουσιάζουμε τη συμπεριφορά του πρωτοκόλλου.
 Το πρωτόκολλο χωρίζεται σε διάφορες φάσεις τις οποίες ονομάζουμε υπο-πρωτόκολλα.
 Τα τέσσερα πρώτα από αυτά (Offer, DSKA, GKA και Attest) είναι υπεύθυνα για να κατασκευάσουν όλη την απαραίτητη πληροφορία που απαιτείται ώστε να λάβει χώρα μια ιδιωτική συνομιλία.
 Το Communication υπο-πρωτόκολλο είναι αυτό το οποίο αναλαμβάνει να φέρει εις πέρας την ίδια τη συνομιλία.
@@ -117,216 +85,82 @@
 \subsection{DSKE}
 \label{dske_subprot}
 
-In \cite{mpotr} the DSKE is partially described using a sub-sub-protocol named Deniable Authenticated Key Exchange (DAKE) as a black box.
-In our implementation we use the Triple Diffie--Hellman key exchange as a DAKE.
-Triple DH is an authenticated and deniable key exchange.
+Στο\cite{mpotr} η ανταλλαγή κλειδιών υπογραφής περιγράφηκε χρησιμοποιώντας ένα πρωτόκολλο που το ονόμαζε ως Διαψεύσιμη Αυθεντικοποιημένη Ανταλλαγή Κλειδιού (DAKE) ως μαύρο κουτί.
+Στην υλοποίησή μας χρησιμοποιούμε το τριπλό \dhname πρωτόκολλο ως DAKE, το οποίο είναι αυθεντικοποιημένο και διαψεύσιμο.
 
-Each participant executes a Triple DH key exchange with every other participant in the chat room and they generate a shared secret.
-Using that secret the user encrypt-then-MACs the public part of his signing key and sends it to the other participant.
+Κάθε συμμετέχοντας εκτελεί μια τριπλή \dhname ανταλλαγή κλειδιού με κάθε άλλο συμμετέχοντα στο δωμάτιο και έτσι κατασκευάζουν ένα κοινό μυστικό.
+Με αυτό το μυστικό θα κρυπτογραφήσει και έπειτα θα αυθεντικοποιήσει το δημόσιο κομμάτι του κλειδιού υπογραφής του, και θα στείλει το αποτέλεσμα στον άλλον συμμετέχοντα.
 
-After all participants have exchanged signing keys with each other in the manner stated above, they all have a signing key association table $\mathcal{S}$.
-Note that the DSKE is the only step in the setup phase where $O(n^2)$ messages must be sent.
-In the other setup phases and the communication phase only $O(n)$ messages are sent.
+Αφού όλοι οι συμμετέχοντας έχουν ανταλλάξει τα κλειδιά υπογραφής τους με όλους τους άλλους, με τον τρόπου που περιγράφηκε παραπάνω, έχουν σχηματίσει τον πίνακα αντιστοίχησης $\mathcal{S}$.
+Είναι άξιο να σημειωθεί ότι η DSKE είναι η μόνη φάση κατά την εγκατάσταση της συζήτησης κατά την οποία $O(n^2)$ μηνύματα ανταλλάσσονται.
+Μετά στέλνονται $O(n)$ μηνύματα.
 
-A schematic description of the protocol can be seen in figure \ref{den_ake_schematic}.
+Μια σχηματική περιγραφή του πρωτοκόλλου φαίνεται στο σχήμα \ref{den_ake_schematic}.
 
-\begin{figure}[h]
-  \input{Figures/DAKE.tex}
-    \caption{The messages exchanged between two users in order to authenticate each other's signing keys. $X$ and $Y$ are the private parts of the long term keys. $KDF_1$ and $KDF_2$ are two key derivation functions.}
-  \label{den_ake_schematic}
-\end{figure}
 
 \subsection{GKA}
 \label{gka_subprot}
 
-\begin{figure}
-  \begin{minipage}{0.49\textwidth}
-    \begin{tikzpicture}[scale=.9]
-      \def \n {5}
-      \def \ndec {4}
-      \def \radius {3cm}
-      \def \margin {8} % margin in angles, depends on the radius
 
-      \foreach \s in {1,...,\ndec}
-      {
-        \node[draw, circle] at ({180 + (360/\n * (\s - 1))}:\radius) {$\s$};
-        \draw[->, >=latex] ({145 + 36 + (360/\n * (\s - 1))+\margin}:\radius)
-          arc ({145 + 36 + (360/\n * (\s - 1))+\margin}:{145 + 36 + 360/\n * (\s)-\margin}:\radius);
-      }
-      \node[draw, circle] at ({181 + 360/\n * (\n - 1)}:\radius) {$\n$};
-    \end{tikzpicture}
-    \caption{This diagram demonstrates the upflow of the intermediate keys}
-    \label{upflow_diagr}
-  \end{minipage}
-  \begin{minipage}{0.49\textwidth}
-    \begin{tikzpicture}[scale=.9]
-      \def \n {5}
-      \def \ndec {4}
-      \def \radius {3cm}
-      \def \margin {8} % margin in angles, depends on the radius
+Για την Ομαδική Συμφωνία Κλειδιού χρησιμοποιούμε το πρωτόκολλο που περιγράφεται στο \cite{mpenc}.
+Επαναλαμβάνουμε ότι η βασική ιδέα είναι η \dhname ανταλλαγή κλειδιού, γενικευμένη για πολλούς συμμετέχοντες.
 
-      \foreach \s in {1,...,\ndec}
-      {
-        \node[draw, circle](\s) at ({180 + (360/\n * (\s - 1))}:\radius) {$\s$};
-      }
-      \node[draw, circle](5) at ({181 + 360/\n * (\n - 1)}:\radius) {$\n$};
-      \draw[->, >=latex] (5) -- (1);
-      \draw[->, >=latex] (5) -- (2);
-      \draw[->, >=latex] (5) -- (3);
-      \draw[->, >=latex] (5) -- (4);
-    \end{tikzpicture}
-    \caption{This diagram demonstrates the downflow of the intermediate keys}
-    \label{downflow_diagr}
-  \end{minipage}
-\end{figure}
+Κατά τη GKA τα μηνύματα ανταλλάσσονται σε δύο φάσεις. Στη φάση της ροής και στη φάση της αντιροής.
+Κατά τη φάση της ροής τα μηνύματα ανταλλάσσονται σειριακά μεταξύ των συμμετεχόντων.
+Ο κάθε συμμετέχοντας υπολογίζει κάποια ενδιάμεσα κλειδιά, βασιζόμενος στα ενδιάμεσα κλειδιά που έλαβε από τον προηγούμενό του.
+Τα ενδιάμεσα κλειδιά αυτά θα τα στείλει στον επόμενο του.
+Μετά το πέρας της φάσης ροής, ο τελευταίος συμμετέχοντας έχει αρκετά δεδομένα ώστε να παράξει το κοινό μυστικό.
+Επίσης έχει όλη την πληροφορία που χρειάζεται και από τους υπόλοιπους συμμετέχοντες, ώστε να φτιάξουν και αυτοί το κοινό μυστικό.
+Αυτή η πληροφορία μεταδίδεται στους υπολοίπους όπως φαίνεται στο σχήμα \ref{figures:gka_downflow}.
 
-For a GKA we use the protocol as specified in \cite{mpenc}.
-Again, the basic idea used here is the Diffie--Hellman key exchange generalized for many participants.
+Στους αλγορίθμους \ref{upflow_algo}, \ref{downflow_algo}, και \ref{gka_proto_algo} παρουσιάζεται η κεντρική ιδέα της GKA.
 
-During the GKA protocol, messages are exchanged in two phases: The upflow and the downflow phase.
-During the upflow phase, the messages are exchanged between participants in a sequential manner, and each next participant calculates keys based on the accumulated messages received from the previous participant before contacting the next participant, as shown in Figure \ref{upflow_diagr}.
-After the completion of the upflow phase, the last participant has collected enough data for key generation.
-This data is subsequently communicated to the rest of the group during the downflow phase, as shown in Figure \ref{downflow_diagr}.
-
-In algorithms \ref{upflow_algo}, \ref{downflow_algo}, \ref{gka_proto_algo} the main idea of the GKA we use is presented.
-
-\begin{algorithm}[h]
-	\KwIn{P : participants list}
-	\KwIn {InterKeys : previous intermediate key list}
-	\KwIn {X : user's secret key}
-	\KwIn {N : next participant}
-	\KwResult{Sends the new intermediate key list to the next participant}
-	\Begin{
-	inter\_key\_list := empty\_list
-
-	inter\_key\_list.append( InterKeys.last\_elem() )
-
-	\ForEach{k in InterKeys}
-	{
-		inter\_key\_list.append( $k^X$ )
-	}
-
-	send( N , P || inter\_key\_list)
-	}
-	\caption{Upflow Message send algorithm, send\_upflow}
-	\label{upflow_algo}
-\end{algorithm}
-
-\begin{algorithm}
-	\KwIn{P : participants list}
-	\KwIn {InterKeys : previous intermediate key list}
-	\KwIn {X : user's secret key}
-	\KwIn {N : next participant}
-	\KwResult{Sends the downflow intermediate key list to the other participants}
-	\Begin{
-	inter\_key\_list := empty\_list
-
-	\ForEach{k in InterKeys}
-	{
-		inter\_key\_list.append( $k^X$ )
-	}
-
-	inter\_key\_list.reverse()
-
-	Broadcast( P || inter\_key\_list)
-	}
-	\caption{Downflow Message send algorithm, send\_downflow}
-	\label{downflow_algo}
-\end{algorithm}
-
-\begin{algorithm}[h]
-	\KwIn{P : participants list}
-	\KwOut{The shared secret}
-	\KwResult{Executes a GKA and produces the shared secret}
-	\Begin{
-
-	prev := get\_previous\_participant()
-
-	next := get\_next\_participant()
-
-	x := gka\_genkey()
-
-	\If{prev == NULL}{
-		send\_upflow(P, [G], x, next)
-		}
-	\Else{
-			m = receive\_from(prev)
-
-			\If{ m not valid}{
-					return error
-			}
-			\If{ next != NULL}{
-				send\_upflow(P, m.key\_list, x, next)
-			}
-			\Else{
-				final\_key := m.key\_list.last\_elem()
-
-				s := $final\_key^x$
-
-				send\_downflow(P, m.key\_list, x)
-
-				return s
-			}
-	}
-
-	m = wait\_for\_downflow()
-
-	\If{m not valid}{
-		return error
-	}
-
-	final\_key := m.key\_list[pos]
-
-	s := $final\_key^x$
-
-	return s
-
-	}
-	\caption{The GKA protocol}
-	\label{gka_proto_algo}
-\end{algorithm}
 
 \section{The primitives}
 
-\subsection{Diffie--Hellman Group}
-The already existing libotr implementation of the DH key exchange is used.
-As a result we use classic Diffie--Hellman , and specifically the group no. 5 \cite{website:dh-rfc} with a 1536 bit modulus.
-In the algorithms presented above, all exponentiations are performed in this group.
+\subsection{Ομάδα Diffie--Hellman}
 
-\subsection{Encryption}
-For encryption we use AES-128 in CTR mode, the same cipher as the two-party OTR protocol.
-We chose 128-bit AES instead of the 256-bit one because our Diffie--Hellman group does not provide 256 bit of entropy and evidence suggests that the 128-bit AES key schedule is preferred for security \cite{aes-key-recov} \cite{rijndael-improved-analysis}.
+Στην υλοποίηση μας επαναχρησιμοποιήσαμε τον κώδικα για την ανταλλαγή κλειδιού \dhname από τη βιβλιοθήκη libotr.
+Αυτό σημαίνει ότι χρησιμοποιούμε κλασσικό \dhname και συγκεκριμένα την ομάδα υπ. αριθμόν 5 με συντελεστή μήκους 1536 bit.
+Στους αλγορίθμους που περιγράψαμε παραπάνω όλες οι υψώσεις σε εκθέτη γίνονται σε αυτή την ομάδα.
 
-To encrypt a message, a user concatenates the shared secret with his personal id and creates a personal key.
-This is the actual encryption key.
+\subsection{Κρυπτογράφηση}
+
+Για την κρυπτογράφηση χρησιμοποιούμε AES-128 σε Counter τρόπο λειτουργίας, όπως και στο απλό OTR.
+Επιλέξαμε τον AES με κλειδί 128 bit και όχι με 256 αφενός γιατί η ομάδα \dhname που χρησιμοποιούμε δεν παρέχει 256 bit εντροπίας και αφετέρου εξαιτίας διαφόρων μελετών που υποδεικνύουν ότι o αλγόριθμος δρομολόγησης κλειδιού του AES-128 είναι πιο ανθεκτικός σε επιθέσεις \cite{aes-key-recov} \cite{rijndael-improved-analysis}.
+
+Για να κρυπτογραφηθεί ένα μήνυμα, ο χρήστης παραθέτει το κοινό μυστικό με το προσωπικό του αναγνωριστικό για τη συζήτηση και δημιουργεί ένα προσωπικό κλειδί ως εξής:
+
 \[
-k_{enc} = H(id_{personal} || master\ key)
+k_{enc} = H(id_{προσωπικο} || master\ key)
 \]
-For the counter, each user stores locally his personal upper half (8 most significant bytes).
-The lower half (8 least significant bytes) are always set to zero.
-The top half of the counter is prepended in the sent message.
-The ciphertext is produced as follows (where $ctr$ is the top half of the locally stored counter):
+
+Για τον μετρητή ο κάθε χρήστης διατηρεί τοπικά το δικό του προσωπικό πάνω μισό (τα 8 πιο σημαντικά bytes) το οποίο αυξάνει κατά 1 κάθε φορά που στέλνει ένα μήνυμα.
+Το κάτω μισό (8 λιγότερο σημαντικά bytes) είναι πάντα αρχικοποιημένα στο 0.
+Σε κάθε μήνυμα που στέλνεται προστίθεται το πάνω μισό του μετρητή.
+Το κρυπτοκείμενο παράγεται ως εξής (όπου $ctr$ είναι το πάνω μισό του μετρητή):
 
 \[
 ciphertext = AES_{CTR}(k_{enc}, ctr||0, plaintext)
 \]
 
-To decrypt a message, a user concatenates the shared secret with the id of the message's sender.
+Για να αποκρυπτογραφηθεί ένα μήνυμα, ο χρήστης παραθέτει το κοινό μυστικό με το προσωπικό id του αποστολέα του μηνύματος.
+
 \[
 k_{dec} = H(id_{sender} || master\ key)
 \]
-He uses the prepended top half of the counter.
+
+Και με τον μετρητή που υπάρχει στο μήνυμα αποκρυπτογραφεί ως εξής:
 
 \[
 plaintext = AES_{CTR}(k_{dec}, ctr||0, ciphertext)
 \]
 
-This encryption scheme is used, so that the possibility that a certain encryption key and counter pair is eliminated.
-If all the participants used the shared secret itself as an encryption key and two users sent a message at the same time, they would use the same counter.
-This would be a catastrophic failure.
+Αυτό το σχήμα κρυπτογράφησης χρησιμοποιείται ώστε να μην υπάρχει πιθανότητα να επαναχρησιμοποιηθεί κάποια δυάδα μετρητή-κλειδιού κρυπτογράφησης, κάτι που ο Counter τρόπος λειτουργίας απαιτεί να μη συμβεί.
 
 \subsection{Authentication}
-For signing we use the EdDSA algorithm over the Ed25519 curve.
-This signature scheme was chosen primarily because of its fast key generation.
-Each message is signed as a whole.
-This means that the signature covers the message and any metadata sent, like session id, counter value etc.
+
+Για τις υπογραφές χρησιμοποιούμε τον αλγόριθμο EdDSA πάνω στην καμπύλη Ed25519
+Κάθε μήνυμα υπογράφεται στο σύνολο του.
+Επιλέχτηκε αυτός ο αλγόριθμος για τη γρήγορη παραγωγή κλειδιού αλλά και για το μικρό μήκος υπογραφής.
+Αυτό σημαίνει ότι η υπογραφή καλύπτει τόσο τα δεδομένα όσο και τα μέταδεδομένα του μηνύματοσ, όπως το αναγνωριστικό της συνομιλίας, την τιμή του μετρητή και άλλα.
