@@ -149,7 +149,6 @@ int chat_shutdown_send_shutdown(ChatContextPtr ctx, ChatMessage **msgToSend)
     if(1 <= shutdown_info->has_send_end[my_pos]) { goto error; }
 
     /* Calculate our messages hash, and store it for later */
-    // TODO Dimitris: here getter plays the role of a setter, maybe refactor this and free in error handling
     err = chat_participant_calculate_messages_hash(me, chat_participant_get_messages_hash(me));
     if(err) { goto error; }
 
@@ -215,7 +214,6 @@ int chat_shutdown_handle_shutdown_message(ChatContextPtr ctx, ChatMessage *msg,
     shutdown_info->shutdowns_remaining -= 1;
 
     /* Hash the participants messages and store them in sender */
-    //TODO Dimitris: here getter plays the role of a setter, maybe refactor this and free in error handling
     err = chat_participant_calculate_messages_hash(sender, chat_participant_get_messages_hash(sender));
     if(err) { goto error; }
 
@@ -407,7 +405,6 @@ int chat_shutdown_handle_end_message(ChatContextPtr ctx, ChatMessage *msg, ChatM
     if(3 <= shutdown_info->has_send_end[their_pos]) { goto error; }
 
     /* Hash the participants messages and store them in sender */
-    //TODO Dimtiris: here getter plays the role of a setter, maybe refactor this and free in error handling
     if(chat_participant_calculate_messages_hash(sender, chat_participant_get_messages_hash(sender))) { goto error;  }
 
     /* Remember that this user has sent us a digest */

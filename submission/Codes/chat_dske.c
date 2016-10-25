@@ -116,9 +116,6 @@ int chat_dske_init(ChatContextPtr ctx, ChatMessage **msgToSend)
     sign_key_pub_copy = chat_sign_copy_pub(sign_key);
     if(!sign_key) { goto error_with_sign_key; }
 
-    //TODO    Is singing_key in context needed??
-    //        Maybe generate it in a local variable instead of a context field
-    //        KOSTIS
     chat_context_set_signing_key(ctx, sign_key);
     chat_participant_set_sign_key(me, sign_key_pub_copy);
 
