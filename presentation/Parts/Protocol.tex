@@ -5,12 +5,14 @@
 
 \begin{frame}
   \frametitle{High level protocol overview (1/2)}
+  We assume that all the session participants have exchanged their longterm public keys beforehand.
+
   mpOTR is divided into sequential phases, sub-protocols.\\[0.3cm]
-  
+
   The first 4 sub-protocols are responsible for setting up the required parameters for the private communication to take place.\\[0.3cm]
-  
+
   The Communication sub-protocol follows. It governs the actual private group conversation.\\[0.3cm]
-  
+
   Finally, the Shutdown sub-protocol is responsible for actions needed to be done before ending each private session.\\[0.3cm]
 
 \end{frame}
