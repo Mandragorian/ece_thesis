@@ -46,6 +46,8 @@ During the Communication sub-protocol, the actual private conversation takes pla
 During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is consistent, and reveal their ephemeral signing keys. If the transcript is indeed consistent we say that consensus has been reached. The revelation of the ephemeral signing keys adds to the deniability property of the protocol, in the same manner the key revelation in OTR protocol does. However, it’s an optional feature, since the signing keys are deniable in the first place. The Shutdown sub-protocol is described in more detail in section \ref{subsections:shutdown}.
 
 \begin{algorithm}[t]
+  \caption{mpOTR($\mathcal{P}$) --- run a session of the mpOTR protocol}
+  \label{algorithms:mpotr_algo}
   \input{Algorithms/mpotr.tex}
 \end{algorithm}
 
@@ -69,6 +71,8 @@ The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer M
 Notice that "Offer Messages" are not authenticated and hence $sid$ must be verified \emph{after} the participants have exchanged signing keys, as described in section \ref{subsections:attest}.
 
 \begin{algorithm}[t]
+  \caption{Offer($\mathcal{P}$) --- session ID construction in the context of participant $\hat{X}$.}
+  \label{algo:offer}
   \input{Algorithms/offer.tex}
 \end{algorithm}
 
@@ -183,10 +187,14 @@ Once all participants have run the DSKE sub-protocol they all have constructed t
 In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is sent and in algorithm \ref{algo:auth_receive} we show how an authenticated message is received and verified.
 
 \begin{algorithm}[t]
+  \caption{AuthBroadcast($M$) --- broadcast message M authenticated under paricipant $\hat{X}$'s ephemeral signing key.}
+  \label{algo:auth_broadcast}
   \input{Algorithms/auth_broadcast.tex}
 \end{algorithm}
 
 \begin{algorithm}[t]
+  \caption{AuthReceive($\mathcal{S}$) --- attempt to receive an authenticated message.}
+  \label{algo:auth_receive}
   \input{Algorithms/auth_receive.tex}
 \end{algorithm}
 
@@ -262,6 +270,8 @@ All other participants now can also caclulate the shared secret $\mathcal{K}$. T
 \end{algorithm}
 
 \begin{algorithm}[p]
+  \caption{GKA($\mathcal{P}$, $sid$, $\mathcal{S}$) - execute a Group Key Agreement and produce the shared secret in the context of participant $\hat{X}$.}
+  \label{gka_proto_algo}
   \input{Algorithms/gka.tex}
 \end{algorithm}
 
@@ -301,6 +311,8 @@ When a participant receives an "Attest Message", first she must verify the signa
 Provided that SHA-512 is a cryptographic hash function an attacker can't find two signing keys association tables with the same hash. This means that he is not able to make two participants believe that they have arrived at the same table when they have not. Also by signing the message containing the specific $sid$, a user implicitly verifies that he is using that particular $sid$ for this session.
 
 \begin{algorithm}[t]
+  \caption{Attest($\mathcal{P}$, $sid$, $\mathcal{S}$) --- authenticate previously unauthenticated protocol parameters for the current session in the context of participant $\hat{X}$.}
+  \label{algo:attest}
   \input{Algorithms/attest.tex}
 \end{algorithm}
 
@@ -378,6 +390,8 @@ When he receives a message from user $B$, he adds that message to the transcript
 \label{subsections:shutdown}
 
 \begin{algorithm}[p]
+  \caption{Shutdown($\mathcal{P}$, $sid$, $\mathcal{S}$), $\mathcal{T}$) --- called in the context of participant $\hat{X}$, determines if consensus has been reached with other participants and publishes the ephemeral signing key of $\hat{X}$.}
+  \label{algo:shutdown}
   \input{Algorithms/shutdown.tex}
 \end{algorithm}
 
