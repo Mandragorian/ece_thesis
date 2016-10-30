@@ -47,7 +47,7 @@
 
 \section{Το Πρωτόκολλο}
 
-Στον αλγόριθμο \ref{algorithms:mpotr_algo} παρουσιάζουμε τη συμπεριφορά του πρωτοκόλλου.
+Στον αλγόριθμο \ref{algorithms:mpotr_algo_greek} παρουσιάζουμε τη συμπεριφορά του πρωτοκόλλου.
 Το πρωτόκολλο χωρίζεται σε διάφορες φάσεις τις οποίες ονομάζουμε υπο-πρωτόκολλα.
 Τα τέσσερα πρώτα από αυτά (Offer, DSKA, GKA και Attest) είναι υπεύθυνα για να κατασκευάσουν όλη την απαραίτητη πληροφορία που απαιτείται ώστε να λάβει χώρα μια ιδιωτική συνομιλία.
 Το Communication υπο-πρωτόκολλο είναι αυτό το οποίο αναλαμβάνει να φέρει εις πέρας την ίδια τη συνομιλία.
@@ -78,6 +78,12 @@
 Εάν τα περιεχόμενα είναι όντως συνεπή τότε λέμε ότι υπάρχει ομοφωνία.
 Η αποκάλυψη των ιδιωτικών κλειδιών υπογραφής προσθέτει επιπλέον διαψευσιμότητα στο πρωτόκολλο, όπως και η αποκάλυψη των MAC κλειδιών στο OTR πρωτόκολλο.
 Παρόλα αυτά είναι προαιρετικό βήμα καθώς το πρωτόκολλο που προτείνεται είναι διαψεύσιμο και χωρίς την αποκάλυψη.
+
+\begin{algorithm}[t]
+  \caption{mpOTR($\mathcal{P}$) --- τρέχει μια συνεδρία του πρωτοκόλλου mpOTR}
+  \label{algorithms:mpotr_algo_greek}
+  \input{Algorithms/mpotr.tex}
+\end{algorithm}
 
 \section{Τα υπο-πρωτόκολλα}
 \label{subprots}
@@ -115,8 +121,25 @@
 Επίσης έχει όλη την πληροφορία που χρειάζεται και από τους υπόλοιπους συμμετέχοντες, ώστε να φτιάξουν και αυτοί το κοινό μυστικό.
 Αυτή η πληροφορία μεταδίδεται στους υπολοίπους όπως φαίνεται στο σχήμα \ref{figures:gka_downflow}.
 
-Στους αλγορίθμους \ref{upflow_algo}, \ref{downflow_algo}, και \ref{gka_proto_algo} παρουσιάζεται η κεντρική ιδέα της GKA.
+Στους αλγορίθμους \ref{upflow_algo_greek}, \ref{downflow_algo_greek}, και \ref{gka_proto_algo_greek} παρουσιάζεται η κεντρική ιδέα της GKA.
 
+\begin{algorithm}[t]
+  \caption{SendUpflow($InterKeys$, $x$, $\hat{Y}$) --- στέλνει την νέα λίστα ενδιάμεσων κλειδιών στον επόμενο συμμετέχοντα.}
+  \label{upflow_algo_greek}
+  \input{Algorithms/send_upflow.tex}
+\end{algorithm}
+
+\begin{algorithm}[t]
+  \caption{SendDownflow($InterKeys$, $x$) --- εκέμπει την λίστα ενδιάμεσων κλειδιών αντιροής στους υπόλοιπους συμμετέχοντες.}
+  \label{downflow_algo_greek}
+  \input{Algorithms/send_downflow.tex}
+\end{algorithm}
+
+\begin{algorithm}[p]
+  \caption{GKA($\mathcal{P}$, $sid$, $\mathcal{S}$) - εκτελεί μια Ομαδική Συμφωνία Κλειδιού και παράγει το κοινό μυστικό στο πλαίσιο του συμμετέχοντα $\hat{X}$.}
+  \label{gka_proto_algo_greek}
+  \input{Algorithms/gka.tex}
+\end{algorithm}
 
 \section{Πρωτογενείς Διαδικασίες}
 
