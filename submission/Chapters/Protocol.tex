@@ -262,10 +262,14 @@ Once the last participant has received the Upflow, he calculates $\mathcal{K}$ b
 All other participants now can also caclulate the shared secret $\mathcal{K}$. The $i-th$ participant calculates $\mathcal{K}$ by raising $i-th$, {\bf counting from the end}, element of the final intermediate key list to his private exponent. Then, they can use $\mathcal{K}$ for encryption.
 
 \begin{algorithm}[t]
+  \caption{SendUpflow($InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
+  \label{upflow_algo}
   \input{Algorithms/send_upflow.tex}
 \end{algorithm}
 
 \begin{algorithm}[t]
+  \caption{SendDownflow($InterKeys$, $x$) --- broadcast the downflow intermediate key list to the other participants.}
+  \label{downflow_algo}
   \input{Algorithms/send_downflow.tex}
 \end{algorithm}
 
