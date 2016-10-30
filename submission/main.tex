@@ -154,14 +154,14 @@ headsepline, % Uncomment to get a line under the header
 
 \begin{document}
 
-\frontmatter % Use roman page numbering style (i, ii, iii, iv...) for the pre-content pages
+\mainmatter
 
 \pagestyle{plain} % Default to the plain heading style until the thesis style is called for the body content
 
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------
-\pagenumbering{gobble}
+\pagenumbering{arabic}
 \begin{titlepage}
 \begin{center}
 
@@ -228,6 +228,7 @@ headsepline, % Uncomment to get a line under the header
 
 \cleardoublepage
 
+\thispagestyle{empty}
 \begin{center}
 
 {\scshape\LARGE ΕΘΝΙΚΟ ΜΕΤΣΟΒΙΟ ΠΟΛΥΤΕΧΝΕΙΟ\par} % University name
@@ -293,6 +294,7 @@ headsepline, % Uncomment to get a line under the header
 
 \pagebreak
 
+\thispagestyle{empty}
 
 \vspace{30ex}
 \noindent
@@ -328,7 +330,6 @@ This work is licensed under the Creative Commons Attribution 4.0 International L
 %----------------------------------------------------------------------------------------
 %	ABSTRACT PAGE
 %----------------------------------------------------------------------------------------
-\pagenumbering{roman}
 
 \addchaptertocentry{Περίληψη} % Add the abstract to the table of contents
 
@@ -500,7 +501,6 @@ Finally, I would like to thank my friends Pavlos, Lefteris and Panos who contrib
 %	THESIS CONTENT - CHAPTERS
 %----------------------------------------------------------------------------------------
 
-\mainmatter % Begin numeric (1,2,3...) page numbering
 
 \pagestyle{thesis} % Return the page headers back to the "thesis" style
 
