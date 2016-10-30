@@ -1,0 +1,30 @@
+  \caption{mpOTR($\mathcal{P}$) --- run a session of the mpOTR protocol}
+  \label{algorithms:mpotr_algo}
+  
+  \KwIn{$\mathcal{P}$ : participants list}
+  \KwResult{Executes a run of the mpOTR protocol}
+  \Begin{
+
+    $sid \leftarrow Offer(\mathcal{P})$
+
+    $\mathcal{S} \leftarrow DSKE(\mathcal{P}, sid)$
+
+    $\mathcal{K} \leftarrow GKA(\mathcal{P}, sid, \mathcal{S})$
+
+    $\mathcal{A} \leftarrow Attest(\mathcal{P}, sid, \mathcal{S})$
+
+    \If{$\mathcal{A}$ = $\perp$}{
+      \Return{"Error"}
+    }
+
+    $\mathcal{T} := Communication(\mathcal{P}, sid, \mathcal{S}, \mathcal{K})$
+
+    $\mathcal{C} \leftarrow Shutdown(\mathcal{P}, sid, \mathcal{S}, \mathcal{T})$
+
+    \uIf{ConsensusForAll($\mathcal{C}$)}{
+      \Return{"OK"}
+    }
+    \Else{
+      \Return{"Error"}
+    }
+  }

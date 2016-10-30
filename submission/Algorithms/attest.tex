@@ -1,0 +1,32 @@
+  \caption{Attest($\mathcal{P}$, $sid$, $\mathcal{S}$) --- authenticate previously unauthenticated protocol parameters for the current session in the context of participant $\hat{X}$.}
+  \label{algo:attest}
+  \KwIn{$\mathcal{P}$ : participants list}
+  \KwExtraIn{$sid$ : the session ID}
+  \KwExtraIn{$\mathcal{S}$ : the association table}
+  \KwOut{$\mathcal{A}$ : "OK" if verification went good, $\perp$ if it went wrong}
+  \Begin
+  {
+	$M \leftarrow sid \Vert SHA512(\mathcal{S})$
+
+	$AuthBroadcast(M)$
+
+	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
+
+    \While{$Outstanding \neq \emptyset$}
+    {
+      $(\hat{Y}, M_{\hat{Y}}) \leftarrow AuthReceive(\mathcal{S})$
+
+      \uIf{$M_{\hat{Y}} = \perp \lor  M_{\hat{Y}} \neq M$}
+      {
+        \Return{$\perp$}
+
+      }
+      \Else{
+
+        $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
+
+      }
+    }
+
+    \Return{"OK"}
+  }

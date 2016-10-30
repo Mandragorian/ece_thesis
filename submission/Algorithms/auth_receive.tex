@@ -1,0 +1,17 @@
+  \caption{AuthReceive($\mathcal{S}$) --- attempt to receive an authenticated message.}
+  \label{algo:auth_receive}
+  \KwIn {$\mathcal{S}$ : assocation table}
+  \KwOut {$(\hat{Y}, M)$ : sender and message on success, sender and $\perp$ on failure}
+  \Begin
+  {
+    $(\hat{Y}, M \Vert \sigma) \leftarrow Receive()$
+
+    $E_{\hat{Y}} \leftarrow \mathcal{S}[\hat{Y}]$
+
+    \If{$Verify(M, \sigma, E_{\hat{Y}}) = false$}
+    {
+      \Return{$(\hat{Y}, \perp)$}
+    }
+
+    \Return{$(\hat{Y}, M)$}
+  }

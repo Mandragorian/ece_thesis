@@ -1,0 +1,19 @@
+  \caption{SendUpflow($InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
+  \label{upflow_algo}
+  \KwIn {$InterKeys$ : previous intermediate key list}
+  \KwExtraIn {$x$ : user's secret key}
+  \KwExtraIn {$\hat{Y}$ : the next participant}
+  \KwResult{Sends the new intermediate key list to the next participant}
+  \Begin
+  {
+    $inter\_key\_list \leftarrow []$
+
+    $inter\_key\_list.Append(InterKeys.Last() )$
+
+    \ForEach{$k$ in $InterKeys$}
+    {
+      $inter\_key\_list.Append(k^x)$
+    }
+
+    $AuthBroadcast(\hat{Y} \Vert inter\_key\_list)$
+  }

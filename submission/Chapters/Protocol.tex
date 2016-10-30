@@ -46,35 +46,7 @@ During the Communication sub-protocol, the actual private conversation takes pla
 During the Shutdown sub-protocol, the participants determine if $\mathcal{T}$ is consistent, and reveal their ephemeral signing keys. If the transcript is indeed consistent we say that consensus has been reached. The revelation of the ephemeral signing keys adds to the deniability property of the protocol, in the same manner the key revelation in OTR protocol does. However, it’s an optional feature, since the signing keys are deniable in the first place. The Shutdown sub-protocol is described in more detail in section \ref{subsections:shutdown}.
 
 \begin{algorithm}[t]
-  \KwIn{$\mathcal{P}$ : participants list}
-  \KwResult{Executes a run of the mpOTR protocol}
-  \Begin{
-
-    $sid \leftarrow Offer(\mathcal{P})$
-
-    $\mathcal{S} \leftarrow DSKE(\mathcal{P}, sid)$
-
-    $\mathcal{K} \leftarrow GKA(\mathcal{P}, sid, \mathcal{S})$
-
-    $\mathcal{A} \leftarrow Attest(\mathcal{P}, sid, \mathcal{S})$
-
-    \If{$\mathcal{A}$ = $\perp$}{
-      \Return{"Error"}
-    }
-
-    $\mathcal{T} := Communication(\mathcal{P}, sid, \mathcal{S}, \mathcal{K})$
-
-    $\mathcal{C} \leftarrow Shutdown(\mathcal{P}, sid, \mathcal{S}, \mathcal{T})$
-
-    \uIf{ConsensusForAll($\mathcal{C}$)}{
-      \Return{"OK"}
-    }
-    \Else{
-      \Return{"Error"}
-    }
-  }
-  \caption{mpOTR($\mathcal{P}$) --- run a session of the mpOTR protocol}
-  \label{algorithms:mpotr_algo}
+  \input{Algorithms/mpotr.tex}
 \end{algorithm}
 
 
@@ -97,35 +69,7 @@ The participant who wants to initiate the mpOTR protocol, broadcasts an "Offer M
 Notice that "Offer Messages" are not authenticated and hence $sid$ must be verified \emph{after} the participants have exchanged signing keys, as described in section \ref{subsections:attest}.
 
 \begin{algorithm}[t]
-  \KwIn{$\mathcal{P}$ : participants list}
-  \KwOut{$sid$ : the session ID}
-  \Begin
-  {
-	$c_{\hat{X}} \xleftarrow{\$} \{0,1\}^{256}$
-
-	$Broadcast(c_{\hat{X}})$
-
-	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
-
-    \While{$Outstanding \neq \emptyset$}
-    {
-      $(\hat{Y}, c) \leftarrow Receive()$
-
-      \If{$\hat{Y} \in Outstanding$}
-      {
-        $c_{\hat{Y}} \leftarrow c$
-
-        $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
-      }
-    }
-
-    $sid \leftarrow SHA512(c_{\hat{Y}_1} \Vert c_{\hat{Y}_2} \Vert \cdots)$
-
-	\Return{$sid$}
-
-  }
-  \caption{Offer($\mathcal{P}$) --- session ID construction in the context of participant $\hat{X}$.}
-  \label{algo:offer}
+  \input{Algorithms/offer.tex}
 \end{algorithm}
 
 
@@ -239,37 +183,11 @@ Once all participants have run the DSKE sub-protocol they all have constructed t
 In algorithm \ref{algo:auth_broadcast} we show how an authenticated message is sent and in algorithm \ref{algo:auth_receive} we show how an authenticated message is received and verified.
 
 \begin{algorithm}[t]
-  \KwIn{$M$ : message}
-  \KwExtraIn {$e_{\hat{X}}$ : ephemeral private signing key}
-  \KwResult{authenticated M is brodcast}
-  \Begin
-  {
-	$\sigma \leftarrow Sign(e_{\hat{X}}, M)$
-
-	$Broadcast(M \Vert \sigma)$
-  }
-  \caption{AuthBroadcast($M$) --- broadcast message M authenticated under paricipant $\hat{X}$'s ephemeral signing key.}
-  \label{algo:auth_broadcast}
+  \input{Algorithms/auth_broadcast.tex}
 \end{algorithm}
 
 \begin{algorithm}[t]
-  \KwIn {$\mathcal{S}$ : assocation table}
-  \KwOut {$(\hat{Y}, M)$ : sender and message on success, sender and $\perp$ on failure}
-  \Begin
-  {
-    $(\hat{Y}, M \Vert \sigma) \leftarrow Receive()$
-
-    $E_{\hat{Y}} \leftarrow \mathcal{S}[\hat{Y}]$
-
-    \If{$Verify(M, \sigma, E_{\hat{Y}}) = false$}
-    {
-      \Return{$(\hat{Y}, \perp)$}
-    }
-
-    \Return{$(\hat{Y}, M)$}
-  }
-  \caption{AuthReceive($\mathcal{S}$) --- attempt to receive an authenticated message.}
-  \label{algo:auth_receive}
+  \input{Algorithms/auth_receive.tex}
 \end{algorithm}
 
 \subsection{Group Key Agreement (GKA)}
@@ -336,110 +254,15 @@ Once the last participant has received the Upflow, he calculates $\mathcal{K}$ b
 All other participants now can also caclulate the shared secret $\mathcal{K}$. The $i-th$ participant calculates $\mathcal{K}$ by raising $i-th$, {\bf counting from the end}, element of the final intermediate key list to his private exponent. Then, they can use $\mathcal{K}$ for encryption.
 
 \begin{algorithm}[t]
-  \KwIn {$InterKeys$ : previous intermediate key list}
-  \KwExtraIn {$x$ : user's secret key}
-  \KwExtraIn {$\hat{Y}$ : the next participant}
-  \KwResult{Sends the new intermediate key list to the next participant}
-  \Begin
-  {
-    $inter\_key\_list \leftarrow []$
-
-    $inter\_key\_list.Append(InterKeys.Last() )$
-
-    \ForEach{$k$ in $InterKeys$}
-    {
-      $inter\_key\_list.Append(k^x)$
-    }
-
-    $AuthBroadcast(\hat{Y} \Vert inter\_key\_list)$
-  }
-  \caption{SendUpflow($InterKeys$, $x$, $\hat{Y}$) --- send the new intermediate key list to the next participant.}
-  \label{upflow_algo}
+  \input{Algorithms/send_upflow.tex}
 \end{algorithm}
 
 \begin{algorithm}[t]
-  \KwIn {$InterKeys$ : previous intermediate key list}
-  \KwExtraIn {$x$ : user's secret key}
-  \KwResult{Broadcasts the downflow intermediate key list to the other participants}
-  \Begin
-  {
-    $inter\_key\_list \leftarrow []$
-
-    \ForEach{$k$ in $InterKeys$}
-    {
-      $inter\_key\_list.Append(k^x)$
-	}
-
-    $AuthBroadcast(inter\_key\_list)$
-  }
-  \caption{SendDownflow($InterKeys$, $x$) --- broadcast the downflow intermediate key list to the other participants.}
-  \label{downflow_algo}
+  \input{Algorithms/send_downflow.tex}
 \end{algorithm}
 
 \begin{algorithm}[p]
-  \KwIn{$\mathcal{P}$ : participants list}
-  \KwExtraIn{$sid$ : the session ID}
-  \KwExtraIn{$\mathcal{S}$ : association table}
-  \KwOut{$\mathcal{K}$ : the shared secret}
-  \Begin
-  {
-    $x \leftarrow GenerateKey()$
-
-    $\hat{Y}_{prev} \leftarrow \hat{X}.Previous()$
-
-    $\hat{Y}_{next} \leftarrow \hat{X}.Next()$
-
-    \uIf(\tcc*[f]{$\hat{X}$ is first}){$\hat{Y}_{prev}$ = NULL}
-    {
-      $SendUpflow([G], x, \hat{Y}_{next})$
-    }
-    \Else
-    {
-
-      \Repeat(\tcc*[f]{wait for previous upflow}){$\hat{R} = \hat{X}$}
-      {
-        $(\hat{Y}, \hat{R} \Vert key\_list) \leftarrow AuthReceive(\mathcal{S})$
-      }
-
-      \If{$\hat{Y}$ $\neq$ $\hat{Y}_{prev}$ $\lor$ $\hat{R} \Vert key\_list = \perp$}
-      {
-        \Return{error}
-      }
-      \uIf(\tcc*[f]{$\hat{X}$ is not first or last}){$\hat{Y}_{next}$ $\neq$ NULL}
-      {
-        $SendUpflow(key\_list, x, \hat{Y}_{next})$
-      }
-      \Else(\tcc*[f]{$\hat{X}$ is last})
-      {
-        $final\_key \leftarrow key\_list.Last()$
-
-        $\mathcal{K} \leftarrow final\_key^x$
-
-        $SendDownflow(key\_list, x)$
-
-        \Return{$\mathcal{K}$}
-      }
-    }
-
-    \Repeat(\tcc*[f]{wait for downflow}){$\hat{Y}$ = $\mathcal{P}.Last()$}
-    {
-      $(\hat{Y}, key\_list) \leftarrow AuthReceive(\mathcal{S})$
-    }
-    \If{$key\_list = \perp$}
-    {
-      \Return{error}
-    }
-
-    $pos \leftarrow \mathcal{P}.IndexOf(\hat{X})$
-
-    $final\_key \leftarrow key\_list.Reverse().Get(pos)$
-
-    $\mathcal{K} \leftarrow final\_key^x$
-
-	\Return{$\mathcal{K}$}
-  }
-  \caption{GKA($\mathcal{P}$, $sid$, $\mathcal{S}$) - execute a Group Key Agreement and produce the shared secret in the context of participant $\hat{X}$.}
-  \label{gka_proto_algo}
+  \input{Algorithms/gka.tex}
 \end{algorithm}
 
 \subsubsection{Example}
@@ -478,38 +301,7 @@ When a participant receives an "Attest Message", first she must verify the signa
 Provided that SHA-512 is a cryptographic hash function an attacker can't find two signing keys association tables with the same hash. This means that he is not able to make two participants believe that they have arrived at the same table when they have not. Also by signing the message containing the specific $sid$, a user implicitly verifies that he is using that particular $sid$ for this session.
 
 \begin{algorithm}[t]
-  \KwIn{$\mathcal{P}$ : participants list}
-  \KwExtraIn{$sid$ : the session ID}
-  \KwExtraIn{$\mathcal{S}$ : the association table}
-  \KwOut{$\mathcal{A}$ : "OK" if verification went good, $\perp$ if it went wrong}
-  \Begin
-  {
-	$M \leftarrow sid \Vert SHA512(\mathcal{S})$
-
-	$AuthBroadcast(M)$
-
-	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
-
-    \While{$Outstanding \neq \emptyset$}
-    {
-      $(\hat{Y}, M_{\hat{Y}}) \leftarrow AuthReceive(\mathcal{S})$
-
-      \uIf{$M_{\hat{Y}} = \perp \lor  M_{\hat{Y}} \neq M$}
-      {
-        \Return{$\perp$}
-
-      }
-      \Else{
-
-        $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
-
-      }
-    }
-
-	\Return{"OK"}
-  }
-  \caption{Attest($\mathcal{P}$, $sid$, $\mathcal{S}$) --- authenticate previously unauthenticated protocol parameters for the current session in the context of participant $\hat{X}$.}
-  \label{algo:attest}
+  \input{Algorithms/attest.tex}
 \end{algorithm}
 
 \subsection{Communication}
@@ -586,86 +378,7 @@ When he receives a message from user $B$, he adds that message to the transcript
 \label{subsections:shutdown}
 
 \begin{algorithm}[p]
-  \KwIn{$\mathcal{P}$ : participants list}
-  \KwExtraIn{$sid$ : the session ID}
-  \KwExtraIn{$\mathcal{S}$ : association table}
-  \KwExtraIn{$\mathcal{T}$ : chat room table of transcripts}
-  \KwExtraIn{$e_{\hat{X}}$ : ephemeral private signing key}
-  \KwOut{$\mathcal{C}$ : boolean array of consensus status for each participant, $\perp$ if shutdown went wrong}
-  \Begin
-  {
-    \tcp{Broadcast digest of our transcript}
-
-    $h_{\hat{X}} \leftarrow SHA512(\mathcal{T}[\hat{X}])$
-
-    $AuthBroadcast("shutdown" \Vert h_{\hat{X}})$
-
-    \tcp{Collect digests of others' transcripts}
-
-	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
-
-    \While{$Outstanding \neq \emptyset$}
-    {
-        $(\hat{Y}, M \Vert h_{\hat{Y}}^{'}) \leftarrow AuthReceive(\mathcal{S})$
-
-        \If{$\hat{Y} \in Outstanding \land M = "shutdown"$}
-        {
-          $h_{\hat{Y}} \leftarrow SHA512(\mathcal{T}[\hat{Y}])$
-
-          $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
-        }
-    }
-
-    \tcp{Broadcast digest of full chat}
-
-    $h \leftarrow SHA512(h_{\hat{Y}_1} \Vert h_{\hat{Y}_2} \Vert \cdots)$
-
-    $AuthBroadcast("digest" \Vert h)$
-
-    \tcp{Determine consenus}
-
-    $Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
-
-    \While{$Outstanding \neq \emptyset$}
-    {
-        $(\hat{Y}, M \Vert h^{'}) \leftarrow AuthReceive(\mathcal{S})$
-
-        \If{$\hat{Y} \in Outstanding \land M = "digest"$}
-        {
-          $consensus[\hat{Y}] \leftarrow h = h^{'}$
-
-          $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
-        }
-    }
-
-    \tcp{Assure that everybody aborted the session}
-
-    $AuthBroadcast("end")$
-
-    $Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
-
-    \While{$Outstanding \neq \emptyset$}
-    {
-        $(\hat{Y}, M) \leftarrow AuthReceive(\mathcal{S})$
-
-        \uIf{$M \neq "end"$}
-        {
-          \Return{$\perp$}
-        }
-        \Else
-        {
-          $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
-        }
-    }
-
-     \tcp{Reveal the ephemeral private signing key}
-
-    $Broadcast(e_{\hat{X}})$
-
-    \Return{$consensus$}
-  }
-  \caption{Shutdown($\mathcal{P}$, $sid$, $\mathcal{S}$), $\mathcal{T}$) --- called in the context of participant $\hat{X}$, determines if consensus has been reached with other participants and publishes the ephemeral signing key of $\hat{X}$.}
-  \label{algo:shutdown}
+  \input{Algorithms/shutdown.tex}
 \end{algorithm}
 
 During the Shutdown sub-protocol, the participants end the current session. Chat room transcript consistency is checked and the ephemeral signing keys are published, in order to permit a posteriori modifications of the chat transcript. The revelation of the ephemeral signing keys adds to the protocol's deniability property. However, the protocol is deniable even without publishing the ephemeral signing keys, since the signing keys are deniable in the first place.

@@ -1,0 +1,11 @@
+  \caption{AuthBroadcast($M$) --- broadcast message M authenticated under paricipant $\hat{X}$'s ephemeral signing key.}
+  \label{algo:auth_broadcast}
+  \KwIn{$M$ : message}
+  \KwExtraIn {$e_{\hat{X}}$ : ephemeral private signing key}
+  \KwResult{authenticated M is brodcast}
+  \Begin
+  {
+    $\sigma \leftarrow Sign(e_{\hat{X}}, M)$
+
+    $Broadcast(M \Vert \sigma)$
+  }

@@ -1,0 +1,16 @@
+  \caption{SendDownflow($InterKeys$, $x$) --- broadcast the downflow intermediate key list to the other participants.}
+  \label{downflow_algo}
+  \KwIn {$InterKeys$ : previous intermediate key list}
+  \KwExtraIn {$x$ : user's secret key}
+  \KwResult{Broadcasts the downflow intermediate key list to the other participants}
+  \Begin
+  {
+    $inter\_key\_list \leftarrow []$
+
+    \ForEach{$k$ in $InterKeys$}
+    {
+      $inter\_key\_list.Append(k^x)$
+	}
+
+    $AuthBroadcast(inter\_key\_list)$
+  }

@@ -1,0 +1,29 @@
+  \caption{Offer($\mathcal{P}$) --- session ID construction in the context of participant $\hat{X}$.}
+  \label{algo:offer}
+  
+  \KwIn{$\mathcal{P}$ : participants list}
+  \KwOut{$sid$ : the session ID}
+  \Begin
+  {
+    $c_{\hat{X}} \xleftarrow{\$} \{0,1\}^{256}$
+
+    $Broadcast(c_{\hat{X}})$
+
+    $Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
+
+    \While{$Outstanding \neq \emptyset$}
+    {
+      $(\hat{Y}, c) \leftarrow Receive()$
+
+      \If{$\hat{Y} \in Outstanding$}
+      {
+        $c_{\hat{Y}} \leftarrow c$
+
+        $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
+      }
+    }
+
+    $sid \leftarrow SHA512(c_{\hat{Y}_1} \Vert c_{\hat{Y}_2} \Vert \cdots)$
+
+    \Return{$sid$}
+  }

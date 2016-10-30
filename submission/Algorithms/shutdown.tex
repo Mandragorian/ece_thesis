@@ -1,0 +1,80 @@
+  \caption{Shutdown($\mathcal{P}$, $sid$, $\mathcal{S}$), $\mathcal{T}$) --- called in the context of participant $\hat{X}$, determines if consensus has been reached with other participants and publishes the ephemeral signing key of $\hat{X}$.}
+  \label{algo:shutdown}
+  \KwIn{$\mathcal{P}$ : participants list}
+  \KwExtraIn{$sid$ : the session ID}
+  \KwExtraIn{$\mathcal{S}$ : association table}
+  \KwExtraIn{$\mathcal{T}$ : chat room table of transcripts}
+  \KwExtraIn{$e_{\hat{X}}$ : ephemeral private signing key}
+  \KwOut{$\mathcal{C}$ : boolean array of consensus status for each participant, $\perp$ if shutdown went wrong}
+  \Begin
+  {
+    \tcp{Broadcast digest of our transcript}
+
+    $h_{\hat{X}} \leftarrow SHA512(\mathcal{T}[\hat{X}])$
+
+    $AuthBroadcast("shutdown" \Vert h_{\hat{X}})$
+
+    \tcp{Collect digests of others' transcripts}
+
+	$Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
+
+    \While{$Outstanding \neq \emptyset$}
+    {
+        $(\hat{Y}, M \Vert h_{\hat{Y}}^{'}) \leftarrow AuthReceive(\mathcal{S})$
+
+        \If{$\hat{Y} \in Outstanding \land M = "shutdown"$}
+        {
+          $h_{\hat{Y}} \leftarrow SHA512(\mathcal{T}[\hat{Y}])$
+
+          $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
+        }
+    }
+
+    \tcp{Broadcast digest of full chat}
+
+    $h \leftarrow SHA512(h_{\hat{Y}_1} \Vert h_{\hat{Y}_2} \Vert \cdots)$
+
+    $AuthBroadcast("digest" \Vert h)$
+
+    \tcp{Determine consenus}
+
+    $Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
+
+    \While{$Outstanding \neq \emptyset$}
+    {
+        $(\hat{Y}, M \Vert h^{'}) \leftarrow AuthReceive(\mathcal{S})$
+
+        \If{$\hat{Y} \in Outstanding \land M = "digest"$}
+        {
+          $consensus[\hat{Y}] \leftarrow h = h^{'}$
+
+          $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
+        }
+    }
+
+    \tcp{Assure that everybody aborted the session}
+
+    $AuthBroadcast("end")$
+
+    $Outstanding \leftarrow \mathcal{P} \textbackslash \{\hat{X}\}$
+
+    \While{$Outstanding \neq \emptyset$}
+    {
+        $(\hat{Y}, M) \leftarrow AuthReceive(\mathcal{S})$
+
+        \uIf{$M \neq "end"$}
+        {
+          \Return{$\perp$}
+        }
+        \Else
+        {
+          $Outstanding \leftarrow Outstanding \textbackslash \{\hat{Y}\}$
+        }
+    }
+
+     \tcp{Reveal the ephemeral private signing key}
+
+    $Broadcast(e_{\hat{X}})$
+
+    \Return{$consensus$}
+  }

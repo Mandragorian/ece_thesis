@@ -1,0 +1,63 @@
+  \caption{GKA($\mathcal{P}$, $sid$, $\mathcal{S}$) - execute a Group Key Agreement and produce the shared secret in the context of participant $\hat{X}$.}
+  \label{gka_proto_algo}
+  \KwIn{$\mathcal{P}$ : participants list}
+  \KwExtraIn{$sid$ : the session ID}
+  \KwExtraIn{$\mathcal{S}$ : association table}
+  \KwOut{$\mathcal{K}$ : the shared secret}
+  \Begin
+  {
+    $x \leftarrow GenerateKey()$
+
+    $\hat{Y}_{prev} \leftarrow \hat{X}.Previous()$
+
+    $\hat{Y}_{next} \leftarrow \hat{X}.Next()$
+
+    \uIf(\tcc*[f]{$\hat{X}$ is first}){$\hat{Y}_{prev}$ = NULL}
+    {
+      $SendUpflow([G], x, \hat{Y}_{next})$
+    }
+    \Else
+    {
+
+      \Repeat(\tcc*[f]{wait for previous upflow}){$\hat{R} = \hat{X}$}
+      {
+        $(\hat{Y}, \hat{R} \Vert key\_list) \leftarrow AuthReceive(\mathcal{S})$
+      }
+
+      \If{$\hat{Y}$ $\neq$ $\hat{Y}_{prev}$ $\lor$ $\hat{R} \Vert key\_list = \perp$}
+      {
+        \Return{error}
+      }
+      \uIf(\tcc*[f]{$\hat{X}$ is not first or last}){$\hat{Y}_{next}$ $\neq$ NULL}
+      {
+        $SendUpflow(key\_list, x, \hat{Y}_{next})$
+      }
+      \Else(\tcc*[f]{$\hat{X}$ is last})
+      {
+        $final\_key \leftarrow key\_list.Last()$
+
+        $\mathcal{K} \leftarrow final\_key^x$
+
+        $SendDownflow(key\_list, x)$
+
+        \Return{$\mathcal{K}$}
+      }
+    }
+
+    \Repeat(\tcc*[f]{wait for downflow}){$\hat{Y}$ = $\mathcal{P}.Last()$}
+    {
+      $(\hat{Y}, key\_list) \leftarrow AuthReceive(\mathcal{S})$
+    }
+    \If{$key\_list = \perp$}
+    {
+      \Return{error}
+    }
+
+    $pos \leftarrow \mathcal{P}.IndexOf(\hat{X})$
+
+    $final\_key \leftarrow key\_list.Reverse().Get(pos)$
+
+    $\mathcal{K} \leftarrow final\_key^x$
+
+    \Return{$\mathcal{K}$}
+  }
