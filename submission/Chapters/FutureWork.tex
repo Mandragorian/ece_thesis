@@ -30,7 +30,7 @@ then their accumulators will arrive at the same value in the end.
 
 Thus, we have removed the need to store the messages in order to sort them during
 the shutdown phase. We only need to store the value of the accumulator which,
-of course, is constant.
+of course, is constant in space.
 
 \section{Longterm public identity key verification via OTR}
 The authentication of participants' identities premises that each participant has verified the others' longterm public identity keys. This means that each pair of participants should exchange their longterm public identity keys using some already authenticated communication channel. For now, we assume that this exchange is done manually, either in person or using other authenticated channels like simple OTR, GPG-signed emails, etc.
