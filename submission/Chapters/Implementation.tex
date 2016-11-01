@@ -241,9 +241,9 @@ struct ChatInternalKeyOps{
 
   \item chat\_fingerprint: It incorporates a First-Class ADT with handle type \emph{OtrlChatFingerprintPtr} that models a fingerprint of a participant's public identity key. It also provides functions to find, add or remove a fingerprint in a list of fingerprints. Finally, it provides functions to read a fingerprint list from or write to a file.
 
-  \item chat\_pending: It incorporates a First-Class ADT with handle type \emph{ChatPendingPtr} that models a fingerprint of a participant's public identity key. Each instance contains the sender username and the message string.
+  \item chat\_pending: It incorporates a First-Class ADT with handle type \emph{ChatPendingPtr} that models a pending message. Each instance contains the sender username and the message string.
   
-  \item chat\_event: It incorporates a First-Class ADT with handle type \emph{OtrlChatEventPtr} that models a fingerprint of a participant's public identity key. Each instance contains the event type and the type specific data. It provides an event creating function for each type of event.
+  \item chat\_event: It incorporates a First-Class ADT with handle type \emph{OtrlChatEventPtr} that models an event. Each instance contains the event type and the type specific data. It provides an event creating function for each type of event.
 
   \item chat\_info:  It incorporates a First-Class ADT with handle type \emph{OtrlChatInfoPtr} that models a chat room descriptor that contains chat room specific information to be sent to the client application.
   
